@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Categories on Rudy&#39;s blog</title>
+    <link>/categories/</link>
+    <description>Recent content in Categories on Rudy&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 31 Jul 2020 23:28:01 +0800</lastBuildDate>
+    
+        <atom:link href="/categories/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>线上问题</title>
+      <link>/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/</link>
+      <pubDate>Fri, 31 Jul 2020 23:28:01 +0800</pubDate>
+      
+      <guid>/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/</guid>
+      <description></description>
+      
+    </item>
+    
+    <item>
+      <title>Nginx</title>
+      <link>/categories/nginx/</link>
+      <pubDate>Mon, 20 Jul 2020 23:27:34 +0800</pubDate>
+      
+      <guid>/categories/nginx/</guid>
+      <description></description>
+      
+    </item>
+    
+  </channel>
+</rss>
