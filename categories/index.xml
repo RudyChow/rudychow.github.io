@@ -1,34 +1,64 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on Rudy&#39;s blog</title>
-    <link>/categories/</link>
+    <link>https://rudychow.github.io/categories/</link>
     <description>Recent content in Categories on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Fri, 31 Jul 2020 23:28:01 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 16 Nov 2020 06:21:00 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Redis</title>
+      <link>https://rudychow.github.io/categories/Redis/</link>
+      <pubDate>Mon, 16 Nov 2020 06:21:00 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/categories/Redis/</guid>
+      <description></description>
+    </item>
     
-        <atom:link href="/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Linux</title>
+      <link>https://rudychow.github.io/categories/Linux/</link>
+      <pubDate>Wed, 09 Sep 2020 22:28:29 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/categories/Linux/</guid>
+      <description></description>
+    </item>
     
+    <item>
+      <title>PHP</title>
+      <link>https://rudychow.github.io/categories/PHP/</link>
+      <pubDate>Fri, 28 Aug 2020 00:29:51 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/categories/PHP/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>MySQL</title>
+      <link>https://rudychow.github.io/categories/MySQL/</link>
+      <pubDate>Mon, 17 Aug 2020 23:53:56 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/categories/MySQL/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>线上问题</title>
-      <link>/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/</link>
+      <link>https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/</link>
       <pubDate>Fri, 31 Jul 2020 23:28:01 +0800</pubDate>
       
-      <guid>/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/</guid>
+      <guid>https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/</guid>
       <description></description>
-      
     </item>
     
     <item>
       <title>Nginx</title>
-      <link>/categories/nginx/</link>
+      <link>https://rudychow.github.io/categories/Nginx/</link>
       <pubDate>Mon, 20 Jul 2020 23:27:34 +0800</pubDate>
       
-      <guid>/categories/nginx/</guid>
+      <guid>https://rudychow.github.io/categories/Nginx/</guid>
       <description></description>
-      
     </item>
     
   </channel>

@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>PHP扩展：实现snowflake分布式id（1） | Rudy&#39;s blog</title>
+    <meta property="og:title" content="PHP扩展：实现snowflake分布式id（1） - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-08-24T23:48:32&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-08-24T23:48:32&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="PHP扩展：实现snowflake分布式id（1）">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/PHP%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#结构">结构</a></li>
+    <li><a href="#实现">实现</a></li>
+    <li><a href="#补充">补充</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">PHP扩展：实现snowflake分布式id（1）</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年8月24日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/PHP'>PHP</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>Snowflake，又称为雪花算法，是Twitter开源的高性能分布式ID的生成算法。关于snowflake的介绍，网上有很多，这里不再赘述。</p>
+<h2 id="结构">结构</h2>
+<p>snowflake说白了就是一个<strong>64位</strong>的整数，整体构成如下：</p>
+<pre><code>                                                              workerid
+         +          current (ms) - epoch (ms)            +  datacenterid +   seqNum
+unsigned |                                               |               |
+         |                                               |               |
+    0    | 0000000000-0000000000-0000000000-0000000000-0 |  0000000000   | 000000000000
+         |                                               |               |
+  1bit   +                    41bits                     +    10bits     +    12bits
+
+</code></pre><ol>
+<li>首位是符号位，因为snowflake总是正整数，所以首位置为0，即无符号。</li>
+<li>第二部分占41bits，该处的值=当前毫秒-设定毫秒。</li>
+<li>第三部分为机器id，占10bits，该处细分为<code>workerid</code>和<code>datacenterid</code>，可灵活配置。</li>
+<li>最后一部分为序列号，占12bits，程序内的自增id值。</li>
+</ol>
+<h2 id="实现">实现</h2>
+<p>由于没有进行过PHP扩展开发，所以此处先用C语言写一个简单版本。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 起始时间
+</span><span style="color:#586e75"></span><span style="color:#719e07">#define SNOWFLAKE_START_TIME 1597939200000
+</span><span style="color:#719e07"></span>
+uint64_t <span style="color:#268bd2">generateSnowflakeId</span>(uint8_t, uint8_t);
+uint64_t <span style="color:#268bd2">getSnowflakeTime</span>();
+
+
+<span style="color:#586e75">/**
+</span><span style="color:#586e75"> * 生成id
+</span><span style="color:#586e75"> */</span>
+uint64_t <span style="color:#268bd2">generateSnowflakeId</span>(uint8_t workerId, uint8_t dataCenterId)
+{
+    uint64_t snowflakeId <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+
+    <span style="color:#586e75">// workerid 和 datacenterid判断
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">if</span> (workerId <span style="color:#719e07">&gt;</span> <span style="color:#2aa198">31</span> <span style="color:#719e07">||</span> dataCenterId <span style="color:#719e07">&gt;</span> <span style="color:#2aa198">31</span>)
+    {
+        fprintf(stderr, <span style="color:#2aa198">&#34;workerId or dataCenterId out of range 31&#34;</span>);
+        exit(<span style="color:#719e07">-</span><span style="color:#2aa198">1</span>);
+    }
+
+    <span style="color:#586e75">// 序列号判断
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">if</span> (snowflakeSeqNum <span style="color:#719e07">&gt;</span> <span style="color:#2aa198">0xfff</span>)
+    {
+        snowflakeSeqNum <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+    }
+
+    <span style="color:#586e75">// 最重要的部分
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">return</span> snowflakeId <span style="color:#719e07">|</span> getSnowflakeTime() <span style="color:#719e07">&lt;&lt;</span> <span style="color:#2aa198">22</span> <span style="color:#719e07">|</span> workerId <span style="color:#719e07">&lt;&lt;</span> <span style="color:#2aa198">17</span> <span style="color:#719e07">|</span> dataCenterId <span style="color:#719e07">&lt;&lt;</span> <span style="color:#2aa198">12</span> <span style="color:#719e07">|</span> snowflakeSeqNum<span style="color:#719e07">++</span>;
+}
+
+<span style="color:#586e75">/**
+</span><span style="color:#586e75"> * 获取snowflake的时间
+</span><span style="color:#586e75"> */</span>
+uint64_t <span style="color:#268bd2">getSnowflakeTime</span>()
+{
+    <span style="color:#719e07">struct</span> timeval now;
+    gettimeofday(<span style="color:#719e07">&amp;</span>now, <span style="color:#b58900">NULL</span>);
+    uint64_t millisecond <span style="color:#719e07">=</span> now.tv_sec <span style="color:#719e07">*</span> <span style="color:#2aa198">1000</span> <span style="color:#719e07">+</span> now.tv_usec <span style="color:#719e07">/</span> <span style="color:#2aa198">1000</span> <span style="color:#719e07">-</span> SNOWFLAKE_START_TIME;
+
+    <span style="color:#719e07">return</span> millisecond;
+}
+</code></pre></div><p>算法实现起来不难，通过简单的<strong>位运算</strong>即可完成，这个代码还存在两个问题：</p>
+<ul>
+<li>由于算法依赖于系统时间，会存在时间回拨的问题</li>
+<li>同一毫秒内，请求生成的id数量超过了4096个，会导致序列号溢出</li>
+</ul>
+<p>这两个问题在后续的PHP扩展实现中解决。</p>
+<h2 id="补充">补充</h2>
+<p>在C语言的实现中，也可以通过<code>union</code>和<code>struct</code>的位域来实现：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> _snowflake_val
+{
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> seq : <span style="color:#2aa198">12</span>;       <span style="color:#586e75">// 12 seq   max:4095
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> data_num : <span style="color:#2aa198">5</span>;   <span style="color:#586e75">// 5        max:31
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> worker_num : <span style="color:#2aa198">5</span>; <span style="color:#586e75">// 5位      max:31
+</span><span style="color:#586e75"></span>    uint64_t ms : <span style="color:#2aa198">41</span>;            <span style="color:#586e75">// 41位毫秒
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">unsigned</span> <span style="color:#719e07">:</span> <span style="color:#2aa198">1</span>;                <span style="color:#586e75">// 1位置留空
+</span><span style="color:#586e75"></span>} _snowflake_val;
+
+<span style="color:#719e07">typedef</span> <span style="color:#719e07">union</span> Snowflake
+{
+    uint64_t parsedVal;
+    _snowflake_val val;
+} Snowflake;
+
+</code></pre></div><p>只要声明定义好<code>Snowflake</code>后，给<code>_snowflake_val</code>里的字段赋值，通过<code>Snowflake</code>中的<code>parsedVal</code>字段即可获取到对应的id，但是需要注意<strong>大小端</strong>的问题。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95'>算法</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81rdb/" title="Redis源码：rdb">Redis源码：rdb</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/" title="Redis源码：事务">Redis源码：事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/" title="Redis源码：pub和sub">Redis源码：pub和sub</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/" title="Redis源码：从bpop看block">Redis源码：从bpop看block</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/" title="Redis源码：一个命令的执行流程">Redis源码：一个命令的执行流程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81redisDB/" title="Redis源码：redisDB">Redis源码：redisDB</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (22)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

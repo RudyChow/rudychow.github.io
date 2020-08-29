@@ -1,11 +1,201 @@
-<!DOCTYPE html>
-<html lang="en"><meta charset="utf-8"><meta name="generator" content="Hugo 0.73.0" /><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark"><title>线上问题 | 锁超时&nbsp;&ndash;&nbsp;Rudy&#39;s blog</title><link rel="stylesheet" href="/css/core.min.a93ddb01f4d800bd38343a04d2f5bfe0b65cded727a985aeb91eccc854fc039a452a44635d252cd1f24ee2e578c1376c.css" integrity="sha384-qT3bAfTYAL04NDoE0vW/4LZc3tcnqYWuuR7MyFT8A5pFKkRjXSUs0fJO4uV4wTds"><meta name="twitter:card" content="summary" />
-<meta name="twitter:title" content="线上问题 | 锁超时" /><body><section id="header">
-    <div class="header wrap"><span class="header left-side"><a class="site home" href="/"><span class="site name">Rudy's blog</span></a></span>
-        <span class="header right-side"><div class="nav wrap"><nav class="nav"><a class="nav item" href="/categories/">Categories</a><a class="nav item" href="/tags/">Tags</a></nav></div></span></div><div class="site slogan"><span class="title">专业拧螺丝</span></div></section><section id="content"><div class="article-container"><section class="article header">
-    <h1 class="article title">线上问题 | 锁超时</h1><p class="article date">2020-07-31</p></section><article class="article markdown-body"><h2 id="问题记录">问题记录</h2>
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>线上问题：锁超时 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="线上问题：锁超时 - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-07-31T23:28:01&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-07-31T23:28:01&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="线上问题：锁超时">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#问题记录">问题记录</a></li>
+    <li><a href="#问题定位">问题定位</a></li>
+    <li><a href="#解决方法">解决方法</a>
+      <ul>
+        <li><a href="#杀掉线程">杀掉线程</a></li>
+        <li><a href="#自动回滚">自动回滚</a></li>
+      </ul>
+    </li>
+    <li><a href="#结语">结语</a></li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">线上问题：锁超时</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年7月31日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98'>线上问题</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <h2 id="问题记录">问题记录</h2>
 <p>门店反馈POS机在用户成功付款时等待很久，并且弹出错误提示。于是查看日志，发现相关接口出现数据库锁超时的报错：<code>Lock wait timeout exceeded; try restarting transaction</code>。</p>
 <h2 id="问题定位">问题定位</h2>
 <p>客户端的付款流程是先调用付款接口，如果付款接口返回“用户支付中”或者没有正确得到相应结果，客户端会接着调用查询支付结果的接口，且线上日志正是查询支付接结果的接口报了锁超时的错误。</p>
@@ -15,28 +205,28 @@
 <li>死锁（<code>Dead Lock</code>）：两个或两个以上的事务在执行过程中，互相等待对方释放相同资源的锁的现象。</li>
 </ul>
 <p>在知道锁超时产生原因的前提下，需要检查付款接口以及查询付款结果接口的代码逻辑即可。</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php">// 付款
-function pay($orderId)
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#586e75">// 付款
+</span><span style="color:#586e75"></span><span style="color:#719e07">function</span> <span style="color:#268bd2">pay</span>(<span style="color:#268bd2">$orderId</span>)
 {
 	begin;
-	try{
-		insert into child_order (order_id) values ($orderId);
-		// 第三方支付
-		thirdPay();
+	<span style="color:#719e07">try</span>{
+		insert into child_order (order_id) values (<span style="color:#268bd2">$orderId</span>);
+		<span style="color:#586e75">// 第三方支付
+</span><span style="color:#586e75"></span>		thirdPay();
         commit;
-	}catch($exception){
+	}<span style="color:#719e07">catch</span>(<span style="color:#268bd2">$exception</span>){
 		rollback;
 	}
 	
 }
-// 查询支付结果
-function query($orderId)
+<span style="color:#586e75">// 查询支付结果
+</span><span style="color:#586e75"></span><span style="color:#719e07">function</span> <span style="color:#268bd2">query</span>(<span style="color:#268bd2">$orderId</span>)
 {
-    // 第三方查询支付结果
-	$isPaid = queryPayResult();
+    <span style="color:#586e75">// 第三方查询支付结果
+</span><span style="color:#586e75"></span>	<span style="color:#268bd2">$isPaid</span> <span style="color:#719e07">=</span> queryPayResult();
     
-    // 锁超时异常点
-    $isPaid and insert into child_order (order_id) values ($orderId);
+    <span style="color:#586e75">// 锁超时异常点
+</span><span style="color:#586e75"></span>    <span style="color:#268bd2">$isPaid</span> <span style="color:#719e07">and</span> insert into child_order (order_id) values (<span style="color:#268bd2">$orderId</span>);
 }
 </code></pre></div><p>两个接口都对相同订单号进行了<code>insert</code>操作。如果是普通的<code>insert</code>操作，即使第一个事务没有完成，第二个事务的insert也不会产生锁超时的情况。之所以产生锁超时，是因为<code>order_id</code>字段是唯一索引。第一个事务的<code>insert</code>会获取到锁，如果没有完成事务，第二个<code>insert</code>由于是相同的<code>order_id</code>，也就进入了等待锁的情况。</p>
 <p>从上面的代码看来没什么问题，该commit的地方commit了，该rollback的地方rollback了。于是我们怀疑程序在调用第三方支付请求太久，导致支付时的事务一直无法完成。但是进一步看代码，我们在请求第三方接口时做了超时限制，如果超过30s没有得到相应结果，则会自动抛出异常，猜测不成立。</p>
@@ -247,18 +437,187 @@ trx_autocommit_non_locking: 0
 <p>而事务202处于<code>LOCK WAIT</code>的状态，且<code>trx_operation_state</code>处于<code>inserting</code>的状态中，并且对应的SQL是<code>insert into test (name) values (&quot;test&quot;)</code>，表明当前事务的插入语句正处于锁等待的状态。</p>
 <blockquote>
 <p>通过<code>information_schema</code>中的<code>innodb_trx</code>、<code>innodb_locks</code>和<code>innodb_lock_waits</code>可以分析innodb事务和锁的情况。</p>
-<p><code>show engine innodb status</code>可以查看到inbodb当前的状态，也可以进行事务和锁的分析。只是这个语句相比上面三个表来说，不那么易读。</p>
+<p><code>show engine innodb status</code>可以查看到inbodb当前的状态，也可以进行事务和锁的分析。只是这个语句相比上面三个表来说，不那么易读。`</p>
 </blockquote>
-<h2 id="最后">最后</h2>
+<h2 id="结语">结语</h2>
 <p>我们使用的是阿里云的RDS，同样，阿里云的RDS也提供了<code>rds_trx_idle_timeout</code>、<code>rds_trx_changes_idle_timeout</code>和<code>rds_trx_readonly_idle_timeout</code>来解决事务长时间不完成的问题。</p>
 <p>通过配置对应的参数值，目前已规避了这类问题的发生。</p>
 <h2 id="参考">参考</h2>
-<p>- [1] <a href="https://mariadb.com/kb/en/transaction-timeouts/"target="_blank">MariaDB-transaction-timeouts</a></p>
-</article><section class="article labels"><a class="category" href=/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/>线上问题</a><a class="tag" href=/tags/%E9%94%81/>锁</a></section></div>
-<div class="article bottom"><section class="article navigation"><p><a class="link" href="/posts/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/"><span class="iconfont icon-article"></span>Nginx客户端断开连接的日志记录</a></p></section></div></section><section id="footer"><div class="footer-wrap">
-    <p class="copyright">Rudy's blog</p>
-    <p class="powerby"><span>Powered&nbsp;by&nbsp;</span><a href="https://gohugo.io" 
-        target="_blank">Hugo</a><span>&nbsp;&amp;&nbsp;</span><a href="https://themes.gohugo.io/hugo-notepadium/" 
-        target="_blank">Notepadium</a></p></div></section></body>
+<p>- [1] <a href="https://mariadb.com/kb/en/transaction-timeouts/">MariaDB-transaction-timeouts</a></p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            <ul class="clearfix">
+                
+                <li><a href='https://rudychow.github.io/tags/%E9%94%81'>锁</a></li>
+                
+            </ul>
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81rdb/" title="Redis源码：rdb">Redis源码：rdb</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/" title="Redis源码：事务">Redis源码：事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/" title="Redis源码：pub和sub">Redis源码：pub和sub</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/" title="Redis源码：从bpop看block">Redis源码：从bpop看block</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/" title="Redis源码：一个命令的执行流程">Redis源码：一个命令的执行流程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81redisDB/" title="Redis源码：redisDB">Redis源码：redisDB</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (22)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
 
 </html>

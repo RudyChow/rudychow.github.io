@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Redis源码：事务 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Redis源码：事务 - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-10-30T18:39:35&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-10-30T18:39:35&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Redis源码：事务">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#数据结构">数据结构</a></li>
+    <li><a href="#状态">状态</a></li>
+    <li><a href="#multi">multi</a></li>
+    <li><a href="#watch和unwatch">watch和unwatch</a></li>
+    <li><a href="#discard">discard</a></li>
+    <li><a href="#exec">exec</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Redis源码：事务</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月30日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>Redis 与事务相关的命令有：<code>multi</code>、<code>discard</code>、<code>exec</code>和<code>watch</code>。</p>
+<p><code>multi</code>、<code>discard</code>和<code>exec</code>这是一组命令，与<code>MySQL</code>的<code>begin</code>、<code>rollback</code>和<code>commit</code>有相似之处。<code>watch</code>则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。</p>
+<h2 id="数据结构">数据结构</h2>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 事务状态
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> multiState {
+    multiCmd <span style="color:#719e07">*</span>commands;     <span style="color:#586e75">/* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */</span>
+    <span style="color:#dc322f">int</span> count;              <span style="color:#586e75">/* 一共有多少个待处理的命令 */</span>
+    <span style="color:#dc322f">int</span> cmd_flags;          <span style="color:#586e75">/* The accumulated command flags OR-ed together.
+</span><span style="color:#586e75">                               So if at least a command has a given flag, it
+</span><span style="color:#586e75">                               will be set in this field. */</span>
+    <span style="color:#dc322f">int</span> minreplicas;        <span style="color:#586e75">/* MINREPLICAS for synchronous replication */</span>
+    time_t minreplicas_timeout; <span style="color:#586e75">/* MINREPLICAS timeout as unixtime. */</span>
+} multiState;
+
+<span style="color:#586e75">// watch的信息
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> watchedKey {
+    robj <span style="color:#719e07">*</span>key;
+    redisDb <span style="color:#719e07">*</span>db;
+} watchedKey;
+
+<span style="color:#586e75">// 客户端相关的事务字段
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> client {
+    multiState mstate;      <span style="color:#586e75">/* 事务状态 */</span>
+    list <span style="color:#719e07">*</span>watched_keys;     <span style="color:#586e75">/* watch的key，里面每个元素都是watchedKey结构体变量 */</span>
+} client;
+
+<span style="color:#586e75">// db
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> redisDb {
+    dict <span style="color:#719e07">*</span>watched_keys;         <span style="color:#586e75">/* watch的key，键是key，值是客户端链表 */</span>
+} redisDb;
+
+</code></pre></div><h2 id="状态">状态</h2>
+<p>与事务相关的几个客户端状态有：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">#define CLIENT_MULTI (1&lt;&lt;3)   </span><span style="color:#586e75">/* 处于事务开启状态 */</span><span style="color:#719e07">
+</span><span style="color:#719e07">#define CLIENT_DIRTY_CAS (1&lt;&lt;5) </span><span style="color:#586e75">/* watch的key发生了改变 */</span><span style="color:#719e07">
+</span><span style="color:#719e07">#define CLIENT_DIRTY_EXEC (1&lt;&lt;12)  </span><span style="color:#586e75">/* 发生错误时，exec会失败，此时处于失败状态 */</span><span style="color:#719e07">
+</span></code></pre></div><p>当执行<code>multi</code>后，客户端就会处于<code>CLIENT_MULTI</code>的状态。</p>
+<p>当执行<code>discard</code>或<code>exec</code>后，客户端会清除所有与事务相关的状态：<code>CLIENT_MULTI</code>、<code>CLIENT_DIRTY_CAS</code>和<code>CLIENT_DIRTY_EXEC</code>。</p>
+<p>当<code>watch</code>了某个 key 时，如果 key 在其它客户端请求下发生了修改，此时会修改所有<code>watch</code>这个 key 的客户端们叠加上<code>CLIENT_DIRTY_CAS</code>的状态。具体是根据<code>signalModifiedKey</code>和<code>signalFlushedDb</code>函数来触发，大部分增删改的操作都有对应的函数埋点。</p>
+<p>如果客户端执行命令时发生了错误，则会叠加上<code>CLIENT_DIRTY_EXEC</code>状态，这个状态由<code>flagTransaction</code>函数来触发。</p>
+<h2 id="multi">multi</h2>
+<p>开启事务的逻辑很简单，就是单纯给客户端叠加<code>CLIENT_MULTI</code>的状态。另外，Redis 不支持嵌套事务。</p>
+<p>另外需要记录的一点是，当客户端处于<code>CLIENT_MULTI</code>状态时，为了保证事务原子性、除了<code>exec</code>、<code>discard</code>、<code>multi</code>和<code>watch</code>以外的其它命令，都不再是调用<code>call</code>函数，而是调用<code>queueMultiCommand</code>。</p>
+<p>具体代码在<code>src/server.c</code>的<code>processCommand</code>：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">    <span style="color:#586e75">/* Exec the command */</span>
+    <span style="color:#719e07">if</span> (c<span style="color:#719e07">-&gt;</span>flags <span style="color:#719e07">&amp;</span> CLIENT_MULTI <span style="color:#719e07">&amp;&amp;</span>
+        c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>proc <span style="color:#719e07">!=</span> execCommand <span style="color:#719e07">&amp;&amp;</span> c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>proc <span style="color:#719e07">!=</span> discardCommand <span style="color:#719e07">&amp;&amp;</span>
+        c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>proc <span style="color:#719e07">!=</span> multiCommand <span style="color:#719e07">&amp;&amp;</span> c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>proc <span style="color:#719e07">!=</span> watchCommand)
+    {
+        <span style="color:#586e75">// 处于事务状态下，除了事务相关的命令，其它命令全部调用queueMultiCommand
+</span><span style="color:#586e75"></span>        queueMultiCommand(c);
+        addReply(c,shared.queued);
+    } <span style="color:#719e07">else</span> {
+        <span style="color:#586e75">// 非事务状态，或者事务开启下执行事务命令时，还是调用call函数
+</span><span style="color:#586e75"></span>        call(c,CMD_CALL_FULL);
+        c<span style="color:#719e07">-&gt;</span>woff <span style="color:#719e07">=</span> server.master_repl_offset;
+        <span style="color:#719e07">if</span> (listLength(server.ready_keys))
+            handleClientsBlockedOnKeys();
+    }
+</code></pre></div><p><code>queueMultiCommand</code>的逻辑很简单，就是把当前命令的参数以及函数封装成<code>multiCmd</code>，存入<code>c-&gt;mstate.commands</code>数组中。</p>
+<h2 id="watch和unwatch">watch和unwatch</h2>
+<p><code>watch</code>的操作也很简单，就是在当前 db 中的<code>watched_keys</code>中对应的 key 添加当前客户端，以及在当前客户端中记录<code>watch</code>的 key。<code>unwatch</code>则是进行反向操作。</p>
+<p>当<code>watch</code>的 key 被<code>touch</code>的时候，Redis 会循环<code>watched_keys</code>所属的 key 下的全部客户端，并且叠加<code>CLIENT_DIRTY_CAS</code>状态。</p>
+<h2 id="discard">discard</h2>
+<p><code>discard</code>主要做两件事：</p>
+<ol>
+<li>清除当前客户端的所有事务状态和信息。</li>
+<li><code>unwatch</code>所有的 key。</li>
+</ol>
+<h2 id="exec">exec</h2>
+<p>如果当前客户端处于<code>CLIENT_DIRTY_CAS</code>或者<code>CLIENT_DIRTY_EXEC</code>的状态，则不能提交事务，此时会强行<code>discard</code>。</p>
+<p>正常流程下，会遍历客户端的<code>c-&gt;mstate.commands</code>，<code>call</code>每一个命令。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81rdb/" title="Redis源码：rdb">Redis源码：rdb</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/" title="Redis源码：事务">Redis源码：事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/" title="Redis源码：pub和sub">Redis源码：pub和sub</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/" title="Redis源码：从bpop看block">Redis源码：从bpop看block</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/" title="Redis源码：一个命令的执行流程">Redis源码：一个命令的执行流程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81redisDB/" title="Redis源码：redisDB">Redis源码：redisDB</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (22)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

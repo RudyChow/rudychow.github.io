@@ -1,44 +1,22 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on Rudy&#39;s blog</title>
-    <link>/posts/</link>
+    <link>http://127.0.0.1:1313/posts/</link>
     <description>Recent content in Posts on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Fri, 31 Jul 2020 23:28:01 +0800</lastBuildDate>
     
-        <atom:link href="/posts/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="http://127.0.0.1:1313/posts/index.xml" rel="self" type="application/rss+xml" />
     
-    
-    <item>
-      <title>线上问题 | 锁超时</title>
-      <link>/posts/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/</link>
-      <pubDate>Fri, 31 Jul 2020 23:28:01 +0800</pubDate>
-      
-      <guid>/posts/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/</guid>
-      <description>问题记录 门店反馈POS机在用户成功付款时等待很久，并且弹出错误提示。于是查看日志，发现相关接口出现数据库锁超时的报错：Lock wait timeout exceeded; try restarting tr</description>
-      
-    </item>
     
     <item>
-      <title>Nginx客户端断开连接的日志记录</title>
-      <link>/posts/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</link>
-      <pubDate>Mon, 20 Jul 2020 23:27:34 +0800</pubDate>
+      <title></title>
+      <link>http://127.0.0.1:1313/posts/select/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>/posts/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</guid>
-      <description>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时</description>
-      
-    </item>
-    
-    <item>
-      <title>线上问题 | 到底是几次请求？</title>
-      <link>/posts/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E5%88%B0%E5%BA%95%E6%98%AF%E5%87%A0%E6%AC%A1%E8%AF%B7%E6%B1%82/</link>
-      <pubDate>Fri, 03 Jul 2020 18:52:50 +0800</pubDate>
-      
-      <guid>/posts/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E5%88%B0%E5%BA%95%E6%98%AF%E5%87%A0%E6%AC%A1%E8%AF%B7%E6%B1%82/</guid>
-      <description>问题记录 运营反馈的问题：顾客成功付款，但是POS机显示在Loading，最后弹窗提示“请校准系统时间”，但是在管理后台能查看到顾客成功付款的</description>
-      
+      <guid>http://127.0.0.1:1313/posts/select/</guid>
+      <description># define __FD_ZERO(set) \ do { \ unsigned int __i; \ fd_set *__arr = (set); \ for (__i = 0; __i &amp;lt; sizeof (fd_set) / sizeof (__fd_mask); ++__i) \ __FDS_BITS (__arr)[__i] = 0; \ } while (0)  #define __FD_SET(d, set) \ ((void) (__FDS_BITS (set)[__FD_ELT (d)] |= __FD_MASK (d)))  #define __FD_CLR(d, set) \ ((void) (__FDS_BITS (set)[__FD_ELT (d)] &amp;amp;= ~__FD_MASK (d)))  #define __FD_ISSET(d, set) \ ((__FDS_BITS (set)[__FD_ELT (d)] &amp;amp; __FD_MASK (d)) != 0)  #define __NFDBITS (8 * (int) sizeof (__fd_mask)) #define __FD_ELT(d) ((d) / __NFDBITS) #define __FD_MASK(d) ((__fd_mask) (1UL &amp;lt;&amp;lt; ((d) % __NFDBITS)))  typedef struct { /* XPG4.2 requires this member name. Otherwise avoid the name from the global namespace. */ #ifdef __USE_XOPEN  __fd_mask fds_bits[__FD_SETSIZE / __NFDBITS]; # define __FDS_BITS(set) ((set)-&amp;gt;fds_bits) #else  __fd_mask __fds_bits[__FD_SETSIZE / __NFDBITS]; # define __FDS_BITS(set) ((set)-&amp;gt;__fds_bits) #endif  } fd_set; #define FD_SETSIZE __FD_SETSIZE typedef __fd_mask fd_mask; typedef long int __fd_mask; #define __FD_SETSIZE 1024 typedef struct{// 64long int __fds_bits[16];// 32long int __fds_bits[32];} fd_set;__FD_SETfd_set.</description>
     </item>
     
   </channel>

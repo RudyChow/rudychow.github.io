@@ -120,7 +120,7 @@ server {
 </blockquote>
 <h2 id="结论">结论</h2>
 <p>跟上级反映情况并且提供验证过程后，得知Nginx并没有配置<code>proxy_read_timeout</code>参数，也就是说默认60s。</p>
-<p>从后端接口记录的日志显示，整个请求完成只有30多秒，不足以触发Nginx的负载均衡超时重发。并且前端记录的请求日志时长是一分钟。如果提前注意到这一点，就可以省去以上的验证过程了，因为服务端请求时长30秒左右，<code>proxy_read_timeout</code>设置少于30秒，那客户端整个请求时长也会在<code>proxy_read_timeout</code>这个值左右。</p>
+<p>从后端接口记录的日志显示，整个请求完成只有30多秒，不足以触发Nginx的负载均衡超时重发。并且前端记录的请求日志时长是一分钟。如果提前注意到这一点，就可以省去以上的验证过程了，因为服务端请求时长30秒左右，proxy_read_timeout设置少于30秒，那客户端整个请求时长也会在<code>proxy_read_timeout</code>这个值左右。</p>
 <p>由于该接口具有幂等性，之后POS机增加了对应的重传补救措施，后端也在中间件增加了校验不通过时的日志，希望后面遇到类型问题可以有更多信息找到解决办法。</p>
 </article><section class="article labels"><a class="category" href=/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/>线上问题</a></section></div>
 <div class="article bottom"><section class="article navigation"><p><a class="link" href="/posts/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/"><span class="iconfont icon-article"></span>Nginx客户端断开连接的日志记录</a></p></section></div></section><section id="footer"><div class="footer-wrap">

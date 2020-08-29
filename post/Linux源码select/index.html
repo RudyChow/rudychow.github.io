@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Linux源码：select浅析 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Linux源码：select浅析 - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-09-09T22:28:29&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-09-09T22:28:29&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Linux源码：select浅析">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Linux%E6%BA%90%E7%A0%81select/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#fd_">FD_*</a></li>
+    <li><a href="#select">select</a></li>
+    <li><a href="#结语">结语</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Linux源码：select浅析</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年9月9日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Linux'>Linux</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>因为 Linux 源码中 select 的代码量不多，所以尝试阅读一下 select 的源码。阅读过程主要以读懂基础流程为主，对于尚未理解或者过于难懂的地方暂时略过。（下面以 <a href="https://elixir.bootlin.com/linux/v5.7/source/fs/select.c">Linux5.7</a> 为准）</p>
+<p>通过<code>man 2 select</code>，我们知道有关 select 的 API 主要有以下几个：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// FD 系列
+</span><span style="color:#586e75"></span><span style="color:#dc322f">void</span> <span style="color:#268bd2">FD_CLR</span>(<span style="color:#dc322f">int</span> fd, fd_set <span style="color:#719e07">*</span>set);
+<span style="color:#dc322f">int</span>  <span style="color:#268bd2">FD_ISSET</span>(<span style="color:#dc322f">int</span> fd, fd_set <span style="color:#719e07">*</span>set);
+<span style="color:#dc322f">void</span> <span style="color:#268bd2">FD_SET</span>(<span style="color:#dc322f">int</span> fd, fd_set <span style="color:#719e07">*</span>set);
+<span style="color:#dc322f">void</span> <span style="color:#268bd2">FD_ZERO</span>(fd_set <span style="color:#719e07">*</span>set);
+
+<span style="color:#586e75">// select函数
+</span><span style="color:#586e75"></span><span style="color:#dc322f">int</span> <span style="color:#268bd2">select</span>(<span style="color:#dc322f">int</span> nfds, fd_set <span style="color:#719e07">*</span>readfds, fd_set <span style="color:#719e07">*</span>writefds, fd_set <span style="color:#719e07">*</span>exceptfds, <span style="color:#719e07">struct</span> timeval <span style="color:#719e07">*</span>timeout);
+
+</code></pre></div><p>主要可以分成两个部分去理解：</p>
+<ol>
+<li><code>FD_*</code>系列的宏函数，用来操作<code>fd_set</code>的结构体</li>
+<li><code>select</code>函数，进行 IO 操作的主要函数</li>
+</ol>
+<h2 id="fd_">FD_*</h2>
+<p>要清楚<code>FD_*</code>系列函数的具体逻辑，首先需要知道<code>fd_set</code>的具体结构。<code>fd_set</code>的成员很简单，这个结构体里只有一个<code>long</code>类型的数组。说白了，<code>fd_set</code>就是一个<strong>bitmap</strong>的数据结构。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 这里是未展开宏时的结构体
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#dc322f">long</span> <span style="color:#dc322f">int</span> __fd_mask;
+<span style="color:#719e07">#define __FD_SETSIZE            1024
+</span><span style="color:#719e07">#define __NFDBITS       (8 * (int) sizeof (__fd_mask))
+</span><span style="color:#719e07"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span>
+{
+    __fd_mask __fds_bits[__FD_SETSIZE <span style="color:#719e07">/</span> __NFDBITS];
+    <span style="color:#719e07"># define __FDS_BITS(set) ((set)-&gt;__fds_bits)
+</span><span style="color:#719e07"></span>} fd_set;
+
+<span style="color:#586e75">// 这里是宏展开后，在64位操作系统下的结构体
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span>
+{
+    <span style="color:#dc322f">long</span> <span style="color:#dc322f">int</span> __fds_bits[<span style="color:#2aa198">16</span>];
+} fd_set;
+</code></pre></div><p>在 64 位操作系统中，数组大小是 16，在 32 位操作系统中，数组大小是 32。但总体上，整个<code>bitmap</code>的长度一定会是1024。这个是根据<code>__FD_SETSIZE</code>的宏计算而来的，这也是大家常说 <strong>select 的最大文件描述符限制是1024</strong> 的原因。</p>
+<p>而<code>FD_*</code>系列的宏定义理所应当的就是对应的操作<code>bitmap</code>的函数：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">#define __FD_ELT(d)     ((d) / __NFDBITS)
+</span><span style="color:#719e07"></span>
+<span style="color:#719e07">#define __FD_ZERO(set)  \
+</span><span style="color:#719e07">  do {                                                                        \
+</span><span style="color:#719e07">    unsigned int __i;                                                         \
+</span><span style="color:#719e07">    fd_set *__arr = (set);                                                    \
+</span><span style="color:#719e07">    for (__i = 0; __i &lt; sizeof (fd_set) / sizeof (__fd_mask); ++__i)          \
+</span><span style="color:#719e07">      __FDS_BITS (__arr)[__i] = 0;                                            \
+</span><span style="color:#719e07">  } while (0)
+</span><span style="color:#719e07"></span>
+<span style="color:#719e07">#define __FD_SET(d, set) \
+</span><span style="color:#719e07">  ((void) (__FDS_BITS (set)[__FD_ELT (d)] |= __FD_MASK (d)))
+</span><span style="color:#719e07"></span>
+<span style="color:#719e07">#define __FD_CLR(d, set) \
+</span><span style="color:#719e07">  ((void) (__FDS_BITS (set)[__FD_ELT (d)] &amp;= ~__FD_MASK (d)))
+</span><span style="color:#719e07"></span>
+<span style="color:#719e07">#define __FD_ISSET(d, set) \
+</span><span style="color:#719e07">  ((__FDS_BITS (set)[__FD_ELT (d)] &amp; __FD_MASK (d)) != 0)
+</span></code></pre></div><p>用伪代码来表示大概就是（以64位操作系统为准）：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 清空bitmap
+</span><span style="color:#586e75"></span>func <span style="color:#268bd2">FD_ZERO</span>(bits)
+{
+	foreach bits as bit
+		bit <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>
+}
+<span style="color:#586e75">// 置位bitmap为1
+</span><span style="color:#586e75"></span>func <span style="color:#268bd2">FD_SET</span>(fd, bits)
+{
+	bits[fd<span style="color:#719e07">/</span><span style="color:#2aa198">64</span>] <span style="color:#719e07">|=</span> (<span style="color:#2aa198">1</span> <span style="color:#719e07">&lt;&lt;</span> (fd <span style="color:#719e07">%</span> <span style="color:#2aa198">64</span>))
+}
+<span style="color:#586e75">// 置位bitmap为0
+</span><span style="color:#586e75"></span>func <span style="color:#268bd2">FD_CLR</span>(fd, bits)
+{
+	bits[fd<span style="color:#719e07">/</span><span style="color:#2aa198">64</span>] <span style="color:#719e07">&amp;</span> <span style="color:#719e07">=</span> <span style="color:#719e07">~</span>(<span style="color:#2aa198">1</span> <span style="color:#719e07">&lt;&lt;</span> (fd <span style="color:#719e07">%</span> <span style="color:#2aa198">64</span>))
+}
+<span style="color:#586e75">// 判断bitmap某个位是否为1
+</span><span style="color:#586e75"></span>func <span style="color:#268bd2">FD_ISSET</span>(fd, bits)
+{
+	fds_bits[fd<span style="color:#719e07">/</span><span style="color:#2aa198">64</span>] <span style="color:#719e07">&amp;</span> (<span style="color:#2aa198">1</span> <span style="color:#719e07">&lt;&lt;</span> (fd <span style="color:#719e07">%</span> <span style="color:#2aa198">64</span>)) <span style="color:#719e07">!=</span> <span style="color:#2aa198">0</span>
+}
+</code></pre></div><p><code>FD_*</code>的函数主要通过<strong>位运算</strong>对<code>fd_set</code>中的<code>bitmap</code>进行为 bit 操作，文件描述符<code>fd</code>则用来作为参数置位。</p>
+<p>如果你想监听<code>fd=5</code>的文件描述符，只需要把<code>fd_set</code>中数组的下标为 0 的 long 类型的数据，<strong>从右往左</strong>的第 6 个 bit 位进行置位操作即可。</p>
+<h2 id="select">select</h2>
+<p><code>select</code>在内核的调用流程是：<code>kern_select()-&gt;core_sys_select()-&gt;do_select()</code>。</p>
+<ol>
+<li>
+<p>kern_select</p>
+<p>这一步主要是判断用户的超时时间参数，如果传递了超时时间参数，则需要设置超时时间。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">static</span> <span style="color:#dc322f">int</span> <span style="color:#268bd2">kern_select</span>(<span style="color:#dc322f">int</span> n, fd_set __user <span style="color:#719e07">*</span>inp, fd_set __user <span style="color:#719e07">*</span>outp,
+            fd_set __user <span style="color:#719e07">*</span>exp, <span style="color:#719e07">struct</span> __kernel_old_timeval __user <span style="color:#719e07">*</span>tvp)
+{
+ <span style="color:#719e07">struct</span> timespec64 end_time, <span style="color:#719e07">*</span>to <span style="color:#719e07">=</span> <span style="color:#b58900">NULL</span>;
+ <span style="color:#719e07">struct</span> __kernel_old_timeval tv;
+ <span style="color:#dc322f">int</span> ret;
+   
+ <span style="color:#586e75">// 这里判断用户传参的超时时间
+</span><span style="color:#586e75"></span> <span style="color:#719e07">if</span> (tvp) {
+     <span style="color:#586e75">// 此时把超时事件从用户空间复制到内核空间 （MMU）
+</span><span style="color:#586e75"></span>     <span style="color:#719e07">if</span> (copy_from_user(<span style="color:#719e07">&amp;</span>tv, tvp, <span style="color:#719e07">sizeof</span>(tv)))
+         <span style="color:#719e07">return</span> <span style="color:#719e07">-</span>EFAULT;
+   
+     to <span style="color:#719e07">=</span> <span style="color:#719e07">&amp;</span>end_time;
+     <span style="color:#586e75">// 设置超时时间
+</span><span style="color:#586e75"></span>     <span style="color:#719e07">if</span> (poll_select_set_timeout(to,
+             tv.tv_sec <span style="color:#719e07">+</span> (tv.tv_usec <span style="color:#719e07">/</span> USEC_PER_SEC),
+             (tv.tv_usec <span style="color:#719e07">%</span> USEC_PER_SEC) <span style="color:#719e07">*</span> NSEC_PER_USEC))
+         <span style="color:#719e07">return</span> <span style="color:#719e07">-</span>EINVAL;
+ }
+   
+ ret <span style="color:#719e07">=</span> core_sys_select(n, inp, outp, exp, to);
+ <span style="color:#719e07">return</span> poll_select_finish(<span style="color:#719e07">&amp;</span>end_time, tvp, PT_TIMEVAL, ret);
+</code></pre></div></li>
+<li>
+<p>core_sys_select</p>
+<p>这个步骤主要是为<code>do_select</code>函数准备参数：<code>n</code>、<code> fds</code>和<code> end_time</code>。</p>
+<ul>
+<li>
+<p><code>n</code>是<code>select</code>函数中的第一个参数：<code>nfds</code>，在函数中会与当前进程的最大的 fd 进行判断，如果用户传进来的 n 大于最大 fd，则把最大 fd 赋值给 n。</p>
+</li>
+<li>
+<p><code>fds</code>是内核用来保存用户传入的参数以及返回用户数据的结构体，在这一步内核做了一些内存优化。</p>
+<p>例如用户传入的<code>nfds=3</code>时，虽然用户态的<code>fd_set</code>占用了 1024 bits，实际上有效数据只用到了 64 个 bits，即一个 long 类型，8个字节的数据空间。此时内核会优先使用栈内存（256 个字节），并且只给<code>fds</code>里每个成员变量分配 64 个 bits （8个字节，与用户态的<code>fd_set</code>实际有效空间相等）的空间使用，而不是完全复制 1024 个bits。</p>
+<p>在栈内存不够用时（即<code>nfds</code>的值太大，通过<code>FDS_BYTES</code>计算出来的所占字节大于先前分配的栈数组内存大小），会分配内核空间给<code>fds</code>使用。分配原则也是一样，以用户态的<code>fd_set</code>的实际有效空间为准。</p>
+</li>
+<li>
+<p><code>end_time</code>则是上一个函数处理后的时间。</p>
+</li>
+</ul>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">core_sys_select</span>(<span style="color:#dc322f">int</span> n, fd_set __user <span style="color:#719e07">*</span>inp, fd_set __user <span style="color:#719e07">*</span>outp,
+            fd_set __user <span style="color:#719e07">*</span>exp, <span style="color:#719e07">struct</span> timespec64 <span style="color:#719e07">*</span>end_time)
+{
+    <span style="color:#586e75">// 	typedef struct {
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// 		unsigned long *in, *out, *ex;  // long类型数组
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// 		unsigned long *res_in, *res_out, *res_ex; // long类型数组
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// } fd_set_bits;
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// *in, *out, *ex 用来保存用户传入的参数
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// *res_in, *res_out, *res_ex 用来保存处理后的结果
+</span><span style="color:#586e75"></span> fd_set_bits fds;
+ <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>bits;
+ <span style="color:#dc322f">int</span> ret, max_fds;
+ size_t size, alloc_size;
+   
+ <span style="color:#719e07">struct</span> fdtable <span style="color:#719e07">*</span>fdt;
+ <span style="color:#586e75">/* Allocate small arguments on the stack to save memory and be faster */</span>
+ <span style="color:#586e75">// 256/8 = 32 个long类型数组 一共占用 256 个字节
+</span><span style="color:#586e75"></span> <span style="color:#dc322f">long</span> stack_fds[SELECT_STACK_ALLOC<span style="color:#719e07">/</span><span style="color:#719e07">sizeof</span>(<span style="color:#dc322f">long</span>)];
+   
+ ret <span style="color:#719e07">=</span> <span style="color:#719e07">-</span>EINVAL;
+ <span style="color:#719e07">if</span> (n <span style="color:#719e07">&lt;</span> <span style="color:#2aa198">0</span>)
+     <span style="color:#719e07">goto</span> out_nofds;
+   
+ <span style="color:#586e75">/* max_fds can increase, so grab it once to avoid race */</span>
+    <span style="color:#586e75">// 获取进程中fdtable中的max_fds
+</span><span style="color:#586e75"></span> rcu_read_lock();
+ fdt <span style="color:#719e07">=</span> files_fdtable(current<span style="color:#719e07">-&gt;</span>files);
+ max_fds <span style="color:#719e07">=</span> fdt<span style="color:#719e07">-&gt;</span>max_fds;
+ rcu_read_unlock();
+ <span style="color:#719e07">if</span> (n <span style="color:#719e07">&gt;</span> max_fds)
+     n <span style="color:#719e07">=</span> max_fds;
+   
+ <span style="color:#586e75">/*
+</span><span style="color:#586e75">  * We need 6 bitmaps (in/out/ex for both incoming and outgoing),
+</span><span style="color:#586e75">  * since we used fdset we need to allocate memory in units of
+</span><span style="color:#586e75">  * long-words. 
+</span><span style="color:#586e75">  */</span>
+ <span style="color:#586e75">// n个描述符所需要占用的字节数量  如 1个需要占用8个字节（1个long） 65个需要占用16个字节（2个long）
+</span><span style="color:#586e75"></span> size <span style="color:#719e07">=</span> FDS_BYTES(n);
+ bits <span style="color:#719e07">=</span> stack_fds;
+ <span style="color:#586e75">// sizeof(stack_fds) / 6 = 42
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// 如果通过最大描述符计算出来的空间比栈内数组空间还大,则内核另外分配空间
+</span><span style="color:#586e75"></span> <span style="color:#719e07">if</span> (size <span style="color:#719e07">&gt;</span> <span style="color:#719e07">sizeof</span>(stack_fds) <span style="color:#719e07">/</span> <span style="color:#2aa198">6</span>) {
+     <span style="color:#586e75">/* Not enough space in on-stack array; must use kmalloc */</span>
+     ret <span style="color:#719e07">=</span> <span style="color:#719e07">-</span>ENOMEM;
+     <span style="color:#719e07">if</span> (size <span style="color:#719e07">&gt;</span> (SIZE_MAX <span style="color:#719e07">/</span> <span style="color:#2aa198">6</span>))
+         <span style="color:#719e07">goto</span> out_nofds;
+   
+     alloc_size <span style="color:#719e07">=</span> <span style="color:#2aa198">6</span> <span style="color:#719e07">*</span> size;
+     bits <span style="color:#719e07">=</span> kvmalloc(alloc_size, GFP_KERNEL);
+     <span style="color:#719e07">if</span> (<span style="color:#719e07">!</span>bits)
+         <span style="color:#719e07">goto</span> out_nofds;
+ }
+    <span style="color:#586e75">// 指向对应内存
+</span><span style="color:#586e75"></span> fds.in      <span style="color:#719e07">=</span> bits;
+ fds.out     <span style="color:#719e07">=</span> bits <span style="color:#719e07">+</span>   size;
+ fds.ex      <span style="color:#719e07">=</span> bits <span style="color:#719e07">+</span> <span style="color:#2aa198">2</span><span style="color:#719e07">*</span>size;
+ fds.res_in  <span style="color:#719e07">=</span> bits <span style="color:#719e07">+</span> <span style="color:#2aa198">3</span><span style="color:#719e07">*</span>size;
+ fds.res_out <span style="color:#719e07">=</span> bits <span style="color:#719e07">+</span> <span style="color:#2aa198">4</span><span style="color:#719e07">*</span>size;
+ fds.res_ex  <span style="color:#719e07">=</span> bits <span style="color:#719e07">+</span> <span style="color:#2aa198">5</span><span style="color:#719e07">*</span>size;
+   
+    <span style="color:#586e75">// 用户参数赋值
+</span><span style="color:#586e75"></span> <span style="color:#719e07">if</span> ((ret <span style="color:#719e07">=</span> get_fd_set(n, inp, fds.in)) <span style="color:#719e07">||</span>
+     (ret <span style="color:#719e07">=</span> get_fd_set(n, outp, fds.out)) <span style="color:#719e07">||</span>
+     (ret <span style="color:#719e07">=</span> get_fd_set(n, exp, fds.ex)))
+     <span style="color:#719e07">goto</span> out;
+    <span style="color:#586e75">// 结果清空
+</span><span style="color:#586e75"></span> zero_fd_set(n, fds.res_in);
+ zero_fd_set(n, fds.res_out);
+ zero_fd_set(n, fds.res_ex);
+   
+    <span style="color:#586e75">// 核心逻辑
+</span><span style="color:#586e75"></span> ret <span style="color:#719e07">=</span> do_select(n, <span style="color:#719e07">&amp;</span>fds, end_time);
+   
+ <span style="color:#719e07">if</span> (ret <span style="color:#719e07">&lt;</span> <span style="color:#2aa198">0</span>)
+     <span style="color:#719e07">goto</span> out;
+ <span style="color:#719e07">if</span> (<span style="color:#719e07">!</span>ret) {
+     ret <span style="color:#719e07">=</span> <span style="color:#719e07">-</span>ERESTARTNOHAND;
+     <span style="color:#719e07">if</span> (signal_pending(current))
+         <span style="color:#719e07">goto</span> out;
+     ret <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+ }
+ <span style="color:#586e75">// 将结果赋值给用户态
+</span><span style="color:#586e75"></span> <span style="color:#719e07">if</span> (set_fd_set(n, inp, fds.res_in) <span style="color:#719e07">||</span>
+     set_fd_set(n, outp, fds.res_out) <span style="color:#719e07">||</span>
+     set_fd_set(n, exp, fds.res_ex))
+     ret <span style="color:#719e07">=</span> <span style="color:#719e07">-</span>EFAULT;
+   
+out:
+ <span style="color:#719e07">if</span> (bits <span style="color:#719e07">!=</span> stack_fds)
+     kvfree(bits);
+out_nofds:
+ <span style="color:#719e07">return</span> ret;
+}
+</code></pre></div></li>
+<li>
+<p>do_select</p>
+<p><code>do_select</code>函数的主要逻辑是在一个无限循环里，该循环有 4 个退出条件：</p>
+<ul>
+<li>监听的文件描述符有处理结果</li>
+<li>超时</li>
+<li>有信号需要处理</li>
+<li>轮询有错误</li>
+</ul>
+<p>在循环中，按照每个 8bits 进行遍历，获取每个文件描述符的时间掩码，再根据位运算对结果进行赋值。</p>
+<p>（对于<code>poll_wqueues</code>和<code>poll_table</code>这些概念尚未吃透，所以在这里不展开说明）</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">static</span> <span style="color:#dc322f">int</span> <span style="color:#268bd2">do_select</span>(<span style="color:#dc322f">int</span> n, fd_set_bits <span style="color:#719e07">*</span>fds, <span style="color:#719e07">struct</span> timespec64 <span style="color:#719e07">*</span>end_time)
+{
+ ktime_t expire, <span style="color:#719e07">*</span>to <span style="color:#719e07">=</span> <span style="color:#b58900">NULL</span>;
+ <span style="color:#719e07">struct</span> poll_wqueues table;
+ poll_table <span style="color:#719e07">*</span>wait;
+ <span style="color:#dc322f">int</span> retval, i, timed_out <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+ u64 slack <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+ __poll_t busy_flag <span style="color:#719e07">=</span> net_busy_loop_on() <span style="color:#719e07">?</span> POLL_BUSY_LOOP : <span style="color:#2aa198">0</span>;
+ <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> busy_start <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+   
+ rcu_read_lock();
+ retval <span style="color:#719e07">=</span> max_select_fd(n, fds);
+ rcu_read_unlock();
+   
+ <span style="color:#719e07">if</span> (retval <span style="color:#719e07">&lt;</span> <span style="color:#2aa198">0</span>)
+     <span style="color:#719e07">return</span> retval;
+ n <span style="color:#719e07">=</span> retval;
+   
+ poll_initwait(<span style="color:#719e07">&amp;</span>table);
+ wait <span style="color:#719e07">=</span> <span style="color:#719e07">&amp;</span>table.pt;
+ <span style="color:#719e07">if</span> (end_time <span style="color:#719e07">&amp;&amp;</span> <span style="color:#719e07">!</span>end_time<span style="color:#719e07">-&gt;</span>tv_sec <span style="color:#719e07">&amp;&amp;</span> <span style="color:#719e07">!</span>end_time<span style="color:#719e07">-&gt;</span>tv_nsec) {
+     wait<span style="color:#719e07">-&gt;</span>_qproc <span style="color:#719e07">=</span> <span style="color:#b58900">NULL</span>;
+     timed_out <span style="color:#719e07">=</span> <span style="color:#2aa198">1</span>;
+ }
+   
+ <span style="color:#719e07">if</span> (end_time <span style="color:#719e07">&amp;&amp;</span> <span style="color:#719e07">!</span>timed_out)
+     slack <span style="color:#719e07">=</span> select_estimate_accuracy(end_time);
+   
+ retval <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+    <span style="color:#586e75">// 无限循环
+</span><span style="color:#586e75"></span> <span style="color:#719e07">for</span> (;;) {
+     <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> <span style="color:#719e07">*</span>rinp, <span style="color:#719e07">*</span>routp, <span style="color:#719e07">*</span>rexp, <span style="color:#719e07">*</span>inp, <span style="color:#719e07">*</span>outp, <span style="color:#719e07">*</span>exp;
+     <span style="color:#dc322f">bool</span> can_busy_loop <span style="color:#719e07">=</span> <span style="color:#b58900">false</span>;
+   
+     inp <span style="color:#719e07">=</span> fds<span style="color:#719e07">-&gt;</span>in; outp <span style="color:#719e07">=</span> fds<span style="color:#719e07">-&gt;</span>out; exp <span style="color:#719e07">=</span> fds<span style="color:#719e07">-&gt;</span>ex;
+     rinp <span style="color:#719e07">=</span> fds<span style="color:#719e07">-&gt;</span>res_in; routp <span style="color:#719e07">=</span> fds<span style="color:#719e07">-&gt;</span>res_out; rexp <span style="color:#719e07">=</span> fds<span style="color:#719e07">-&gt;</span>res_ex;
+   
+        <span style="color:#586e75">// 遍历bitmap的所有位(以8为步长)
+</span><span style="color:#586e75"></span>     <span style="color:#719e07">for</span> (i <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>; i <span style="color:#719e07">&lt;</span> n; <span style="color:#719e07">++</span>rinp, <span style="color:#719e07">++</span>routp, <span style="color:#719e07">++</span>rexp) {
+         <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> in, out, ex, all_bits, bit <span style="color:#719e07">=</span> <span style="color:#2aa198">1</span>, j;
+         <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> res_in <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>, res_out <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>, res_ex <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+         __poll_t mask;
+   
+         in <span style="color:#719e07">=</span> <span style="color:#719e07">*</span>inp<span style="color:#719e07">++</span>; out <span style="color:#719e07">=</span> <span style="color:#719e07">*</span>outp<span style="color:#719e07">++</span>; ex <span style="color:#719e07">=</span> <span style="color:#719e07">*</span>exp<span style="color:#719e07">++</span>;
+         all_bits <span style="color:#719e07">=</span> in <span style="color:#719e07">|</span> out <span style="color:#719e07">|</span> ex;
+            <span style="color:#586e75">// 如果第一个8位都没有数据 则继续下一个8位
+</span><span style="color:#586e75"></span>         <span style="color:#719e07">if</span> (all_bits <span style="color:#719e07">==</span> <span style="color:#2aa198">0</span>) {
+             i <span style="color:#719e07">+=</span> BITS_PER_LONG;
+             <span style="color:#719e07">continue</span>;
+         }
+   
+            <span style="color:#586e75">// 遍历每一个bit
+</span><span style="color:#586e75"></span>         <span style="color:#719e07">for</span> (j <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>; j <span style="color:#719e07">&lt;</span> BITS_PER_LONG; <span style="color:#719e07">++</span>j, <span style="color:#719e07">++</span>i, bit <span style="color:#719e07">&lt;&lt;=</span> <span style="color:#2aa198">1</span>) {
+             <span style="color:#719e07">struct</span> fd f;
+             <span style="color:#719e07">if</span> (i <span style="color:#719e07">&gt;=</span> n)
+                 <span style="color:#719e07">break</span>;
+                <span style="color:#586e75">// 如果当前bit没有置位 则继续下一个bit
+</span><span style="color:#586e75"></span>             <span style="color:#719e07">if</span> (<span style="color:#719e07">!</span>(bit <span style="color:#719e07">&amp;</span> all_bits))
+                 <span style="color:#719e07">continue</span>;
+                <span style="color:#586e75">// 当前bit位有值的话 则根据fd去获取struct fd
+</span><span style="color:#586e75"></span>             f <span style="color:#719e07">=</span> fdget(i);
+             <span style="color:#719e07">if</span> (f.file) {
+                 wait_key_set(wait, in, out, bit,
+                          busy_flag);
+                    <span style="color:#586e75">// 获取掩码
+</span><span style="color:#586e75"></span>                 mask <span style="color:#719e07">=</span> vfs_poll(f.file, wait);
+   
+                 fdput(f);
+                 <span style="color:#719e07">if</span> ((mask <span style="color:#719e07">&amp;</span> POLLIN_SET) <span style="color:#719e07">&amp;&amp;</span> (in <span style="color:#719e07">&amp;</span> bit)) {
+                     res_in <span style="color:#719e07">|=</span> bit;
+                     retval<span style="color:#719e07">++</span>;
+                     wait<span style="color:#719e07">-&gt;</span>_qproc <span style="color:#719e07">=</span> <span style="color:#b58900">NULL</span>;
+                 }
+                 <span style="color:#719e07">if</span> ((mask <span style="color:#719e07">&amp;</span> POLLOUT_SET) <span style="color:#719e07">&amp;&amp;</span> (out <span style="color:#719e07">&amp;</span> bit)) {
+                     res_out <span style="color:#719e07">|=</span> bit;
+                     retval<span style="color:#719e07">++</span>;
+                     wait<span style="color:#719e07">-&gt;</span>_qproc <span style="color:#719e07">=</span> <span style="color:#b58900">NULL</span>;
+                 }
+                 <span style="color:#719e07">if</span> ((mask <span style="color:#719e07">&amp;</span> POLLEX_SET) <span style="color:#719e07">&amp;&amp;</span> (ex <span style="color:#719e07">&amp;</span> bit)) {
+                     res_ex <span style="color:#719e07">|=</span> bit;
+                     retval<span style="color:#719e07">++</span>;
+                     wait<span style="color:#719e07">-&gt;</span>_qproc <span style="color:#719e07">=</span> <span style="color:#b58900">NULL</span>;
+                 }
+                 <span style="color:#586e75">/* got something, stop busy polling */</span>
+                 <span style="color:#719e07">if</span> (retval) {
+                     can_busy_loop <span style="color:#719e07">=</span> <span style="color:#b58900">false</span>;
+                     busy_flag <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+   
+                 <span style="color:#586e75">/*
+</span><span style="color:#586e75">                  * only remember a returned
+</span><span style="color:#586e75">                  * POLL_BUSY_LOOP if we asked for it
+</span><span style="color:#586e75">                  */</span>
+                 } <span style="color:#719e07">else</span> <span style="color:#719e07">if</span> (busy_flag <span style="color:#719e07">&amp;</span> mask)
+                     can_busy_loop <span style="color:#719e07">=</span> <span style="color:#b58900">true</span>;
+   
+             }
+         }
+         <span style="color:#719e07">if</span> (res_in)
+             <span style="color:#719e07">*</span>rinp <span style="color:#719e07">=</span> res_in;
+         <span style="color:#719e07">if</span> (res_out)
+             <span style="color:#719e07">*</span>routp <span style="color:#719e07">=</span> res_out;
+         <span style="color:#719e07">if</span> (res_ex)
+             <span style="color:#719e07">*</span>rexp <span style="color:#719e07">=</span> res_ex;
+         cond_resched();
+     }
+     wait<span style="color:#719e07">-&gt;</span>_qproc <span style="color:#719e07">=</span> <span style="color:#b58900">NULL</span>;
+        <span style="color:#586e75">// 如果有文件描述符就绪 或者 超时 或者有信号 则跳出循环
+</span><span style="color:#586e75"></span>     <span style="color:#719e07">if</span> (retval <span style="color:#719e07">||</span> timed_out <span style="color:#719e07">||</span> signal_pending(current))
+         <span style="color:#719e07">break</span>;
+        <span style="color:#586e75">// 如果有错误 则跳出循环
+</span><span style="color:#586e75"></span>     <span style="color:#719e07">if</span> (table.error) {
+         retval <span style="color:#719e07">=</span> table.error;
+         <span style="color:#719e07">break</span>;
+     }
+   
+     <span style="color:#586e75">/* only if found POLL_BUSY_LOOP sockets &amp;&amp; not out of time */</span>
+     <span style="color:#719e07">if</span> (can_busy_loop <span style="color:#719e07">&amp;&amp;</span> <span style="color:#719e07">!</span>need_resched()) {
+         <span style="color:#719e07">if</span> (<span style="color:#719e07">!</span>busy_start) {
+             busy_start <span style="color:#719e07">=</span> busy_loop_current_time();
+             <span style="color:#719e07">continue</span>;
+         }
+         <span style="color:#719e07">if</span> (<span style="color:#719e07">!</span>busy_loop_timeout(busy_start))
+             <span style="color:#719e07">continue</span>;
+     }
+     busy_flag <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+   
+     <span style="color:#586e75">/*
+</span><span style="color:#586e75">      * If this is the first loop and we have a timeout
+</span><span style="color:#586e75">      * given, then we convert to ktime_t and set the to
+</span><span style="color:#586e75">      * pointer to the expiry value.
+</span><span style="color:#586e75">      */</span>
+     <span style="color:#719e07">if</span> (end_time <span style="color:#719e07">&amp;&amp;</span> <span style="color:#719e07">!</span>to) {
+         expire <span style="color:#719e07">=</span> timespec64_to_ktime(<span style="color:#719e07">*</span>end_time);
+         to <span style="color:#719e07">=</span> <span style="color:#719e07">&amp;</span>expire;
+     }
+   
+     <span style="color:#719e07">if</span> (<span style="color:#719e07">!</span>poll_schedule_timeout(<span style="color:#719e07">&amp;</span>table, TASK_INTERRUPTIBLE,
+                    to, slack))
+         timed_out <span style="color:#719e07">=</span> <span style="color:#2aa198">1</span>;
+ }
+   
+ poll_freewait(<span style="color:#719e07">&amp;</span>table);
+   
+ <span style="color:#719e07">return</span> retval;
+}
+</code></pre></div></li>
+</ol>
+<h2 id="结语">结语</h2>
+<ol>
+<li>select 最大只能监听 1024 个文件描述符，这是根据<code>__FD_SETSIZE</code>这个宏来定义的。</li>
+<li>select 的每一次操作，都需要把 fd_set 复制到内核空间，再一个个遍历处理后，再作为传出参数复制给用户空间。</li>
+<li>select 第一个参数需是最大文件描述符 +1，可以理解为用户需要内核需要处理的文件描述符的个数。</li>
+</ol>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81rdb/" title="Redis源码：rdb">Redis源码：rdb</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/" title="Redis源码：事务">Redis源码：事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/" title="Redis源码：pub和sub">Redis源码：pub和sub</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/" title="Redis源码：从bpop看block">Redis源码：从bpop看block</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/" title="Redis源码：一个命令的执行流程">Redis源码：一个命令的执行流程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81redisDB/" title="Redis源码：redisDB">Redis源码：redisDB</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (22)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

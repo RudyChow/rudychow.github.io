@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>线上问题：到底是几次请求？ | Rudy&#39;s blog</title>
+    <meta property="og:title" content="线上问题：到底是几次请求？ - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-07-03T18:52:50&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-07-03T18:52:50&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="线上问题：到底是几次请求？">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E5%88%B0%E5%BA%95%E6%98%AF%E5%87%A0%E6%AC%A1%E8%AF%B7%E6%B1%82/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#问题记录">问题记录</a>
+      <ul>
+        <li><a href="#问题定位">问题定位</a></li>
+        <li><a href="#错误信息原因">错误信息原因</a></li>
+      </ul>
+    </li>
+    <li><a href="#猜想验证">猜想验证</a></li>
+    <li><a href="#结语">结语</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">线上问题：到底是几次请求？</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年7月3日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98'>线上问题</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <h2 id="问题记录">问题记录</h2>
+<p>运营反馈的问题：顾客成功付款，但是POS机显示在Loading，最后弹窗提示“请校准系统时间”，但是在管理后台能查看到顾客成功付款的订单数据。</p>
+<p>POS机发出的每一个请求都会携带签名和时间戳，后端服务在接受到请求后会进行签名和时间戳的检验，如果时间戳与服务器当前时间差在20s以上，则会返回“请校准系统时间”的错误信息。</p>
+<h3 id="问题定位">问题定位</h3>
+<p>后台的接口日志现实响应成功，并且处理了对应逻辑，整个请求的时间在30s左右，但POS机收到的响应结果却是“请校准系统时间”。</p>
+<p>一开始怀疑POS机发送了两次请求，第一次请求成功，第二次请求因为网络原因导致出现该错误。</p>
+<pre><code>+-------+     http1     +--------+
+|       +--------------&gt;+        |
+|       |               |        |
+|       +&lt;--------------+        |
+|       |      200      |        |
+|  POS  |               | server |
+|       |     http2     |        |
+|       +--------------&gt;+        |
+|       |               |        |
+|       +&lt;--------------+        |
++-------+     error     +--------+
+</code></pre><p>但在POS机记录的请求日志中，客户端发起请求直至得到响应结果前，都没有发送过第二次请求。并且在POS机发起的请求中，其携带的链路ID是可以追踪到我们后台对应的请求日志，也就是响应成功的那一个日志。</p>
+<h3 id="错误信息原因">错误信息原因</h3>
+<p>假设不存在网络问题，那就是POS机与服务器的时间确实相差了20秒以上。该逻辑不成立，如果真的是系统时间不准确，每个从POS机发出的请求都会得到这个错误响应，整个POS机也无法正常运行，而现实情况中POS机运行正常，只有这个特例。</p>
+<p>如果是网络问题，则POS机的该请求达到我们服务器确实用了20秒以上的时间。该逻辑不成立，根据POS机的链路ID记录请求达到服务器花了1秒不到的时间，而且服务器中也进行了业务处理，对应的数据库记录的时间也吻合，日志也记录了正确的响应结果。</p>
+<p>我们能确保的是POS机记录的请求和服务器记录的请求是同一个请求，因为请求携带的链路ID确实一致。于是我猜测另外一种可能性：Nginx负载均衡的<strong>超时重发</strong>。</p>
+<pre><code>+-----------+             +----------+                    +-----------+
+|           |             |          |   http(timeout)    |           |
+|           |             |          +-------------------&gt;+           |
+|           |             |          |                    |           |
+|           |    http     |          |  20s               |           |
+|    POS    +------------&gt;+  Nginx   |                    |   server  |
+|           |             |          |       http         |           |
+|           |             |          +-------------------^+           |
+|           |             |          +v-------------------+           |
+|           |             |          |       error        |           |
+|           |             |          |                    |           |
+|           |             |          +&lt;-------------------+           |
++-----------+             +----------+        200         +-----------+
+
+</code></pre><h2 id="猜想验证">猜想验证</h2>
+<p>Nginx配置：</p>
+<pre><code>upstream backend {
+    server 192.168.31.67:8080;
+    server 192.168.31.67:8081;
+}
+
+
+server {
+    listen       80;
+    server_name  localhost;
+    
+    location / {
+        proxy_pass http://backend;
+        proxy_read_timeout 10s;
+        index  index.html index.htm;
+    }
+}
+</code></pre><p>8080服务代码：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#719e07">package</span> main
+
+<span style="color:#719e07">import</span> <span style="color:#2aa198">&#34;github.com/gin-gonic/gin&#34;</span>
+
+<span style="color:#268bd2">func</span> <span style="color:#268bd2">main</span>() {
+        r <span style="color:#719e07">:=</span> gin.<span style="color:#268bd2">Default</span>()
+        r.<span style="color:#268bd2">GET</span>(<span style="color:#2aa198">&#34;&#34;</span>, <span style="color:#268bd2">func</span>(c <span style="color:#719e07">*</span>gin.Context) {
+                c.<span style="color:#268bd2">JSON</span>(<span style="color:#2aa198">200</span>, gin.H{
+                        <span style="color:#2aa198">&#34;message&#34;</span>: <span style="color:#2aa198">&#34;pong8080&#34;</span>,
+                })
+        })
+        r.<span style="color:#268bd2">Run</span>(<span style="color:#2aa198">&#34;:8080&#34;</span>)
+}
+</code></pre></div><p>8081服务代码：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#719e07">package</span> main
+
+<span style="color:#719e07">import</span> (
+        <span style="color:#2aa198">&#34;time&#34;</span>
+
+        <span style="color:#2aa198">&#34;github.com/gin-gonic/gin&#34;</span>
+)
+
+<span style="color:#268bd2">func</span> <span style="color:#268bd2">main</span>() {
+        r <span style="color:#719e07">:=</span> gin.<span style="color:#268bd2">Default</span>()
+        r.<span style="color:#268bd2">GET</span>(<span style="color:#2aa198">&#34;&#34;</span>, <span style="color:#268bd2">func</span>(c <span style="color:#719e07">*</span>gin.Context) {
+                time.<span style="color:#268bd2">Sleep</span>(time.Second <span style="color:#719e07">*</span> <span style="color:#2aa198">20</span>)
+                c.<span style="color:#268bd2">JSON</span>(<span style="color:#2aa198">200</span>, gin.H{
+                        <span style="color:#2aa198">&#34;message&#34;</span>: <span style="color:#2aa198">&#34;pong8081&#34;</span>,
+                })
+        })
+        r.<span style="color:#268bd2">Run</span>(<span style="color:#2aa198">&#34;:8081&#34;</span>)
+}
+</code></pre></div><p>测试代码：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt; curl 127.0.0.1
+<span style="color:#719e07">{</span><span style="color:#2aa198">&#34;message&#34;</span>:<span style="color:#2aa198">&#34;pong8080&#34;</span><span style="color:#719e07">}</span>                                                                             
+&gt; curl 127.0.0.1
+<span style="color:#719e07">{</span><span style="color:#2aa198">&#34;message&#34;</span>:<span style="color:#2aa198">&#34;pong8080&#34;</span><span style="color:#719e07">}</span>
+</code></pre></div><p>第二次curl，Nginx把请求负载到8081服务中，此时Nginx日志显示：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">2020/07/05 13:52:45 <span style="color:#719e07">[</span>warn<span style="color:#719e07">]</span> 6#6: *26 upstream server temporarily disabled <span style="color:#719e07">while</span> reading response header from upstream, client: 172.20.0.1, server: localhost, request: <span style="color:#2aa198">&#34;GET / HTTP/1.1&#34;</span>, upstream: <span style="color:#2aa198">&#34;http://192.168.31.67:8081/&#34;</span>, host: <span style="color:#2aa198">&#34;127.0.0.1&#34;</span>
+2020/07/05 13:52:45 <span style="color:#719e07">[</span>error<span style="color:#719e07">]</span> 6#6: *26 upstream timed out <span style="color:#719e07">(</span>110: Operation timed out<span style="color:#719e07">)</span> <span style="color:#719e07">while</span> reading response header from upstream, client: 172.20.0.1, server: localhost, request: <span style="color:#2aa198">&#34;GET / HTTP/1.1&#34;</span>, upstream: <span style="color:#2aa198">&#34;http://192.168.31.67:8081/&#34;</span>, host: <span style="color:#2aa198">&#34;127.0.0.1&#34;</span>
+</code></pre></div><p>通过wireshark显示8081端口与80端口之间的通讯：</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/tcp1.png">
+            <img class="mx-auto" alt="tcp1" src="/pics/tcp1.png" />
+        </a>
+    </p>
+<p>
+        <a data-fancybox="gallery" href="/pics/tcp2.png">
+            <img class="mx-auto" alt="tcp2" src="/pics/tcp2.png" />
+        </a>
+    </p>
+<p>
+        <a data-fancybox="gallery" href="/pics/tcp3.png">
+            <img class="mx-auto" alt="tcp3" src="/pics/tcp3.png" />
+        </a>
+    </p>
+<p>序号31到35：Nginx与8081服务进行三次握手，并在完成握手后转发客户端http请求到8081服务上。</p>
+<p>序号37到58：8081服务处理业务逻辑的同时，Nginx与8081维持TCP心跳，并且在10s后得到不http响应，于是主动发起FIN。由于8081服务的逻辑还没处理完，所以并没有给Nginx发送FIN，四次挥手只完成了两次。</p>
+<p>序号55到74：Nginx在对8081服务发起FIN后，将客户端的http请求负载到8080服务上，并且将从8080服务上获取到的http响应结果发送给客户端。</p>
+<p>序号75到96：由于8081服务未发起FIN，Nginx还是继续与8081服务维持心跳。8081服务在逻辑执行完后，响应给Nginx结果并且发起FIN进行挥手操作，整个请求在20s左右。</p>
+<p><strong>在第二次curl请求中，虽然Nginx第一个负载到的服务是8081，但实际上客户端获取到的结果却是8080服务的响应</strong>。</p>
+<blockquote>
+<p>在NGINX配置中，有关负载均衡超时相关的配置主要有<code>proxy_connect_timeout</code>、<code>proxy_read_timeout</code>和<code>proxy_send_timeout</code>，所有的默认时间都是60s。</p>
+<p><code>proxy_connect_timeout</code>：该设置是Nginx与目标服务器的连接超时时间。</p>
+<p><code>proxy_read_timeout</code>：该设置是Nginx与目标服务器的读超时时间。</p>
+<p><code>proxy_send_timeout</code>：该设置是Nginx与目标服务器的写超时时间。</p>
+</blockquote>
+<h2 id="结语">结语</h2>
+<p>跟上级反映情况并且提供验证过程后，得知Nginx并没有配置<code>proxy_read_timeout</code>参数，也就是说默认60s。</p>
+<p>从后端接口记录的日志显示，整个请求完成只有30多秒，不足以触发Nginx的负载均衡超时重发。并且前端记录的请求日志时长是一分钟。如果提前注意到这一点，就可以省去以上的验证过程了，因为服务端请求时长30秒左右，<code>proxy_read_timeout</code>设置少于30秒，那客户端整个请求时长也会在<code>proxy_read_timeout</code>这个值左右。</p>
+<p>由于该接口具有幂等性，之后POS机增加了对应的重传补救措施，后端也在中间件增加了校验不通过时的日志，希望后面遇到类型问题可以有更多信息找到解决办法。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81rdb/" title="Redis源码：rdb">Redis源码：rdb</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/" title="Redis源码：事务">Redis源码：事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/" title="Redis源码：pub和sub">Redis源码：pub和sub</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/" title="Redis源码：从bpop看block">Redis源码：从bpop看block</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/" title="Redis源码：一个命令的执行流程">Redis源码：一个命令的执行流程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81redisDB/" title="Redis源码：redisDB">Redis源码：redisDB</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (22)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

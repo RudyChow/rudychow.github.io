@@ -1,24 +1,19 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>锁 on Rudy&#39;s blog</title>
-    <link>/tags/%E9%94%81/</link>
+    <link>https://rudychow.github.io/tags/%E9%94%81/</link>
     <description>Recent content in 锁 on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Fri, 31 Jul 2020 23:28:01 +0800</lastBuildDate>
-    
-        <atom:link href="/tags/%E9%94%81/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Fri, 31 Jul 2020 23:28:01 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/tags/%E9%94%81/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>线上问题 | 锁超时</title>
-      <link>/posts/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/</link>
+      <title>线上问题：锁超时</title>
+      <link>https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/</link>
       <pubDate>Fri, 31 Jul 2020 23:28:01 +0800</pubDate>
       
-      <guid>/posts/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/</guid>
-      <description>问题记录 门店反馈POS机在用户成功付款时等待很久，并且弹出错误提示。于是查看日志，发现相关接口出现数据库锁超时的报错：Lock wait timeout exceeded; try restarting tr</description>
-      
+      <guid>https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/</guid>
+      <description>问题记录 门店反馈POS机在用户成功付款时等待很久，并且弹出错误提示。于是查看日志，发现相关接口出现数据库锁超时的报错：Lock wait timeout exceeded; try restarting transaction。</description>
     </item>
     
   </channel>
