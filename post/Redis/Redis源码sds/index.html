@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Redis源码：sds | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Redis源码：sds - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-09-25T23:09:58&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-09-25T23:09:58&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Redis源码：sds">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81sds/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#数据结构">数据结构</a>
+      <ul>
+        <li><a href="#header">header</a></li>
+        <li><a href="#sds-2picsredissds2jpg"><img src="/pics/redis/sds/2.jpg" alt="sds-2"></a></li>
+        <li><a href="#string与结束符0">string与结束符\0</a></li>
+      </ul>
+    </li>
+    <li><a href="#api">api</a></li>
+    <li><a href="#结语">结语</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Redis源码：sds</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年9月25日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>sds 全称是<code>simple dynamic string</code>，是 Redis 用来实现字符串的一个数据结构。</p>
+<h2 id="数据结构">数据结构</h2>
+<p>在 C 中，简单的动态字符串结构通常会记录长度和内容：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> string {
+    <span style="color:#dc322f">char</span> <span style="color:#719e07">*</span>buf;<span style="color:#586e75">// 字符指针
+</span><span style="color:#586e75"></span>    uint32_t len; <span style="color:#586e75">// 字符串长度
+</span><span style="color:#586e75"></span>};
+</code></pre></div><p>同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：</p>
+<ul>
+<li>sds 是一个字符指针。</li>
+<li>sds 是一段连续的内存空间，前缀记录着字符串元数据，如长度、分配空间、类型。</li>
+</ul>
+<p>我们先看一下 sds 的数据结构在内存中的分布，可以看出 sds 是由三部分组成，<code>header</code>、<code>string</code>和<code>结束符\0</code>：</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/redis/sds/1.jpg">
+            <img class="mx-auto" alt="sds-1" src="/pics/redis/sds/1.jpg" />
+        </a>
+    </p>
+<p>我们再看一下源码里的<code>sds</code>以及<code>header</code>：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#dc322f">char</span> <span style="color:#719e07">*</span>sds;
+
+<span style="color:#586e75">/* Note: sdshdr5 is never used, we just access the flags byte directly.
+</span><span style="color:#586e75"> * However is here to document the layout of type 5 SDS strings. */</span>
+<span style="color:#719e07">struct</span> <span style="color:#268bd2">__attribute__</span> ((__packed__)) sdshdr5 {
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> flags; <span style="color:#586e75">/* 3 lsb of type, and 5 msb of string length */</span>
+    <span style="color:#dc322f">char</span> buf[];
+};
+<span style="color:#719e07">struct</span> <span style="color:#268bd2">__attribute__</span> ((__packed__)) sdshdr8 {
+    uint8_t len; <span style="color:#586e75">/* used */</span>
+    uint8_t alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> flags; <span style="color:#586e75">/* 3 lsb of type, 5 unused bits */</span>
+    <span style="color:#dc322f">char</span> buf[];
+};
+<span style="color:#719e07">struct</span> <span style="color:#268bd2">__attribute__</span> ((__packed__)) sdshdr16 {
+    uint16_t len; <span style="color:#586e75">/* used */</span>
+    uint16_t alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> flags; <span style="color:#586e75">/* 3 lsb of type, 5 unused bits */</span>
+    <span style="color:#dc322f">char</span> buf[];
+};
+<span style="color:#719e07">struct</span> <span style="color:#268bd2">__attribute__</span> ((__packed__)) sdshdr32 {
+    uint32_t len; <span style="color:#586e75">/* used */</span>
+    uint32_t alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> flags; <span style="color:#586e75">/* 3 lsb of type, 5 unused bits */</span>
+    <span style="color:#dc322f">char</span> buf[];
+};
+<span style="color:#719e07">struct</span> <span style="color:#268bd2">__attribute__</span> ((__packed__)) sdshdr64 {
+    uint64_t len; <span style="color:#586e75">/* used */</span>
+    uint64_t alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> flags; <span style="color:#586e75">/* 3 lsb of type, 5 unused bits */</span>
+    <span style="color:#dc322f">char</span> buf[];
+};
+</code></pre></div><p><strong>sds 就是一个字符指针，而 sds 的前缀 header 则是对应的 sdshdr#T 的结构体。</strong></p>
+<h3 id="header">header</h3>
+<p>header 的结构体一共有 5 个，但主要分成两类：<code>sdshdr5</code>与<code>非sdshdr5</code>。具体会使用哪一个结构体，则是根据字符串的长度来决定的。</p>
+<p><code>len</code>代表字符串的长度，<code>alloc</code>代表字符串分配的空间。在一开始创建 sds 时，<code>len</code>和<code>alloc</code>是相同的，但是可以通过空间扩容进行预分配，此时<code>alloc</code>的值会比<code>len</code>大。</p>
+<p>所有的结构体都有两个共同的属性：<code>flags</code>和<code>buf[]</code>。<code>buf[]</code>是一个柔性数组，不占用空间，起到标识作用。而<code>flags</code>是很重要的一个属性，因为它记录了数据结构使用了哪个结构体。</p>
+<p><code>flags</code>占 1 个字节，即 8 个 bits。这 8 个 bits 会分成两部分，第一部分是 3 个bits：存放结构体类型的type、第二个部分是 5 个bits：字符串长度或者无实际意义。</p>
+<h3 id="sds-2picsredissds2jpg">
+        <a data-fancybox="gallery" href="/pics/redis/sds/2.jpg">
+            <img class="mx-auto" alt="sds-2" src="/pics/redis/sds/2.jpg" />
+        </a>
+    </h3>
+<p><code>sds</code>通过指针位移<code>sds[-1]</code>即可获得<code>sdshdr&lt;T&gt;</code>的<code>flags</code>属性。</p>
+<p>需要注意的是，整个数据结构的内存是连续的，所以为了避免编译器在编译过程中进行内存对齐优化，<code>header</code>的结构体使用了<code>__attribute__ ((__packed__))</code>来保证结构体的每一个字段都黏在一起。</p>
+<p>最重要是确保结构体中的<code>flags</code>字段与<code>sds</code>连续，因为<code>sds</code>会通过指针位移来获取<code>header</code>中的<code>flags</code>属性。</p>
+<h3 id="string与结束符0">string与结束符\0</h3>
+<p>string 是 heap 中的内存空间，而后面跟着字符串结束符。正常来说，知道 len 就可以获取到整个字符串了。在这里加上字符串结束符主要是为了可以让 sds 兼容<code>&lt;string.h&gt;</code>库的字符串函数，但这里不保证二进制安全。</p>
+<h2 id="api">api</h2>
+<p>几个关于 sds 的常见 api：</p>
+<ul>
+<li>
+<p>sdsnewlen</p>
+<p>该函数用于创建 sds 数据结构，接收两个参数，一个指针，一个是字符串长度。创建流程如下：</p>
+<ol>
+<li>根据字符串长度参数获取<code>sdshdr&lt;T&gt;</code>的类型，即 header。此时如果长度为 0，则分配的是<code>sdshdr8</code>的结构体。</li>
+<li>获取到 header 后，根据 header 的长度加上字符串长度再加上 1 个字节长度（\0），分配内存空间。</li>
+<li>根据 sdshdr 的类型对 header 里的各项数据进行赋值：len、alloc和flags，此时 len 和 alloc 等值。</li>
+<li>复制第一个参数到 sds 中的字符串内存中，并给最后一个字节赋值为 \0。</li>
+</ol>
+</li>
+<li>
+<p>sdsMakeRoomFor</p>
+<p>该函数用于扩容，即预分配 sds 的空间，即 alloc 的值。接收两个参数，一个 sds 指针，一个是扩容的空间长度 addlen。</p>
+<ol>
+<li>获取到目前剩余的空间：alloc - len，如果当前剩余空间大于要扩容的空间长度，则直接返回（代表有足够的空间）。</li>
+<li>计算新的总空间大小 newlen = len + addlen。这里进行空间预分配，如果 newlen &lt; 1M，则 newlen *= 2，否则 newlen += 1M。</li>
+<li>重新分配空间。</li>
+</ol>
+</li>
+<li>
+<p>sdsfree</p>
+<p>该函数用于释放 sds 的空间。</p>
+</li>
+</ul>
+<h2 id="结语">结语</h2>
+<p>以前看《Redis设计与实现》时，关于 Redis 早期版本的数据结构并非如此像上面那样，当时的数据结构如下：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> sdshdr {
+    <span style="color:#dc322f">int</span> len;
+    <span style="color:#dc322f">int</span> free;
+    <span style="color:#dc322f">char</span> buf[];
+};
+</code></pre></div><p>可见一个 sds 占用至少 8 个字节，这样无论字符串多小还是多大，header 都是占用一个固定的内存空间。在新版的 sds 中，其范围是 1 ~ 17 个字节，来适应不同长度的字符串长度，更加弹性，在资源控制上更加严格。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (6)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (23)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

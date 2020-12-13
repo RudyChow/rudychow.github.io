@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Redis源码：skiplist | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Redis源码：skiplist - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-10-08T12:13:32&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-10-08T12:13:32&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Redis源码：skiplist">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81skiplist/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#数据结构">数据结构</a></li>
+    <li><a href="#api">api</a>
+      <ul>
+        <li><a href="#zslinsert插入数据">zslInsert（插入数据）</a></li>
+        <li><a href="#zsldelete删除数据">zslDelete（删除数据）</a></li>
+        <li><a href="#zslupdatescore修改数据">zslUpdateScore（修改数据）</a></li>
+      </ul>
+    </li>
+    <li><a href="#结语">结语</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Redis源码：skiplist</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月8日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>skiplist 是 Redis 对于跳跃表的一个实现，它也是 zset 的主要实现。网上关于 skiplist 数据结构的介绍有很多，这里主要记录 Redis 中的实现方式。</p>
+<h2 id="数据结构">数据结构</h2>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 跳表节点
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> zskiplistNode {
+    sds ele;
+    <span style="color:#dc322f">double</span> score;
+    <span style="color:#719e07">struct</span> zskiplistNode <span style="color:#719e07">*</span>backward;
+    <span style="color:#719e07">struct</span> zskiplistLevel {
+        <span style="color:#719e07">struct</span> zskiplistNode <span style="color:#719e07">*</span>forward;
+        <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> span;
+    } level[];
+} zskiplistNode;
+<span style="color:#586e75">// 跳表
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> zskiplist {
+    <span style="color:#719e07">struct</span> zskiplistNode <span style="color:#719e07">*</span>header, <span style="color:#719e07">*</span>tail;
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> length;<span style="color:#586e75">// 有多少个节点
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">int</span> level;<span style="color:#586e75">// 目前有几层高
+</span><span style="color:#586e75"></span>} zskiplist;
+</code></pre></div><p>skiplist 简单点说就是个有序的双向链表，同时为了提高查询复杂度，增加了<strong>层</strong>的概念，其实是一种空间换时间的方法。</p>
+<p>与 adlist 这种传统的双向链表来比较，skiplist 的前节点指针跟 adlist 的<code>*prev</code>的用法一样，但是后节点的指针<code>*next</code>却不同。</p>
+<p>skiplist 中指向后节点的指针是使用层来存储。层在代码中就是一个数组，在最底层<code>level[0]</code>中永远会指向下一个节点。如果只想把 skiplist 当作一个普通的双向链表来使用，那么通过 zskiplistNode 中的<code>*backward</code>以及<code>level[0].forward</code>也能达到同样的效果。而 &gt;0 的层，则充当着索引的作用。</p>
+<p>skiplist 衍生出层的概念，个人觉得是在模拟树的结构。当层级分布均匀，且链表是有序排列，那查询效率可以达到类似二分查找的复杂度。</p>
+<p>一个刚初始化后的结构：</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/redis/skiplist/skiplist.jpg">
+            <img class="mx-auto" alt="skiplist" src="/pics/redis/skiplist/skiplist.jpg" />
+        </a>
+    </p>
+<h2 id="api">api</h2>
+<p>下面是阅读源码时做的笔记：</p>
+<h3 id="zslinsert插入数据">zslInsert（插入数据）</h3>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">zskiplistNode <span style="color:#719e07">*</span><span style="color:#268bd2">zslInsert</span>(zskiplist <span style="color:#719e07">*</span>zsl, <span style="color:#dc322f">double</span> score, sds ele) {
+    zskiplistNode <span style="color:#719e07">*</span>update[ZSKIPLIST_MAXLEVEL], <span style="color:#719e07">*</span>x;
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> rank[ZSKIPLIST_MAXLEVEL];
+    <span style="color:#dc322f">int</span> i, level;
+
+    serverAssert(<span style="color:#719e07">!</span>isnan(score));
+    x <span style="color:#719e07">=</span> zsl<span style="color:#719e07">-&gt;</span>header;
+    <span style="color:#586e75">// 简述以下此处循环的目的
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// update[] 和 rank[] 是两个重要的变量，它们的下标都是 level 的层级
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// update 每层存放的数据是：距离新插入节点最近的的节点指针
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// rank 每层存放的数据是：header距离update[i]节点之间的节点数量（距离）
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// 这个循环就是处理 update[] 与 rank[] 的
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">for</span> (i <span style="color:#719e07">=</span> zsl<span style="color:#719e07">-&gt;</span>level<span style="color:#719e07">-</span><span style="color:#2aa198">1</span>; i <span style="color:#719e07">&gt;=</span> <span style="color:#2aa198">0</span>; i<span style="color:#719e07">--</span>) {
+        <span style="color:#586e75">/* store rank that is crossed to reach the insert position */</span>
+        rank[i] <span style="color:#719e07">=</span> i <span style="color:#719e07">==</span> (zsl<span style="color:#719e07">-&gt;</span>level<span style="color:#719e07">-</span><span style="color:#2aa198">1</span>) <span style="color:#719e07">?</span> <span style="color:#2aa198">0</span> <span style="color:#719e07">:</span> rank[i<span style="color:#719e07">+</span><span style="color:#2aa198">1</span>];
+        <span style="color:#586e75">// 此处循环是要找出最近的节点
+</span><span style="color:#586e75"></span>        <span style="color:#719e07">while</span> (x<span style="color:#719e07">-&gt;</span>level[i].forward <span style="color:#719e07">&amp;&amp;</span>
+                (x<span style="color:#719e07">-&gt;</span>level[i].forward<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">&lt;</span> score <span style="color:#719e07">||</span>
+                    (x<span style="color:#719e07">-&gt;</span>level[i].forward<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">==</span> score <span style="color:#719e07">&amp;&amp;</span>
+                    sdscmp(x<span style="color:#719e07">-&gt;</span>level[i].forward<span style="color:#719e07">-&gt;</span>ele,ele) <span style="color:#719e07">&lt;</span> <span style="color:#2aa198">0</span>)))
+        {
+            <span style="color:#586e75">// 累计span值，计算每一层header到插入节点前节点的跨度
+</span><span style="color:#586e75"></span>            rank[i] <span style="color:#719e07">+=</span> x<span style="color:#719e07">-&gt;</span>level[i].span;
+            x <span style="color:#719e07">=</span> x<span style="color:#719e07">-&gt;</span>level[i].forward;
+        }
+        <span style="color:#586e75">// 存放每一层距离新插入节点最近的节点指针
+</span><span style="color:#586e75"></span>        update[i] <span style="color:#719e07">=</span> x;
+    }
+    <span style="color:#586e75">// 这里按概率生成一个level
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// 如果level比目前最大的level大，则补充 update[] 和 rank[]
+</span><span style="color:#586e75"></span>    level <span style="color:#719e07">=</span> zslRandomLevel();
+    <span style="color:#719e07">if</span> (level <span style="color:#719e07">&gt;</span> zsl<span style="color:#719e07">-&gt;</span>level) {
+        <span style="color:#719e07">for</span> (i <span style="color:#719e07">=</span> zsl<span style="color:#719e07">-&gt;</span>level; i <span style="color:#719e07">&lt;</span> level; i<span style="color:#719e07">++</span>) {
+            rank[i] <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+            update[i] <span style="color:#719e07">=</span> zsl<span style="color:#719e07">-&gt;</span>header;
+            <span style="color:#586e75">// 因为后续需要进行 span 值的计算，所以此时新层的span值设定成节点数
+</span><span style="color:#586e75"></span>            update[i]<span style="color:#719e07">-&gt;</span>level[i].span <span style="color:#719e07">=</span> zsl<span style="color:#719e07">-&gt;</span>length;
+        }
+        <span style="color:#586e75">// 更新最大level值
+</span><span style="color:#586e75"></span>        zsl<span style="color:#719e07">-&gt;</span>level <span style="color:#719e07">=</span> level;
+    }
+    <span style="color:#586e75">// 开始创建新的节点
+</span><span style="color:#586e75"></span>    x <span style="color:#719e07">=</span> zslCreateNode(level,score,ele);
+    <span style="color:#586e75">// 循环每一层
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">for</span> (i <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>; i <span style="color:#719e07">&lt;</span> level; i<span style="color:#719e07">++</span>) {
+        x<span style="color:#719e07">-&gt;</span>level[i].forward <span style="color:#719e07">=</span> update[i]<span style="color:#719e07">-&gt;</span>level[i].forward;
+        update[i]<span style="color:#719e07">-&gt;</span>level[i].forward <span style="color:#719e07">=</span> x;
+
+        <span style="color:#586e75">// 计算span值，并对应更新每一层的前后节点的span值
+</span><span style="color:#586e75"></span>        x<span style="color:#719e07">-&gt;</span>level[i].span <span style="color:#719e07">=</span> update[i]<span style="color:#719e07">-&gt;</span>level[i].span <span style="color:#719e07">-</span> (rank[<span style="color:#2aa198">0</span>] <span style="color:#719e07">-</span> rank[i]);
+        update[i]<span style="color:#719e07">-&gt;</span>level[i].span <span style="color:#719e07">=</span> (rank[<span style="color:#2aa198">0</span>] <span style="color:#719e07">-</span> rank[i]) <span style="color:#719e07">+</span> <span style="color:#2aa198">1</span>;
+    }
+
+    <span style="color:#586e75">// 因为插入了数据，所以在插入数据的层级到最高层之间，都需要增加1个跨度
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">for</span> (i <span style="color:#719e07">=</span> level; i <span style="color:#719e07">&lt;</span> zsl<span style="color:#719e07">-&gt;</span>level; i<span style="color:#719e07">++</span>) {
+        update[i]<span style="color:#719e07">-&gt;</span>level[i].span<span style="color:#719e07">++</span>;
+    }
+
+    <span style="color:#586e75">// 更新插入节点的前节点指针，以及后节点的前节点指针
+</span><span style="color:#586e75"></span>    x<span style="color:#719e07">-&gt;</span>backward <span style="color:#719e07">=</span> (update[<span style="color:#2aa198">0</span>] <span style="color:#719e07">==</span> zsl<span style="color:#719e07">-&gt;</span>header) <span style="color:#719e07">?</span> <span style="color:#b58900">NULL</span> <span style="color:#719e07">:</span> update[<span style="color:#2aa198">0</span>];
+    <span style="color:#719e07">if</span> (x<span style="color:#719e07">-&gt;</span>level[<span style="color:#2aa198">0</span>].forward)
+        x<span style="color:#719e07">-&gt;</span>level[<span style="color:#2aa198">0</span>].forward<span style="color:#719e07">-&gt;</span>backward <span style="color:#719e07">=</span> x;
+    <span style="color:#719e07">else</span>
+        zsl<span style="color:#719e07">-&gt;</span>tail <span style="color:#719e07">=</span> x;
+    <span style="color:#586e75">// 长度追加
+</span><span style="color:#586e75"></span>    zsl<span style="color:#719e07">-&gt;</span>length<span style="color:#719e07">++</span>;
+    <span style="color:#719e07">return</span> x;
+}
+</code></pre></div><h3 id="zsldelete删除数据">zslDelete（删除数据）</h3>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">zslDelete</span>(zskiplist <span style="color:#719e07">*</span>zsl, <span style="color:#dc322f">double</span> score, sds ele, zskiplistNode <span style="color:#719e07">**</span>node) {
+    zskiplistNode <span style="color:#719e07">*</span>update[ZSKIPLIST_MAXLEVEL], <span style="color:#719e07">*</span>x;
+    <span style="color:#dc322f">int</span> i;
+
+    x <span style="color:#719e07">=</span> zsl<span style="color:#719e07">-&gt;</span>header;
+    <span style="color:#586e75">// 找出每一层距离删除节点最近的节点，并存放 update[]
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">for</span> (i <span style="color:#719e07">=</span> zsl<span style="color:#719e07">-&gt;</span>level<span style="color:#719e07">-</span><span style="color:#2aa198">1</span>; i <span style="color:#719e07">&gt;=</span> <span style="color:#2aa198">0</span>; i<span style="color:#719e07">--</span>) {
+        <span style="color:#719e07">while</span> (x<span style="color:#719e07">-&gt;</span>level[i].forward <span style="color:#719e07">&amp;&amp;</span>
+                (x<span style="color:#719e07">-&gt;</span>level[i].forward<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">&lt;</span> score <span style="color:#719e07">||</span>
+                    (x<span style="color:#719e07">-&gt;</span>level[i].forward<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">==</span> score <span style="color:#719e07">&amp;&amp;</span>
+                     sdscmp(x<span style="color:#719e07">-&gt;</span>level[i].forward<span style="color:#719e07">-&gt;</span>ele,ele) <span style="color:#719e07">&lt;</span> <span style="color:#2aa198">0</span>)))
+        {
+            x <span style="color:#719e07">=</span> x<span style="color:#719e07">-&gt;</span>level[i].forward;
+        }
+        update[i] <span style="color:#719e07">=</span> x;
+    }
+    <span style="color:#586e75">// x 是距离删除节点最近的节点，所以需要根据它下一个节点进行判断
+</span><span style="color:#586e75"></span>    x <span style="color:#719e07">=</span> x<span style="color:#719e07">-&gt;</span>level[<span style="color:#2aa198">0</span>].forward;
+    <span style="color:#586e75">// 如果有下一个节点，并且分数和ele都相同，则删除节点
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">if</span> (x <span style="color:#719e07">&amp;&amp;</span> score <span style="color:#719e07">==</span> x<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">&amp;&amp;</span> sdscmp(x<span style="color:#719e07">-&gt;</span>ele,ele) <span style="color:#719e07">==</span> <span style="color:#2aa198">0</span>) {
+        <span style="color:#586e75">// 删除节点的操作
+</span><span style="color:#586e75"></span>        <span style="color:#586e75">// 简单来说是修改 update[] 的 forward 指针，和其它的一些指针调整操作
+</span><span style="color:#586e75"></span>        <span style="color:#586e75">// 并且修正span值
+</span><span style="color:#586e75"></span>        zslDeleteNode(zsl, x, update);
+        <span style="color:#586e75">// 根据node判断，来选择是否释放空间，又或者回传节点数据给调用者
+</span><span style="color:#586e75"></span>        <span style="color:#719e07">if</span> (<span style="color:#719e07">!</span>node)
+            zslFreeNode(x);
+        <span style="color:#719e07">else</span>
+            <span style="color:#719e07">*</span>node <span style="color:#719e07">=</span> x;
+        <span style="color:#719e07">return</span> <span style="color:#2aa198">1</span>;
+    }
+    <span style="color:#719e07">return</span> <span style="color:#2aa198">0</span>; <span style="color:#586e75">/* not found */</span>
+}
+</code></pre></div><h3 id="zslupdatescore修改数据">zslUpdateScore（修改数据）</h3>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">zskiplistNode <span style="color:#719e07">*</span><span style="color:#268bd2">zslUpdateScore</span>(zskiplist <span style="color:#719e07">*</span>zsl, <span style="color:#dc322f">double</span> curscore, sds ele, <span style="color:#dc322f">double</span> newscore) {
+    zskiplistNode <span style="color:#719e07">*</span>update[ZSKIPLIST_MAXLEVEL], <span style="color:#719e07">*</span>x;
+    <span style="color:#dc322f">int</span> i;
+
+    <span style="color:#586e75">// 找出每一层距离旧分数节点最近的节点，并存放 update[]
+</span><span style="color:#586e75"></span>    x <span style="color:#719e07">=</span> zsl<span style="color:#719e07">-&gt;</span>header;
+    <span style="color:#719e07">for</span> (i <span style="color:#719e07">=</span> zsl<span style="color:#719e07">-&gt;</span>level<span style="color:#719e07">-</span><span style="color:#2aa198">1</span>; i <span style="color:#719e07">&gt;=</span> <span style="color:#2aa198">0</span>; i<span style="color:#719e07">--</span>) {
+        <span style="color:#719e07">while</span> (x<span style="color:#719e07">-&gt;</span>level[i].forward <span style="color:#719e07">&amp;&amp;</span>
+                (x<span style="color:#719e07">-&gt;</span>level[i].forward<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">&lt;</span> curscore <span style="color:#719e07">||</span>
+                    (x<span style="color:#719e07">-&gt;</span>level[i].forward<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">==</span> curscore <span style="color:#719e07">&amp;&amp;</span>
+                     sdscmp(x<span style="color:#719e07">-&gt;</span>level[i].forward<span style="color:#719e07">-&gt;</span>ele,ele) <span style="color:#719e07">&lt;</span> <span style="color:#2aa198">0</span>)))
+        {
+            x <span style="color:#719e07">=</span> x<span style="color:#719e07">-&gt;</span>level[i].forward;
+        }
+        update[i] <span style="color:#719e07">=</span> x;
+    }
+
+    <span style="color:#586e75">// 获取旧分数所在的节点
+</span><span style="color:#586e75"></span>    x <span style="color:#719e07">=</span> x<span style="color:#719e07">-&gt;</span>level[<span style="color:#2aa198">0</span>].forward;
+    serverAssert(x <span style="color:#719e07">&amp;&amp;</span> curscore <span style="color:#719e07">==</span> x<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">&amp;&amp;</span> sdscmp(x<span style="color:#719e07">-&gt;</span>ele,ele) <span style="color:#719e07">==</span> <span style="color:#2aa198">0</span>);
+
+    <span style="color:#586e75">// 看看是否有办法直接修改数据
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// 如果 (x 是第一个节点 又或者 x上一个节点的分数比新插入的分数小) 并且 (x 是最后一个节点 又或者 x下一个节点的分数比新插入的分数大)
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// 此时可以直接修改数据
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">if</span> ((x<span style="color:#719e07">-&gt;</span>backward <span style="color:#719e07">==</span> <span style="color:#b58900">NULL</span> <span style="color:#719e07">||</span> x<span style="color:#719e07">-&gt;</span>backward<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">&lt;</span> newscore) <span style="color:#719e07">&amp;&amp;</span>
+        (x<span style="color:#719e07">-&gt;</span>level[<span style="color:#2aa198">0</span>].forward <span style="color:#719e07">==</span> <span style="color:#b58900">NULL</span> <span style="color:#719e07">||</span> x<span style="color:#719e07">-&gt;</span>level[<span style="color:#2aa198">0</span>].forward<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">&gt;</span> newscore))
+    {
+        x<span style="color:#719e07">-&gt;</span>score <span style="color:#719e07">=</span> newscore;
+        <span style="color:#719e07">return</span> x;
+    }
+
+    <span style="color:#586e75">// 在不能修改旧分数节点的情况下
+</span><span style="color:#586e75"></span>    <span style="color:#586e75">// 我们需要删除节点然后重新插入节点
+</span><span style="color:#586e75"></span>    zslDeleteNode(zsl, x, update);
+    zskiplistNode <span style="color:#719e07">*</span>newnode <span style="color:#719e07">=</span> zslInsert(zsl,newscore,x<span style="color:#719e07">-&gt;</span>ele);
+    <span style="color:#586e75">/* We reused the old node x-&gt;ele SDS string, free the node now
+</span><span style="color:#586e75">     * since zslInsert created a new one. */</span>
+    x<span style="color:#719e07">-&gt;</span>ele <span style="color:#719e07">=</span> <span style="color:#b58900">NULL</span>;
+    zslFreeNode(x);
+    <span style="color:#719e07">return</span> newnode;
+}
+</code></pre></div><h2 id="结语">结语</h2>
+<p>skiplist 算是这几个结构中比较难啃的一个，在于它往上拔高了层的概念，理解后就觉得不太难了。主要重点在于寻找距离目标节点最近的节点，再进行指针操作即可。</p>
+<p>后续有空会自己实现一个 skiplist。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (6)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (23)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

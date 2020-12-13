@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Redis源码：内存淘汰策略 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Redis源码：内存淘汰策略 - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-11-06T06:36:51&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-11-06T06:36:51&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Redis源码：内存淘汰策略">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#相关配置">相关配置</a></li>
+    <li><a href="#调用链">调用链</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Redis源码：内存淘汰策略</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年11月6日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>当 Redis 的内存达到一定值时，会触发自身的内存淘汰策略，目的是为了避免内存的增长。Redis 内存相关的淘汰策略代码主要在<code>src/evict.c</code>里。</p>
+<h2 id="相关配置">相关配置</h2>
+<p>配置文件中的<code>maxmemory</code>和<code>maxmemory-policy</code>就可以对 Redis 进行淘汰策略的配置。</p>
+<ul>
+<li>
+<p>maxmemory</p>
+<p>Redis 可用的最大内存，也就是触发策略的阈值。32 位系统下默认是 3G 内存（受限于 4G 内存空间），64 位系统下不受限制。</p>
+</li>
+<li>
+<p>maxmemory-policy</p>
+<p>相关的策略，一共有：</p>
+<ul>
+<li>volatile-lru：过期键 LRU 策略。</li>
+<li>volatile-lfu：过期键 LFU 策略。</li>
+<li>volatile-random：过期键 RANDOM 策略。</li>
+<li>volatile-ttl：过期键 TTL 策略。</li>
+<li>allkeys-lru：所有键 LRU 策略。</li>
+<li>allkeys-lfu：所有键 LFU 策略。</li>
+<li>allkeys-random：所有键 RANDOM 策略。</li>
+<li>noeviction：无策略。</li>
+</ul>
+<p>从键的维度来看，分成了两种，一种是设置了过期时间的 key，另一种是所有key。</p>
+<p>从策略维度看，分成四种：LRU最近访问时间、LFU访问频率、RANDOM随机，TTL过期时间。</p>
+</li>
+</ul>
+<h2 id="调用链">调用链</h2>
+<p>缓存策略的入口在<code>processCommand</code>里，这里会调用<code>freeMemoryIfNeededAndSafe</code>，然后调用<code>freeMemoryIfNeeded</code>。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">processCommand</span>(client <span style="color:#719e07">*</span>c) {
+    <span style="color:#586e75">/* Handle the maxmemory directive.
+</span><span style="color:#586e75">     *
+</span><span style="color:#586e75">     * Note that we do not want to reclaim memory if we are here re-entering
+</span><span style="color:#586e75">     * the event loop since there is a busy Lua script running in timeout
+</span><span style="color:#586e75">     * condition, to avoid mixing the propagation of scripts with the
+</span><span style="color:#586e75">     * propagation of DELs due to eviction. */</span>
+    <span style="color:#719e07">if</span> (server.maxmemory <span style="color:#719e07">&amp;&amp;</span> <span style="color:#719e07">!</span>server.lua_timedout) {
+        <span style="color:#dc322f">int</span> out_of_memory <span style="color:#719e07">=</span> freeMemoryIfNeededAndSafe() <span style="color:#719e07">==</span> C_ERR;
+        <span style="color:#586e75">/* freeMemoryIfNeeded may flush slave output buffers. This may result
+</span><span style="color:#586e75">         * into a slave, that may be the active client, to be freed. */</span>
+        <span style="color:#719e07">if</span> (server.current_client <span style="color:#719e07">==</span> <span style="color:#b58900">NULL</span>) <span style="color:#719e07">return</span> C_ERR;
+
+        <span style="color:#586e75">/* It was impossible to free enough memory, and the command the client
+</span><span style="color:#586e75">         * is trying to execute is denied during OOM conditions or the client
+</span><span style="color:#586e75">         * is in MULTI/EXEC context? Error. */</span>
+        <span style="color:#719e07">if</span> (out_of_memory <span style="color:#719e07">&amp;&amp;</span>
+            (c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>flags <span style="color:#719e07">&amp;</span> CMD_DENYOOM <span style="color:#719e07">||</span>
+             (c<span style="color:#719e07">-&gt;</span>flags <span style="color:#719e07">&amp;</span> CLIENT_MULTI <span style="color:#719e07">&amp;&amp;</span> c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>proc <span style="color:#719e07">!=</span> execCommand))) {
+            flagTransaction(c);
+            addReply(c, shared.oomerr);
+            <span style="color:#719e07">return</span> C_OK;
+        }
+    }
+}
+</code></pre></div><p><code>freeMemoryIfNeeded</code>主要流程：</p>
+<ol>
+<li>
+<p>获取当前内存使用量，以及可释放的内存量。</p>
+</li>
+<li>
+<p>如果当前策略是<code>noeviction</code>，则等待 bio 的内存回收线程结束，然后返回函数。</p>
+</li>
+<li>
+<p>进入循环，直到释放的内存达到可释放的内存量。</p>
+</li>
+<li>
+<p>此时根据不同策略采取不同的行动：</p>
+<ul>
+<li>
+<p>RANDOM 策略</p>
+<p>Redis 每次循环会从每个 db 中取随机的 key 来释放空间。</p>
+</li>
+<li>
+<p>LRU 或者 LFU 或者 TTL 策略</p>
+<p>这几种类型的策略逻辑都差不多，主要区别是在计算<code>idle</code>值上。</p>
+<p>Redis 全局定义了一个固定大小的淘汰数组，然后从全部键或者过期键中随机取出一定数量的键，再根据不同策略计算这些键的<code>idle</code>值，按照从小到大排序放在数组里，最后从数组尾部一个个取键进行空间释放即可。</p>
+</li>
+</ul>
+<p>另外，allkeys 和 volatile 只是取 db 的字段的区别。allkeys 会取 ditc 字段，volatile 则取 expires。</p>
+</li>
+<li>
+<p>删除键</p>
+</li>
+</ol>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (6)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (23)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

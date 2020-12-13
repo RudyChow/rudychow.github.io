@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Redis源码：AE文件事件 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Redis源码：AE文件事件 - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-09-19T11:46:17&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-09-19T11:46:17&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Redis源码：AE文件事件">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81AE%E6%96%87%E4%BB%B6%E4%BA%8B%E4%BB%B6/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#aeeventloop">aeEventLoop</a></li>
+    <li><a href="#ae函数">ae函数</a></li>
+    <li><a href="#执行流程">执行流程</a></li>
+    <li><a href="#结语">结语</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Redis源码：AE文件事件</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年9月19日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>Redis 的事件模块分为<strong>文件事件</strong>和<strong>时间事件</strong>。文件事件主要是处理网络 IO 事件，而时间事件主要处理 Redis 自身的一些定时任务。</p>
+<p>这里会先对 Redis 的文件事件的源码进行简单地阅读并且分析（以 <a href="https://github.com/redis/redis/tree/5.0.9">Redis5.0.9</a> 为例）。</p>
+<h2 id="aeeventloop">aeEventLoop</h2>
+<p><code>aeEventLoop</code>是<code>Redis</code>全局的结构体对象，所有跟事件有关的数据和状态都存储在这上面：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 只展示文件事件相关属性
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeEventLoop {
+    <span style="color:#dc322f">int</span> maxfd;   <span style="color:#586e75">/* 当前注册的最大的文件描述符 */</span>
+    <span style="color:#dc322f">int</span> setsize; <span style="color:#586e75">/* 可追踪的文件描述符数量 */</span>
+    aeFileEvent <span style="color:#719e07">*</span>events; <span style="color:#586e75">/* 已注册的事件数组，数组下标是 fd 值，每个events默认的mask是AE_NONE */</span>
+    aeFiredEvent <span style="color:#719e07">*</span>fired; <span style="color:#586e75">/* 触发的事件数组 */</span>
+    <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>apidata; <span style="color:#586e75">/* api结构，select epoll 等等 */</span>
+} aeEventLoop;
+</code></pre></div><ul>
+<li>
+<p><code>int maxfd</code></p>
+<p>当前最大的文件描述符。初始值是 -1。这个值会根据<code>aeCreateFileEvent</code>和<code>aeDeleteFileEvent</code>执行时动态变化。</p>
+</li>
+<li>
+<p><code>int setsize</code></p>
+<p>Redis 所能够处理的文件描述符的数量，默认值是 10000 + 32 + 96。</p>
+</li>
+<li>
+<p><code>aeFileEvent *events</code></p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeFileEvent {
+    <span style="color:#dc322f">int</span> mask; <span style="color:#586e75">/* one of AE_(READABLE|WRITABLE|BARRIER) 掩码  标识这个文件注册了哪种IO回调函数 */</span>
+    aeFileProc <span style="color:#719e07">*</span>rfileProc;<span style="color:#586e75">/* 文件可读时的回调函数 */</span>
+    aeFileProc <span style="color:#719e07">*</span>wfileProc;<span style="color:#586e75">/* 文件可写时的回调函数 */</span>
+    <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>clientData;<span style="color:#586e75">/* 客户端数据 */</span>
+} aeFileEvent;
+</code></pre></div><p>Redis 当前注册的事件连续数组，<strong>数组容量是 setsize 的大小，对应的数组下标就是 fd 的值</strong>。</p>
+<p>每一个<code>event</code>的<code>mask</code>属性会被初始化为<code>AE_NONE</code>，用以来表示这个事件没有被设置。<code>AE_READABLE</code>表示事件可以执行读事件，<code>AE_WRITABLE</code>表示事件可以执行写事件。在事件循环中，Redis 总是先处理读事件再处理写事件，除非<code>mask</code>设置了<code>AE_BARRIER</code>，此时则会先处理写事件再处理读事件。</p>
+<p><code>rfileProc</code>和<code>wfileProc</code>则表示当前文件注册的回调函数。所属文件描述符有可读事件，会调用<code>rfileProc</code>函数，有可写事件时，会调用<code>wfileProc</code>函数。</p>
+<p><code>clientData</code>则存放的是当前客户端的数据。</p>
+<p>例如 Redis 监听了 6379 端口，且对应的<code>fd=3</code>，那么此时<code>event[3]</code>的<code>mask</code>是可读的<code>AE_READABLE</code>，<code>rfileProc</code>注册了<code>acceptTcpHandler</code>函数用来处理客户端请求。</p>
+</li>
+<li>
+<p><code>aeFiredEvent *fired</code></p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeFiredEvent {
+    <span style="color:#dc322f">int</span> fd;<span style="color:#586e75">/* 文件描述符 */</span>
+    <span style="color:#dc322f">int</span> mask;<span style="color:#586e75">/* 掩码 用于位运算 标识这个文件处于可读/可写状态 */</span>
+} aeFiredEvent;
+</code></pre></div><p>Redis 当前触发的事件数组，数组容量是 setsize 的大小。</p>
+<p>Redis 调用了多路复用的函数后，会把当前可读或可写的 fd 存入这个<code>fired</code>的数组中。如此时<code>fired[0]</code>中，<code>fd=4</code>且<code>mask=AE_READABLE</code>，代表<code>fd=4</code>的文件描述符可以进行数据读取。</p>
+</li>
+<li>
+<p><code>void *apidata</code></p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeApiState {
+    <span style="color:#dc322f">int</span> epfd;<span style="color:#586e75">/* epoll的fd */</span>
+  <span style="color:#719e07">struct</span> epoll_event <span style="color:#719e07">*</span>events;<span style="color:#586e75">/* 用来接收监听的事件 */</span>
+} aeApiState;
+</code></pre></div><p>Redis 会根据操作系统而选择使用<code>evport</code>、<code>epoll</code>、<code>kqueue</code>或者<code>select</code>的方式来处理网络 IO，<code>apidata</code>就是存放对应的结构体。</p>
+</li>
+</ul>
+<h2 id="ae函数">ae函数</h2>
+<p><code>ae</code>系列的函数分为两种，一种是针对<code>aeEventLoop</code>的函数，另一种是针对<code>aeEventLoop</code>里的<code>apidata</code>的函数。</p>
+<p>以<code>epoll</code>为例，<code>apidata</code>的常用 api 其实就是对<code>epoll</code>的一系列函数的封装：</p>
+<ul>
+<li>
+<p><code>aeApiCreate</code></p>
+<p>Redis 会调用<code>epoll_create</code>创建<code>epoll</code>的结构体，然后赋值给<code>aeEventLoop</code>的<code>apidata</code>。</p>
+</li>
+<li>
+<p><code>aeApiAddEvent</code>和<code>aeApiDelEvent</code></p>
+<p>通过调用<code>epoll_ctl</code>来注册文件描述符的读写行为。</p>
+</li>
+<li>
+<p><code>aeApiPoll</code></p>
+<p>通过调用<code>epoll_wait</code>来监听 IO 事件，如果有事件要处理，则依次往<code>aeEventLoop</code>的<code>fired</code>字段填充触发的文件描述符以及对应的事件类型。</p>
+</li>
+</ul>
+<p><code>aeEventLoop</code>的 api：</p>
+<ul>
+<li>
+<p><code>aeCreateFileEvent</code>和<code>aeDeleteFileEvent</code></p>
+<p>这两个函数就是操作<code>aeEventLoop</code>的<code>events</code>数组的属性，简单来说就是给对应的文件描述符新增或删除对应的回调函数。除了这些操作，同时还会对<code>maxfd</code>进行维护。</p>
+<p>当然这里需要调用<code>aeApiAddEvent</code>和<code>aeApiDelEvent</code>函数来进行事件注册。</p>
+</li>
+<li>
+<p><code>aeMain</code>和<code>aeProcessEvents</code></p>
+<p><code>aeMain</code>是<code>aeEventLoop</code>的主要的逻辑执行函数，<code>aeProcessEvents</code>则是事件执行入口。<code>aeProcessEvents</code>会调用<code>aeApiPoll</code>获取监听的事件，结合<code>fired</code>和<code>events</code>字段判断是否要执行对应文件描述符的读写事件。</p>
+</li>
+</ul>
+<h2 id="执行流程">执行流程</h2>
+<p>以下是 Redis 的文件事件执行流程（忽略时间事件）：</p>
+<ol>
+<li>
+<p><code>initServer</code></p>
+<p>定义一个<code>aeEventLoop</code>，同时初始化 setsize 个长度的<code>events</code>和<code>fired</code>，此时<code>events</code>的每个<code>mask</code>都被设置成<code>AE_NONE</code>。</p>
+<p><code>apidata</code>则是根据当前操作系统，依次选择<code>evport</code>、<code>epoll</code>、<code>kqueue</code>和<code>select</code>。以我本地系统 Linux 环境为例，<code>apidata</code>指向的是<code>ae_epoll.c</code>的<code>aeApiState</code>结构体，同时会调用<code>epoll_create</code>创建<code>epoll</code>，并把记录对应的<code>fd</code>。</p>
+<p>如果程序监听了 6379 端口，此时注册这个监听事件。程序会调用<code>epoll_ctl</code>去登记这个 fd 到<code>epoll</code>上，然后记录这个 fd 的回调函数：</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/redis-fileevent-1.jpg">
+            <img class="mx-auto" alt="redis-fileevent-1" src="/pics/redis-fileevent-1.jpg" />
+        </a>
+    </p>
+</li>
+<li>
+<p><code>aeMain</code></p>
+<p>事件循环的入口是<code>aeMain</code>，这个函数就是一个简单的循环，主要执行逻辑在<code>aeProcessEvents</code>里面：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">aeMain</span>(aeEventLoop <span style="color:#719e07">*</span>eventLoop) {
+    <span style="color:#586e75">// 设置不停止
+</span><span style="color:#586e75"></span>    eventLoop<span style="color:#719e07">-&gt;</span>stop <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+    <span style="color:#586e75">// 一直运行 除非停止
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">while</span> (<span style="color:#719e07">!</span>eventLoop<span style="color:#719e07">-&gt;</span>stop) {
+        <span style="color:#586e75">// 一个前置函数的埋点
+</span><span style="color:#586e75"></span>        <span style="color:#719e07">if</span> (eventLoop<span style="color:#719e07">-&gt;</span>beforesleep <span style="color:#719e07">!=</span> <span style="color:#b58900">NULL</span>)
+            eventLoop<span style="color:#719e07">-&gt;</span>beforesleep(eventLoop);
+        <span style="color:#586e75">// 主要执行函数
+</span><span style="color:#586e75"></span>        aeProcessEvents(eventLoop, AE_ALL_EVENTS<span style="color:#719e07">|</span>AE_CALL_AFTER_SLEEP);
+    }
+}
+</code></pre></div></li>
+<li>
+<p><code>aeProcessEvents</code></p>
+<p>事件循环最重要的执行逻辑。这个函数里，主要执行了<code>aeApiPoll</code>函数，再底层一点，会执行<code>epoll_wait</code>函数，然后把事件结果存入到<code>aeEventLoop</code>到<code>fired</code>数组里。</p>
+<blockquote>
+<p>由于这里不考虑时间事件，所以<code>epoll_wait</code>会一直阻塞到有对应的文件描述符触发事件。</p>
+<p>正常流程会有一个超时时间，这个时间是当前事件和最近需要处理的时间事件事件的差值。在这个事件差内，即使没有文件 IO 触发，也可以执行到对应的时间事件。</p>
+</blockquote>
+<p>执行完<code>aeApiPoll</code>后，会循环<code>fired</code>数组，取得对应的 fd，即<code>events</code>的下标。获取到对应的<code>event</code>后，根据<code>mask</code>计算，判断是否需要执行读还是写的函数。正常情况下，Redis 会先处理读再处理写，除非<code>event</code>的<code>mask</code>设置了<code>AE_BARRIER</code>。</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/redis-fileevent-2.jpg">
+            <img class="mx-auto" alt="redis-fileevent-2" src="/pics/redis-fileevent-2.jpg" />
+        </a>
+    </p>
+</li>
+</ol>
+<h2 id="结语">结语</h2>
+<p>其实 Redis 在 6 之后的版本已经使用多线程去处理网络 IO，后面有空会总结一份 Redis6 的文件 IO 模型。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (6)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (23)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
