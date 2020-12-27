@@ -6,7 +6,25 @@
     <description>Recent content on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sun, 13 Dec 2020 13:45:54 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 13 Dec 2020 21:33:54 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>undo日志</title>
+      <link>https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/</link>
+      <pubDate>Sun, 13 Dec 2020 21:33:54 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/</guid>
+      <description>undo log 主要有两个作用：事务回滚和 MVCC。 到底是什么是 undo log ？前面说到 InnoDB 表空间存放着许多不同类型的页，undo log 就是其中的一种类型。它和 redo log 不同，是一种逻辑日志，记</description>
+    </item>
+    
+    <item>
+      <title>B&#43;树二叉查询</title>
+      <link>https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/</link>
+      <pubDate>Sun, 13 Dec 2020 17:53:23 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/</guid>
+      <description>B+树是通过二叉查找树，再由平衡二叉树，B数演化而来。 我们知道从一组有序数字数组中查找目标记录，使用二分查找法（Binary Search）是一种有效的方式，复杂</description>
+    </item>
+    
     <item>
       <title>Vscode下使用GDB调试Redis</title>
       <link>https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/</link>

@@ -70,6 +70,52 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/" title="undo日志">undo日志</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年12月13日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/MySQL'>MySQL</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            undo log 主要有两个作用：事务回滚和 MVCC。 到底是什么是 undo log ？前面说到 InnoDB 表空间存放着许多不同类型的页，undo log 就是其中的一种类型。它和 redo log 不同，是一种逻辑日志，记……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/" title="B&#43;树二叉查询">B&#43;树二叉查询</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年12月13日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/MySQL'>MySQL</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            B+树是通过二叉查找树，再由平衡二叉树，B数演化而来。 我们知道从一组有序数字数组中查找目标记录，使用二分查找法（Binary Search）是一种有效的方式，复杂……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
             </h1>
         </header>
@@ -251,52 +297,6 @@
         <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/">阅读全文</a></p>
     </article>
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2020年11月6日
-        </date>
-        
-        <div class="post-meta">
-            <span>|</span>
-            
-            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
-            
-        </div>
-        
-        <div class="post-content">
-            当 Redis 的内存达到一定值时，会触发自身的内存淘汰策略，目的是为了避免内存的增长。Redis 内存相关的淘汰策略代码主要在src/evict.c里。 相关配置 配置文件中的……
-        </div>
-        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/">阅读全文</a></p>
-    </article>
-    
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2020年11月1日
-        </date>
-        
-        <div class="post-meta">
-            <span>|</span>
-            
-            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
-            
-        </div>
-        
-        <div class="post-content">
-            Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。 初始化 Redis 通过loadServer……
-        </div>
-        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/">阅读全文</a></p>
-    </article>
-    
     
 
 
@@ -379,6 +379,14 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/" title="undo日志">undo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/" title="B&#43;树二叉查询">B&#43;树二叉查询</a>
+    </li>
+    
+    <li>
         <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
     </li>
     
@@ -410,14 +418,6 @@
         <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
     </li>
     
-    <li>
-        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
-    </li>
-    
 </ul>
     </section>
 
@@ -429,7 +429,7 @@
     
     <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
     
-    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (6)</a></li>
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (8)</a></li>
     
     <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
     
