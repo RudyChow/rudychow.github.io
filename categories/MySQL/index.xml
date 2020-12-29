@@ -6,7 +6,16 @@
     <description>Recent content in MySQL on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sun, 13 Dec 2020 21:33:54 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/MySQL/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 28 Dec 2020 22:58:32 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/MySQL/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>事务</title>
+      <link>https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/</link>
+      <pubDate>Mon, 28 Dec 2020 22:58:32 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/</guid>
+      <description>事务是数据库区别于文件系统的重要特性之一。数据库系统引入事务的主要目的：事务会把数据库从一种一致状态转移为另一种一致状态。在数据库提交工作时，可以确保要么所有修</description>
+    </item>
+    
     <item>
       <title>undo日志</title>
       <link>https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/</link>
