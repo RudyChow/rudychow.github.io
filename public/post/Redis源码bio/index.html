@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Redis源码：bio | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Redis源码：bio - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-10-12T16:39:29&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-10-12T16:39:29&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Redis源码：bio">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81bio/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#初始化">初始化</a></li>
+    <li><a href="#实现逻辑">实现逻辑</a></li>
+    <li><a href="#结语">结语</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Redis源码：bio</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月12日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>Redis 的主线程处理事件循环，所以我们常说 Redis 是单线程的（Redis6 之后加入了多线程模型）。但是在 Redis 中，也存在着 3 条线程，专门处理一些其它操作。</p>
+<h2 id="初始化">初始化</h2>
+<p>bio 的初始化在<code>src/server.c</code>中的<code>InitServerLast</code>函数，函数接着会调用<code>src/bio.c</code>的<code>bioInit</code>函数。</p>
+<h2 id="实现逻辑">实现逻辑</h2>
+<p>与 bio 相关的几个宏定义、变量以及结构体：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 后台线程的类型
+</span><span style="color:#586e75"></span><span style="color:#719e07">#define BIO_CLOSE_FILE    0 </span><span style="color:#586e75">/* Deferred close(2) syscall. */</span><span style="color:#719e07">
+</span><span style="color:#719e07">#define BIO_AOF_FSYNC     1 </span><span style="color:#586e75">/* Deferred AOF fsync. */</span><span style="color:#719e07">
+</span><span style="color:#719e07">#define BIO_LAZY_FREE     2 </span><span style="color:#586e75">/* Deferred objects freeing. */</span><span style="color:#719e07">
+</span><span style="color:#719e07"></span><span style="color:#586e75">// 线程数量
+</span><span style="color:#586e75"></span><span style="color:#719e07">#define BIO_NUM_OPS       3
+</span><span style="color:#719e07"></span>
+<span style="color:#586e75">// 线程数组
+</span><span style="color:#586e75"></span><span style="color:#719e07">static</span> pthread_t bio_threads[BIO_NUM_OPS];
+<span style="color:#586e75">// 线程锁数组
+</span><span style="color:#586e75"></span><span style="color:#719e07">static</span> pthread_mutex_t bio_mutex[BIO_NUM_OPS];
+<span style="color:#586e75">// 线程条件变量数组
+</span><span style="color:#586e75"></span><span style="color:#719e07">static</span> pthread_cond_t bio_newjob_cond[BIO_NUM_OPS];
+<span style="color:#719e07">static</span> pthread_cond_t bio_step_cond[BIO_NUM_OPS];
+<span style="color:#586e75">// 任务数组
+</span><span style="color:#586e75"></span><span style="color:#719e07">static</span> list <span style="color:#719e07">*</span>bio_jobs[BIO_NUM_OPS];
+<span style="color:#586e75">// 待处理任务数组
+</span><span style="color:#586e75"></span><span style="color:#719e07">static</span> <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> <span style="color:#dc322f">long</span> bio_pending[BIO_NUM_OPS];
+
+<span style="color:#586e75">// bio的每一个执行任务结构体
+</span><span style="color:#586e75"></span><span style="color:#719e07">struct</span> bio_job {
+    time_t time; <span style="color:#586e75">/* Time at which the job was created. */</span>
+    <span style="color:#586e75">/* Job specific arguments pointers. If we need to pass more than three
+</span><span style="color:#586e75">     * arguments we can just pass a pointer to a structure or alike. */</span>
+    <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>arg1, <span style="color:#719e07">*</span>arg2, <span style="color:#719e07">*</span>arg3;
+};
+</code></pre></div><p>线程的初始化函数：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">bioInit</span>(<span style="color:#dc322f">void</span>) {
+    pthread_attr_t attr;
+    pthread_t <span style="color:#268bd2">thread</span>;
+    size_t stacksize;
+    <span style="color:#dc322f">int</span> j;
+
+    <span style="color:#586e75">// 初始化线程相关变量
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">for</span> (j <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>; j <span style="color:#719e07">&lt;</span> BIO_NUM_OPS; j<span style="color:#719e07">++</span>) {
+        pthread_mutex_init(<span style="color:#719e07">&amp;</span>bio_mutex[j],<span style="color:#b58900">NULL</span>);
+        pthread_cond_init(<span style="color:#719e07">&amp;</span>bio_newjob_cond[j],<span style="color:#b58900">NULL</span>);
+        pthread_cond_init(<span style="color:#719e07">&amp;</span>bio_step_cond[j],<span style="color:#b58900">NULL</span>);
+        bio_jobs[j] <span style="color:#719e07">=</span> listCreate();
+        bio_pending[j] <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+    }
+
+    <span style="color:#586e75">/* Set the stack size as by default it may be small in some system */</span>
+    pthread_attr_init(<span style="color:#719e07">&amp;</span>attr);
+    pthread_attr_getstacksize(<span style="color:#719e07">&amp;</span>attr,<span style="color:#719e07">&amp;</span>stacksize);
+    <span style="color:#719e07">if</span> (<span style="color:#719e07">!</span>stacksize) stacksize <span style="color:#719e07">=</span> <span style="color:#2aa198">1</span>; <span style="color:#586e75">/* The world is full of Solaris Fixes */</span>
+    <span style="color:#719e07">while</span> (stacksize <span style="color:#719e07">&lt;</span> REDIS_THREAD_STACK_SIZE) stacksize <span style="color:#719e07">*=</span> <span style="color:#2aa198">2</span>;
+    pthread_attr_setstacksize(<span style="color:#719e07">&amp;</span>attr, stacksize);
+
+    <span style="color:#586e75">// 创建 3 个线程
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">for</span> (j <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>; j <span style="color:#719e07">&lt;</span> BIO_NUM_OPS; j<span style="color:#719e07">++</span>) {
+        <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>arg <span style="color:#719e07">=</span> (<span style="color:#dc322f">void</span><span style="color:#719e07">*</span>)(<span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span>) j;
+        <span style="color:#719e07">if</span> (pthread_create(<span style="color:#719e07">&amp;</span><span style="color:#268bd2">thread</span>,<span style="color:#719e07">&amp;</span>attr,bioProcessBackgroundJobs,arg) <span style="color:#719e07">!=</span> <span style="color:#2aa198">0</span>) {
+            serverLog(LL_WARNING,<span style="color:#2aa198">&#34;Fatal: Can&#39;t initialize Background Jobs.&#34;</span>);
+            exit(<span style="color:#2aa198">1</span>);
+        }
+        bio_threads[j] <span style="color:#719e07">=</span> <span style="color:#268bd2">thread</span>;
+    }
+}
+</code></pre></div><p>简要说明，就是预先初始好几个相关数组，然后创建 3 个线程，让线程去执行<code>bioProcessBackgroundJobs</code>，这个函数就是我们后台线程的主要执行逻辑。</p>
+<p><code>bioProcessBackgroundJobs</code>的具体逻辑如下：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#719e07">*</span><span style="color:#268bd2">bioProcessBackgroundJobs</span>(<span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>arg) {
+    <span style="color:#719e07">struct</span> bio_job <span style="color:#719e07">*</span>job;
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> type <span style="color:#719e07">=</span> (<span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span>) arg;
+    sigset_t sigset;
+
+    <span style="color:#586e75">// 线程数量判断
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">if</span> (type <span style="color:#719e07">&gt;=</span> BIO_NUM_OPS) {
+        serverLog(LL_WARNING,
+            <span style="color:#2aa198">&#34;Warning: bio thread started with wrong type %lu&#34;</span>,type);
+        <span style="color:#719e07">return</span> <span style="color:#b58900">NULL</span>;
+    }
+
+    <span style="color:#586e75">// 设置线程可被终止，让bioKillThreads可以正常执行
+</span><span style="color:#586e75"></span>    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, <span style="color:#b58900">NULL</span>);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, <span style="color:#b58900">NULL</span>);
+
+    pthread_mutex_lock(<span style="color:#719e07">&amp;</span>bio_mutex[type]);
+    <span style="color:#586e75">// 屏蔽SIGALRM信号
+</span><span style="color:#586e75"></span>    sigemptyset(<span style="color:#719e07">&amp;</span>sigset);
+    sigaddset(<span style="color:#719e07">&amp;</span>sigset, SIGALRM);
+    <span style="color:#719e07">if</span> (pthread_sigmask(SIG_BLOCK, <span style="color:#719e07">&amp;</span>sigset, <span style="color:#b58900">NULL</span>))
+        serverLog(LL_WARNING,
+            <span style="color:#2aa198">&#34;Warning: can&#39;t mask SIGALRM in bio.c thread: %s&#34;</span>, strerror(errno));
+
+    <span style="color:#586e75">// 此处进入死循环
+</span><span style="color:#586e75"></span>    <span style="color:#719e07">while</span>(<span style="color:#2aa198">1</span>) {
+        listNode <span style="color:#719e07">*</span>ln;
+
+        <span style="color:#586e75">// 有新的job实例才进行逻辑
+</span><span style="color:#586e75"></span>        <span style="color:#719e07">if</span> (listLength(bio_jobs[type]) <span style="color:#719e07">==</span> <span style="color:#2aa198">0</span>) {
+            pthread_cond_wait(<span style="color:#719e07">&amp;</span>bio_newjob_cond[type],<span style="color:#719e07">&amp;</span>bio_mutex[type]);
+            <span style="color:#719e07">continue</span>;
+        }
+        <span style="color:#586e75">/* Pop the job from the queue. */</span>
+        ln <span style="color:#719e07">=</span> listFirst(bio_jobs[type]);
+        job <span style="color:#719e07">=</span> ln<span style="color:#719e07">-&gt;</span>value;
+        <span style="color:#586e75">/* It is now possible to unlock the background system as we know have
+</span><span style="color:#586e75">         * a stand alone job structure to process.*/</span>
+        pthread_mutex_unlock(<span style="color:#719e07">&amp;</span>bio_mutex[type]);
+
+        <span style="color:#586e75">// 第一个线程，执行close操作
+</span><span style="color:#586e75"></span>        <span style="color:#719e07">if</span> (type <span style="color:#719e07">==</span> BIO_CLOSE_FILE) {
+            close((<span style="color:#dc322f">long</span>)job<span style="color:#719e07">-&gt;</span>arg1);
+        <span style="color:#586e75">// 第二个线程，执行AOF刷盘操作
+</span><span style="color:#586e75"></span>        } <span style="color:#719e07">else</span> <span style="color:#719e07">if</span> (type <span style="color:#719e07">==</span> BIO_AOF_FSYNC) {
+            redis_fsync((<span style="color:#dc322f">long</span>)job<span style="color:#719e07">-&gt;</span>arg1);
+        <span style="color:#586e75">// 第三个线程，执行释放空间操作
+</span><span style="color:#586e75"></span>        } <span style="color:#719e07">else</span> <span style="color:#719e07">if</span> (type <span style="color:#719e07">==</span> BIO_LAZY_FREE) {
+            <span style="color:#586e75">/* What we free changes depending on what arguments are set:
+</span><span style="color:#586e75">             * arg1 -&gt; free the object at pointer.
+</span><span style="color:#586e75">             * arg2 &amp; arg3 -&gt; free two dictionaries (a Redis DB).
+</span><span style="color:#586e75">             * only arg3 -&gt; free the skiplist. */</span>
+            <span style="color:#719e07">if</span> (job<span style="color:#719e07">-&gt;</span>arg1)
+                lazyfreeFreeObjectFromBioThread(job<span style="color:#719e07">-&gt;</span>arg1);
+            <span style="color:#719e07">else</span> <span style="color:#719e07">if</span> (job<span style="color:#719e07">-&gt;</span>arg2 <span style="color:#719e07">&amp;&amp;</span> job<span style="color:#719e07">-&gt;</span>arg3)
+                lazyfreeFreeDatabaseFromBioThread(job<span style="color:#719e07">-&gt;</span>arg2,job<span style="color:#719e07">-&gt;</span>arg3);
+            <span style="color:#719e07">else</span> <span style="color:#719e07">if</span> (job<span style="color:#719e07">-&gt;</span>arg3)
+                lazyfreeFreeSlotsMapFromBioThread(job<span style="color:#719e07">-&gt;</span>arg3);
+        } <span style="color:#719e07">else</span> {
+            serverPanic(<span style="color:#2aa198">&#34;Wrong job type in bioProcessBackgroundJobs().&#34;</span>);
+        }
+        zfree(job);
+
+        <span style="color:#586e75">/* Lock again before reiterating the loop, if there are no longer
+</span><span style="color:#586e75">         * jobs to process we&#39;ll block again in pthread_cond_wait(). */</span>
+        pthread_mutex_lock(<span style="color:#719e07">&amp;</span>bio_mutex[type]);
+        listDelNode(bio_jobs[type],ln);
+        bio_pending[type]<span style="color:#719e07">--</span>;
+
+        <span style="color:#586e75">/* Unblock threads blocked on bioWaitStepOfType() if any. */</span>
+        pthread_cond_broadcast(<span style="color:#719e07">&amp;</span>bio_step_cond[type]);
+    }
+}
+</code></pre></div><p>简单的结构图：</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/redis/bio/bio.jpg">
+            <img class="mx-auto" alt="bio" src="/pics/redis/bio/bio.jpg" />
+        </a>
+    </p>
+<h2 id="结语">结语</h2>
+<p>Redis 之所以实现 bio，原因很简单：把主线程的一些耗时的工作，移到后台线程中去做。比如 Redis4 之后新增的<code>unlink</code>操作，就是用来替代<code>del</code>的。因为在一些比较大的数据下，<code>del</code>会因为操作太久导致整个事件循环的阻塞。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81rdb/" title="Redis源码：rdb">Redis源码：rdb</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/" title="Redis源码：事务">Redis源码：事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/" title="Redis源码：pub和sub">Redis源码：pub和sub</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/" title="Redis源码：从bpop看block">Redis源码：从bpop看block</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/" title="Redis源码：一个命令的执行流程">Redis源码：一个命令的执行流程</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis%E6%BA%90%E7%A0%81redisDB/" title="Redis源码：redisDB">Redis源码：redisDB</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (22)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

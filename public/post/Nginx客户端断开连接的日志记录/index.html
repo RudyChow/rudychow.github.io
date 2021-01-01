@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Nginx客户端断开连接的日志记录 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Nginx客户端断开连接的日志记录 - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-07-20T23:27:34&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-07-20T23:27:34&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Nginx客户端断开连接的日志记录">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#测试环境">测试环境</a>
+      <ul>
+        <li><a href="#场景1主动断开连接">场景1：主动断开连接</a></li>
+        <li><a href="#场景2异常断开连接">场景2：异常断开连接</a></li>
+      </ul>
+    </li>
+    <li><a href="#结语">结语</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Nginx客户端断开连接的日志记录</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年7月20日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Nginx'>Nginx</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。
+同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。</p>
+<h2 id="测试环境">测试环境</h2>
+<pre><code>+----------+        +---------+        +----------+
+|          |        |         |        |          |
+|          |  http  |         |upstream|  server  |
+|  client  &lt;--------&gt;  Nginx  +-------&gt;+          |
+|          |        |         |        |sleep(20s)|
+|          |        |         |        |          |
++----------+        +---------+        +----------+
+
+</code></pre><h3 id="场景1主动断开连接">场景1：主动断开连接</h3>
+<p>测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。</p>
+<p>经过抓包得到客户端和服务端的连接信息：</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/nginx-client-close-200.png">
+            <img class="mx-auto" alt="nginx-client-close-200" src="/pics/nginx-client-close-200.png" />
+        </a>
+    </p>
+<p>通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。</p>
+<p>此时Nginx记录的日志如下：</p>
+<pre><code>172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] &quot;GET / HTTP/1.1&quot; 499 0 &quot;-&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&quot; &quot;-&quot;
+</code></pre><blockquote>
+<p>HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">/*
+</span><span style="color:#586e75">* HTTP does not define the code for the case when a client closed
+</span><span style="color:#586e75">* the connection while we are processing its request so we introduce
+</span><span style="color:#586e75">* own code to log such situation when a client has closed the connection
+</span><span style="color:#586e75">* before we even try to send the HTTP header to it
+</span><span style="color:#586e75">*/</span>
+<span style="color:#719e07">#define NGX_HTTP_CLIENT_CLOSED_REQUEST     499
+</span></code></pre></div></blockquote>
+<h3 id="场景2异常断开连接">场景2：异常断开连接</h3>
+<p>测试行为：手机对Nginx发起请求，并在Nginx响应前切换网络环境，以达到异常断开目的，此后观察结果</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/nginx-client-close-499.png">
+            <img class="mx-auto" alt="nginx-client-close-200" src="/pics/nginx-client-close-499.png" />
+        </a>
+    </p>
+<p>序号106中，Nginx已经处理完server的请求，并且响应结果给客户端。</p>
+<pre><code>172.20.0.1 - - [20/Jul/2020:14:44:16 +0000] &quot;GET / HTTP/1.1&quot; 200 22 &quot;-&quot; &quot;Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1&quot; &quot;-&quot;
+</code></pre><p>序号107～289，是服务端对客户端进行的重传。</p>
+<p>序号318，服务端对客户端发起RST，强制中断连接。</p>
+<h2 id="结语">结语</h2>
+<p>在客户端主动断开时（即TCP正常地发起挥手行为），Nginx会进行状态码为499的日志记录。</p>
+<p>在客户端异常断开时（网络切换、断网等等原因），Nginx会记录200的成功日志。至于为什么，只有后面看Nginx源码才能知道原因。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/" title="事务">事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/" title="undo日志">undo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/" title="B&#43;树二叉查询">B&#43;树二叉查询</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (9)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (23)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

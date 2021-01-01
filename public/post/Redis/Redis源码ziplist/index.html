@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Redis源码：ziplist | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Redis源码：ziplist - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-10-06T18:40:41&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-10-06T18:40:41&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Redis源码：ziplist">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81ziplist/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#数据结构">数据结构</a>
+      <ul>
+        <li><a href="#header和end">header和end</a></li>
+        <li><a href="#entry">entry</a></li>
+      </ul>
+    </li>
+    <li><a href="#结语">结语</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Redis源码：ziplist</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月6日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>ziplist，又称作压缩列表，它是 Redis 内部定义的连续的内存组成的数据结构，目的是减少内存碎片，节省内存空间。</p>
+<h2 id="数据结构">数据结构</h2>
+<p>ziplist主要由三部分组成：header、entry和end。</p>
+<h3 id="header和end">header和end</h3>
+<p>
+        <a data-fancybox="gallery" href="/pics/redis/ziplist/1.jpg">
+            <img class="mx-auto" alt="ziplist-1" src="/pics/redis/ziplist/1.jpg" />
+        </a>
+    </p>
+<p>header 主要由三部分组成：</p>
+<ul>
+<li>
+<p>bytes</p>
+<p>bytes 记录整个 ziplist 占用的内存字节数，长度是 4 个字节。</p>
+</li>
+<li>
+<p>tail</p>
+<p>tail 就是最后一个节点到 ziplist 起始位置的偏移量，该偏移量是从 ziplist 指针开始计算。</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/redis/ziplist/ziplist_tail.jpg">
+            <img class="mx-auto" alt="ziplist_tail" src="/pics/redis/ziplist/ziplist_tail.jpg" />
+        </a>
+    </p>
+</li>
+<li>
+<p>len</p>
+<p>ziplist 的节点数。当 len &lt; 65535 时，len 即是节点数，此时取 ziplist 的节点数的复杂度是 O(1)。当 len = 65535 时，需要遍历整个节点获取实际的 len，此时取 ziplist 的节点数的复杂度是 O(n)。</p>
+</li>
+</ul>
+<p>end 是一个恒定值 0xff，用来标识 ziplist 的末尾。</p>
+<h3 id="entry">entry</h3>
+<p>entry 是 ziplist 中的每一个节点，也是由三个部分组成：prevlen、encoding和content。下面是 entry 的大概结构：</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/redis/ziplist/ziplist_entry.jpg">
+            <img class="mx-auto" alt="ziplist-entry" src="/pics/redis/ziplist/ziplist_entry.jpg" />
+        </a>
+    </p>
+<ul>
+<li>
+<p>prevlen</p>
+<p>这是 entry 的第一部分，这个部分定义了<strong>前一个元素的长度</strong>。并且它的内存占用大小是<strong>不定</strong>的，有可能是 1 字节，有可能是 5 字节。</p>
+<p>Redis 先获取这一部分的<strong>首字节</strong>，如果<code>首字节大小 &lt; 254</code>（255 表示 ziplist 的结束符，所以此处最大为 254），则占用 1 字节，并且首字节就是前一个 entry 的长度。</p>
+<p>如果<code>首字节大小 = 254</code>，则 prevlen 占用 5 个字节大小。后面紧挨的 4 个字节即为前一个 entry 的长度。</p>
+<p>ziplist 就是通过这种方式可以计算出前一个 entry 节点的内存地址，从而实现<strong>反向遍历</strong>的功能。</p>
+<p>
+        <a data-fancybox="gallery" href="/pics/redis/ziplist/ziplist_entry_prevlen.jpg">
+            <img class="mx-auto" alt="ziplist-entry-prevlen" src="/pics/redis/ziplist/ziplist_entry_prevlen.jpg" />
+        </a>
+    </p>
+<p>下面是源码中有关 prevlen 的一些相关宏定义：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 首字节最大值
+</span><span style="color:#586e75"></span><span style="color:#719e07">#define ZIP_BIG_PREVLEN 254 
+</span><span style="color:#719e07"></span><span style="color:#586e75">// 获取prevlen占用的字节大小
+</span><span style="color:#586e75"></span><span style="color:#719e07">#define ZIP_DECODE_PREVLENSIZE(ptr, prevlensize) do {                          \
+</span><span style="color:#719e07">    if ((ptr)[0] &lt; ZIP_BIG_PREVLEN) {                                          \
+</span><span style="color:#719e07">        (prevlensize) = 1;                                                     \
+</span><span style="color:#719e07">    } else {                                                                   \
+</span><span style="color:#719e07">        (prevlensize) = 5;                                                     \
+</span><span style="color:#719e07">    }                                                                          \
+</span><span style="color:#719e07">} while(0);
+</span><span style="color:#719e07"></span><span style="color:#586e75">// 获取前一个entry的长度
+</span><span style="color:#586e75"></span><span style="color:#719e07">#define ZIP_DECODE_PREVLEN(ptr, prevlensize, prevlen) do {                     \
+</span><span style="color:#719e07">    ZIP_DECODE_PREVLENSIZE(ptr, prevlensize);                                  \
+</span><span style="color:#719e07">    if ((prevlensize) == 1) {                                                  \
+</span><span style="color:#719e07">        (prevlen) = (ptr)[0];                                                  \
+</span><span style="color:#719e07">    } else if ((prevlensize) == 5) {                                           \
+</span><span style="color:#719e07">        assert(sizeof((prevlen)) == 4);                                    \
+</span><span style="color:#719e07">        memcpy(&amp;(prevlen), ((char*)(ptr)) + 1, 4);                             \
+</span><span style="color:#719e07">        memrev32ifbe(&amp;prevlen);                                                \
+</span><span style="color:#719e07">    }                                                                          \
+</span><span style="color:#719e07">} while(0);
+</span><span style="color:#719e07"></span>  
+</code></pre></div></li>
+<li>
+<p>encoding</p>
+<p>这一部分记录的是该 entry 的 content 数据的类型以及大小，内存占用空间可能是1、2 或者 5 个字节。</p>
+<p>content 存放的类型可能是<strong>整数</strong>或者<strong>字符数组</strong>。</p>
+<ul>
+<li>
+<p>整数</p>
+<p>先从整数的角度来看，如果 content 存放的是整数，<strong>此时 encoding 的大小必定为 1 字节，并且字节的前两个 bits 位必定为 11</strong>，剩下的其它 bits 位则用来定义整数具体的类型，整数有可能是 1、2、3、4、8字节的类型。</p>
+<p>额外需要注意，当首字节 &gt;= 0xf1（11110001）以及 &lt;= 0xfd（11111101）时，content不占用空间，字节的末尾 4 个 bits 即为整数值，就是 encoding 和 content 合体。虽然这里是判断 1~13 的范围，但实际存储的是 0~12 的整数，在压缩存储时会进行<code>value+ZIP_INT_IMM_MIN</code>的运算。</p>
+</li>
+<li>
+<p>字符数组</p>
+<p>如果 content 存放的是字符数组，则 encoding 可能是1、2 或者 5 个字节。</p>
+<ul>
+<li>首字节前两个 bits 位为 00 时，占 1 字节，首字节后面 6 个 bits 表示数组长度，即最大能存 2^6-1 的长度。</li>
+<li>首字节前两个 bits 位为 01 时，占 2 字节，首字节后面 6 个 bits 以及后面的 1 个字节表示数组长度，即最大能存 2^(6+8)-1 的长度。</li>
+<li>首字节前两个 bits 位为 10 时，占 5 字节，后面的 4 个字节表示数组长度，即最大能存 2^(32)-1 的长度。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>content</p>
+<p>content 就是存放的实际数据，具体存放类型根据 encoding 来定。</p>
+</li>
+</ul>
+<blockquote>
+<p>在 entry 中，prevlen 这一部分会受到其它 entry 的影响而变动，因此会产生<strong>连锁更新</strong>的问题。</p>
+<p>如部分 entry 的 prevlen 在临界值如 253 时，某个靠前的 entry 存储的数据变大了，则变动的 entry 的下一个 entry 的 prevlen 会变成 5 字节，此时 Redis 会调用<code>__ziplistCascadeUpdate</code>进行连锁更新，重新分配内存空间。</p>
+<p>这种情况发生的概率不高，只是出现了连锁更新时，对应的增删改的操作的复杂度可能上升到O(n^2)。</p>
+</blockquote>
+<h2 id="结语">结语</h2>
+<p>像这种自定义的数据结构，正常阅读需要花费不少时间。但是 Redis 在源码文件一开头就介绍了整个数据结构，且介绍得非常详细，让人在阅读源码时异常顺畅。</p>
+<p>再一次感叹代码注释的重要性。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/" title="事务">事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/" title="undo日志">undo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/" title="B&#43;树二叉查询">B&#43;树二叉查询</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (9)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (23)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

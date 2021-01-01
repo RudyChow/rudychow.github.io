@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>索引 on Rudy&#39;s blog</title>
+    <link>https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/</link>
+    <description>Recent content in 索引 on Rudy&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 17 Aug 2020 23:53:56 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MySQL索引相关概念（1）</title>
+      <link>https://rudychow.github.io/post/MySQL/MySQL%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/</link>
+      <pubDate>Mon, 17 Aug 2020 23:53:56 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/MySQL/MySQL%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/</guid>
+      <description>前缀索引（Index Prefixes） 前缀索引，即是你可以通过字段的前N个字符去创建一个索引。当你想为TEXT或者BLOB字段创建索引时，必须指定长度。 ## 创建测</description>
+    </item>
+    
+  </channel>
+</rss>

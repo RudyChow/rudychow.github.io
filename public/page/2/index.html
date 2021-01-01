@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+	<meta name="generator" content="Hugo 0.79.0" />
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Rudy&#39;s blog | 专业拧螺丝</title>
+    <meta property="og:title" content="Rudy&#39;s blog | 专业拧螺丝">
+    <meta property="og:type" content="website">
+    <meta name="Keywords" content="">
+    <meta name="description" content="">
+    <meta property="og:url" content="https://rudychow.github.io/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <link rel="alternate" type="application/rss+xml+xml" href="https://rudychow.github.io/index.xml" title="Rudy's blog" />
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <h1>
+                        <a id="logo" href="https://rudychow.github.io/">
+                            Rudy&#39;s blog
+                        </a>
+                    </h1>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/" title="Redis源码：多线程">Redis源码：多线程</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年11月15日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            Redis6 有了不少更新：ACL 权限、RESP3 协议、SSL等等，其中包括了多线程。 以往的 Redis 在处理网络 IO 时是单线程，在新版本中引入了多线程。默认是关闭的，需要修改配置进行……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/" title="Redis源码：内存淘汰策略">Redis源码：内存淘汰策略</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年11月6日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            当 Redis 的内存达到一定值时，会触发自身的内存淘汰策略，目的是为了避免内存的增长。Redis 内存相关的淘汰策略代码主要在src/evict.c里。 相关配置 配置文件中的……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/" title="Redis源码：aof">Redis源码：aof</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年11月1日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。 初始化 Redis 通过loadServer……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81rdb/" title="Redis源码：rdb">Redis源码：rdb</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月31日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            Redis 有两种数据持久化策略，其中一种是RDB（Redis database），属于快照持久化的方式。它分为主动备份和定时备份两种方式去运行。 主动备份 当执行save或者……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81rdb/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/" title="Redis源码：事务">Redis源码：事务</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月30日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            Redis 与事务相关的命令有：multi、discard、exec和watch。 multi、discard和exec这是一组命令，与MySQL的begin、rollba……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/" title="Redis源码：pub和sub">Redis源码：pub和sub</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月28日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            Redis 中使用订阅与发布同样可以达到 block 的效果。 数据结构 客户端： typedef struct client { dict *pubsub_channels; /* 普通订阅，key是channel，value为null */ list *pubsub_patterns; /* 匹配模式的订阅*/ } client; 服务端……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/" title="Redis源码：从bpop看block">Redis源码：从bpop看block</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月26日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            Redis 中可以通过brpop、blpop和brpoplpush来实现对列表的阻塞 pop 操作。 Redis 在处理主逻辑是单线程的，如果使用上述的命令进行阻塞操作的话，后面的请求也会一……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/" title="Redis源码：一个命令的执行流程">Redis源码：一个命令的执行流程</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月15日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析： 建立连接 建立连接要从acceptTcpHand……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81redisDB/" title="Redis源码：redisDB">Redis源码：redisDB</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月14日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            redisDB 即是 database，是 Redis 的数据库。它是变量server里的一个成员变量数组，数组大小默认是 16。 客户端默认使用第一个数据库，其间可以使用select进行 db 的……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81redisDB/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0main/" title="Redis源码：入口函数main">Redis源码：入口函数main</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月14日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            main 函数是程序执行的起点，也是大家就阅读源码的入口。要了解 Redis 的初始化和运行过程，还是要通过 main 函数入手。 已一个单机的 Redis 为例，main 函数主要可以分成以下几个步骤： 初……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0main/">阅读全文</a></p>
+    </article>
+    
+    
+
+
+
+<ol class="page-navigator">
+    
+    <li class="prev">
+        <a href="https://rudychow.github.io/">上一页</a>
+    </li>
+    
+
+    
+    <li >
+        <a href="https://rudychow.github.io/">1</a>
+    </li>
+    
+    <li  class="current">
+        <a href="https://rudychow.github.io/page/2/">2</a>
+    </li>
+    
+    <li >
+        <a href="https://rudychow.github.io/page/3/">3</a>
+    </li>
+    
+    <li >
+        <a href="https://rudychow.github.io/page/4/">4</a>
+    </li>
+    
+
+    
+    <li class="next">
+        <a href="https://rudychow.github.io/page/3/">下一页</a>
+    </li>
+    
+</ol>
+
+
+
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/" title="事务">事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/" title="undo日志">undo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/" title="B&#43;树二叉查询">B&#43;树二叉查询</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (9)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (23)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

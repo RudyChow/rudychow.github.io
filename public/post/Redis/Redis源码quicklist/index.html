@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Redis源码：quicklist | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Redis源码：quicklist - Rudy&#39;s blog">
+    <meta property="og:type" content="article">
+        
+    <meta property="article:published_time" content='2020-10-07T15:34:26&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2020-10-07T15:34:26&#43;08:00'>
+        
+    <meta name="Keywords" content="">
+    <meta name="description" content="Redis源码：quicklist">
+        
+    <meta name="author" content="Rudy">
+    <meta property="og:url" content="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81quicklist/">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href='/css/normalize.css'>
+    <link rel="stylesheet" href='/css/style.css'>
+    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    
+    
+    
+        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
+    
+    
+    
+    
+</head>
+
+
+<body>
+    <header id="header" class="clearfix">
+    <div class="container">
+        <div class="col-group">
+            <div class="site-name ">
+                
+                    <a id="logo" href="https://rudychow.github.io/">
+                        Rudy&#39;s blog
+                    </a>
+                
+                <p class="description">专业拧螺丝</p>
+            </div>
+            <div>
+                <nav id="nav-menu" class="clearfix">
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
+                    
+                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
+                    
+                    <a  href="https://github.com/RudyChow" title="github">github</a>
+                    
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <div id="body">
+        <div class="container">
+            <div class="col-group">
+
+                <div class="col-8" id="main">
+                    
+<div class="res-cons">
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#数据结构">数据结构</a></li>
+    <li><a href="#结语">结语</a></li>
+  </ul>
+</nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
+    <article class="post">
+        <header>
+            <h1 class="post-title">Redis源码：quicklist</h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月7日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        
+        
+        <div class="post-content">
+            <p>quicklist 全称是<code>a generic doubly linked quicklist</code>，从全称可以看得出这是一个节点存放 ziplist 的双向链表。我们常用的 list 功能，底层就是使用 quicklist 实现的。</p>
+<h2 id="数据结构">数据结构</h2>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 双向链表结构体
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> quicklist {
+    quicklistNode <span style="color:#719e07">*</span>head;
+    quicklistNode <span style="color:#719e07">*</span>tail;
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> count;        <span style="color:#586e75">/* total count of all entries in all ziplists */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> len;          <span style="color:#586e75">/* number of quicklistNodes */</span>
+    <span style="color:#dc322f">int</span> fill : <span style="color:#2aa198">16</span>;              <span style="color:#586e75">/* fill factor for individual nodes */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> compress : <span style="color:#2aa198">16</span>; <span style="color:#586e75">/* depth of end nodes not to compress;0=off */</span>
+} quicklist;
+<span style="color:#586e75">// 节点
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> quicklistNode {
+    <span style="color:#719e07">struct</span> quicklistNode <span style="color:#719e07">*</span>prev;
+    <span style="color:#719e07">struct</span> quicklistNode <span style="color:#719e07">*</span>next;
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> <span style="color:#719e07">*</span>zl;
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> sz;             <span style="color:#586e75">/* ziplist size in bytes */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> count : <span style="color:#2aa198">16</span>;     <span style="color:#586e75">/* count of items in ziplist */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> encoding : <span style="color:#2aa198">2</span>;   <span style="color:#586e75">/* RAW==1 or LZF==2 */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> container : <span style="color:#2aa198">2</span>;  <span style="color:#586e75">/* NONE==1 or ZIPLIST==2 */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> recompress : <span style="color:#2aa198">1</span>; <span style="color:#586e75">/* was this node previous compressed? */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> attempted_compress : <span style="color:#2aa198">1</span>; <span style="color:#586e75">/* node can&#39;t compress; too small */</span>
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> extra : <span style="color:#2aa198">10</span>; <span style="color:#586e75">/* more bits to steal for future usage */</span>
+} quicklistNode;
+<span style="color:#586e75">// 压缩后的结构体
+</span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> quicklistLZF {
+    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> sz; <span style="color:#586e75">/* LZF size in bytes*/</span>
+    <span style="color:#dc322f">char</span> compressed[];
+} quicklistLZF;
+</code></pre></div><p>简单一看，quicklist 和 quicklistNode 就已经组成了一个双向链表的基础结构。但是为了完全适应 ziplist，quicklist 额外记录了一些变量：</p>
+<ul>
+<li>
+<p>quicklist</p>
+<ul>
+<li>
+<p>len 与 count</p>
+<p>相比之前的 adlist，这里也用 len 记录了节点数。但是由于节点中是使用 ziplist 来存储数据，即一个节点可能存储多个数据，因此实际的数据量不能简单用 len 来获取。此处 quicklist 用 count 来记录了实际存储的数据量。因此获取数据量也是 O(1) 的复杂度。</p>
+</li>
+<li>
+<p>fill</p>
+<p>每个节点都有一个 ziplist，为了均衡分布每个节点的 ziplist 中存放的数据量，Redis 额外用 fill 字段来制定这个策略。</p>
+<p>fill 的范围是 [-5 ~ (1 &laquo; 15)]，默认值是 2。</p>
+<p>策略也分两种：一种是按 ziplist 字节大小，一种是按 ziplist 的 entry 个数。当<code>fill &lt; 0</code>时采取内存大小策略，<code>fill &gt; 0</code>时则采取数据量策略。</p>
+</li>
+<li>
+<p>compress</p>
+<p>我们对 list 常用的操作有：<code>lpush</code>、<code>lpop</code>、<code>rpush</code>、<code>rpop</code>，简单来说就是常对 list 的头尾进行操作。Redis 认为 quicklist 的中间部分是不常用的，所以中间部分节点可以使用压缩算法来对数据进行压缩。</p>
+<p>哪里才算是中间节点？compress 就是用来指定这个中间节点的界限的。</p>
+<p>compress 的范围是[ 0 ~ (1 &laquo; 16)] ，为 0 时表示不进行压缩。为 1 时表示头和尾两个节点不压缩，其余节点都压缩，为 2 时表示头和尾四个节点不压缩，其余节点都压缩，以此类推。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>quicklistNode</p>
+<ul>
+<li>
+<p>zl</p>
+<p>ziplist 指针，如果是具体数据被压缩，则指向压缩后的结构体 quicklistLZF。</p>
+</li>
+<li>
+<p>sz</p>
+<p>ziplist 的总大小。</p>
+</li>
+<li>
+<p>count</p>
+<p>count 表示 ziplist 中 entry 的个数，占 16 bits，最大值为 65536。</p>
+</li>
+<li>
+<p>encoding</p>
+<p>目前的数据是使用哪种方式存放，0 表示存的是源数据，1 表示存的是 LZF 压缩后的数据。</p>
+</li>
+<li>
+<p>container</p>
+<p>使用哪种方式存储值，0 为 none，1 为 ziplist。</p>
+</li>
+<li>
+<p>recompress</p>
+<p>解压标识，当数据被压缩时，需要解压，此时值为 1。</p>
+</li>
+<li>
+<p>attempted_compress</p>
+<p>源码中表示这个字段只用于测试：<code>attempted_compress: 1 bit, boolean, used for verifying during testing.</code>。</p>
+</li>
+<li>
+<p>extra</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="结语">结语</h2>
+<p>以前看《Redis设计与实现》时，书上说 list 的实现是 adlist。这次看源码，发现 list 在 Redis3 后已经使用 quicklist 来实现了。</p>
+<p>为什么要改用 quicklist 呢？</p>
+<ol>
+<li>
+<p>从数据结构来看</p>
+<p>我们对 list 常做的操作都是<code>push</code>或者<code>pop</code>，这意味着这些操作的复杂度约小越好。adlist 是双向链表，所以这些操作都能做到 O(1) 的复杂度。相同 ziplist 由于可以快速定位到首尾的 entry，所以这些操作在 ziplist 中的复杂度也是  O(1)。Redis 把两个数据结构结合起来，在 quicklist 里最优也能达到 O(1) 的复杂度。</p>
+</li>
+<li>
+<p>从内存出发</p>
+<p>过去在 adlist 中，添加一个数据，就要产生一个新的 node。这些节点地址一般都不连续的，容易产生内存碎片。而 ziplist 是一个连续的内存空间的数据结构，内存使用上更加少。并且在 quicklist 中也增加了压缩操作，更加节省了内存。</p>
+</li>
+</ol>
+<p>当然 quicklist 较之前的 adlist 也有缺点。代码复杂度提高了、频繁地增删数据也可能造成频繁地压缩解压操作、ziplist 频繁变动也会导致内存重新分配等等。</p>
+<p>由于 quicklist 的具体 api 的代码实现比较多，而且阅读代码的目的是快速深入了解 Redis，所以只进行了简单阅读。</p>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
+        </div>
+    </article>
+    
+    
+
+    
+    
+</div>
+
+                    <footer id="footer">
+    <div>
+        &copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        
+    </div>
+    <br />
+    <div>
+        <div class="github-badge">
+            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
+        </div>
+        <div class="github-badge">
+            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
+        </div>
+    </div>
+</footer>
+
+
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+<a id="rocket" href="#top"></a>
+<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
+
+
+
+
+
+
+                </div>
+
+                <div id="secondary">
+    <section class="widget">
+        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
+      
+      <input type="text" name="q" maxlength="20" placeholder="Search">
+      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
+      <button type="submit" class="submit icon-search"></button>
+</form>
+    </section>
+    
+    <section class="widget">
+        <h3 class="widget-title">最近文章</h3>
+<ul class="widget-list">
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/" title="事务">事务</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/" title="undo日志">undo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/" title="B&#43;树二叉查询">B&#43;树二叉查询</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
+    </li>
+    
+</ul>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/categories">分类</a></h3>
+<ul class="widget-list">
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (9)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (23)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
+    
+</ul>
+    </section>
+
+    <section class="widget">
+        <h3 class="widget-title"><a href="/tags">标签</a></h3>
+<div class="tagcloud">
+    
+    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
+    
+    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
+    
+    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
+    
+</div>
+    </section>
+
+    
+
+    <section class="widget">
+        <h3 class="widget-title">其它</h3>
+        <ul class="widget-list">
+            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
+        </ul>
+    </section>
+</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
