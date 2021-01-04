@@ -138,6 +138,7 @@
   <ul>
     <li><a href="#特性">特性</a></li>
     <li><a href="#隔离级别">隔离级别</a></li>
+    <li><a href="#小结">小结</a></li>
     <li><a href="#参考">参考</a></li>
   </ul>
 </nav>
@@ -285,6 +286,72 @@
 </ol>
 <p>基于上述判断，如果记录不可见，则尝试使用 undo log 去构建老的版本，直到找到可以被看见的记录或者解析完所有的 undo log。</p>
 </blockquote>
+<h2 id="小结">小结</h2>
+<p>简要总结以下四种隔离隔离级别：</p>
+<ul>
+<li>
+<p><code>READ UNCOMMITTED</code></p>
+<ul>
+<li>
+<p>非锁定读</p>
+<p>此时 select 是直接读取记录的最新版本，所以会读到其它事务修改过但未提交的记录，即<strong>脏读</strong>。</p>
+</li>
+<li>
+<p>锁定读</p>
+<p>聚簇索引读命中时，加记录锁，不命中时不需要加锁。</p>
+<p>通过二级索引读时，二级索引和聚簇索引都需要加锁。</p>
+<p>没有索引时，给全部记录加记录锁，但是 server 层进行条件过滤后发现不满足条件时，则会解锁（违背 2PL，因为解锁发生在 rollback 或者 commit 前）。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><code>READ COMMITTED</code></p>
+<ul>
+<li>
+<p>非锁定读</p>
+<p>此时每次 select 都会生成一个当前的<code>ReadView</code>，然后按照记录版本链的顺序去判断是否可读，所以不会产生<strong>脏读</strong>，但是由于<code>ReadView</code>在每次 select 都可能变化，所以会产生<strong>不可重复读</strong>。</p>
+</li>
+<li>
+<p>锁定读</p>
+<p>和 RU 级别一致。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><code>REPEATABLE READ</code></p>
+<ul>
+<li>
+<p>非锁定读</p>
+<p>事务开启后的第一个 select 会产生<code>ReadView</code>，并且有且只会产生一个，所以不会产生<strong>不可重复读</strong>。</p>
+</li>
+<li>
+<p>锁定读</p>
+<p>聚簇索引读命中时，加记录锁，不命中时在读的值加 GAP 锁。</p>
+<p>通过二级唯一索引读时，二级唯一索引和聚簇索引都需要加锁，二级唯一索引没命中时，加 GAP 锁。</p>
+<p>通过二级非普通索引读时，二级索引加记录锁和 GAP 锁（防止插入相同数据），聚簇索引加记录锁。二级索引没命中时，加 GAP 锁。</p>
+<p>无索引时，所有记录加记录锁，并且加 GAP 锁。</p>
+<p>因为在 RR 级别会加 GAP 锁，insert 时的插入意向锁会阻塞，所以不会产生<strong>幻读</strong>。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><code>SERIALIZABLE</code></p>
+<ul>
+<li>
+<p>非锁定读</p>
+<p>如果是自动提交的事务，则会产生<code>ReadView</code>去读取数据。</p>
+</li>
+<li>
+<p>锁定读</p>
+<p>如果是开启的事务，或者非自动提交的事务，则所有 select 都会加上 S 锁。其余和 RR 一致。</p>
+</li>
+<li>
+<p>其它</p>
+<p>可开启 XA 事务。</p>
+</li>
+</ul>
+</li>
+</ul>
 <h2 id="参考">参考</h2>
 <p>- <a href="http://mysql.taobao.org/monthly/2017/12/01/">MySQL · 引擎特性 · InnoDB 事务系统</a></p>
 
@@ -311,7 +378,7 @@
 
                     <footer id="footer">
     <div>
-        &copy; 2020 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
+        &copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
         
     </div>
     <br />
@@ -365,6 +432,10 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/" title="Join算法">Join算法</a>
+    </li>
+    
+    <li>
         <a href="https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/" title="事务">事务</a>
     </li>
     
@@ -400,10 +471,6 @@
         <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
     </li>
     
-    <li>
-        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
-    </li>
-    
 </ul>
     </section>
 
@@ -415,7 +482,7 @@
     
     <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
     
-    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (9)</a></li>
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (10)</a></li>
     
     <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
     

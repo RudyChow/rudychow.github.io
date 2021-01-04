@@ -6,7 +6,16 @@
     <description>Recent content in MySQL on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Mon, 28 Dec 2020 22:58:32 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/MySQL/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 03 Jan 2021 23:42:34 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/MySQL/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Join算法</title>
+      <link>https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/</link>
+      <pubDate>Sun, 03 Jan 2021 23:42:34 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/</guid>
+      <description>MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。 Hash Join Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段： build 构建阶段下，MySQL 会将小的表作为构建，构建的</description>
+    </item>
+    
     <item>
       <title>事务</title>
       <link>https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/</link>
