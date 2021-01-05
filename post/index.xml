@@ -6,7 +6,16 @@
     <description>Recent content in Posts on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sun, 03 Jan 2021 23:42:34 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 05 Jan 2021 23:38:36 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>查询语句的访问方式</title>
+      <link>https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/</link>
+      <pubDate>Tue, 05 Jan 2021 23:38:36 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/</guid>
+      <description>简单总结一下 MySQL 表的访问方式： 等值 const： 最多只能有一个匹配记录，这个方式应用在聚簇索引或唯一索引上。 eq_ref： 和 const 差不多的性能，不过用在连表上。当连接的</description>
+    </item>
+    
     <item>
       <title>Join算法</title>
       <link>https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/</link>
