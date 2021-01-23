@@ -6,20 +6,20 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Vscode下使用GDB调试Redis | Rudy&#39;s blog</title>
-    <meta property="og:title" content="Vscode下使用GDB调试Redis - Rudy&#39;s blog">
+    <title>iproute2 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="iproute2 - Rudy&#39;s blog">
     <meta property="og:type" content="article">
         
-    <meta property="article:published_time" content='2020-12-13T13:45:54&#43;08:00'>
+    <meta property="article:published_time" content='2021-01-23T13:59:11&#43;08:00'>
         
         
-    <meta property="article:modified_time" content='2020-12-13T13:45:54&#43;08:00'>
+    <meta property="article:modified_time" content='2021-01-23T13:59:11&#43;08:00'>
         
     <meta name="Keywords" content="">
-    <meta name="description" content="Vscode下使用GDB调试Redis">
+    <meta name="description" content="iproute2">
         
     <meta name="author" content="Rudy">
-    <meta property="og:url" content="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/">
+    <meta property="og:url" content="https://rudychow.github.io/post/Linux/iproute2/">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 
     <link rel="stylesheet" href='/css/normalize.css'>
@@ -134,7 +134,19 @@
 <div class="post-toc" style="position: absolute; top: 188px;">
     <h2 class="post-toc-title">文章目录</h2>
     <div class="post-toc-content">
-        <nav id="TableOfContents"></nav>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#ip">ip</a>
+      <ul>
+        <li><a href="#ip-link">ip link</a></li>
+        <li><a href="#ip-addr">ip addr</a></li>
+        <li><a href="#ip-route">ip route</a></li>
+        <li><a href="#ip-neigh">ip neigh</a></li>
+      </ul>
+    </li>
+    <li><a href="#ss">ss</a></li>
+  </ul>
+</nav>
     </div>
 </div>
 <script type="text/javascript">
@@ -166,72 +178,89 @@
 </script>
     <article class="post">
         <header>
-            <h1 class="post-title">Vscode下使用GDB调试Redis</h1>
+            <h1 class="post-title">iproute2</h1>
         </header>
         <date class="post-meta meta-date">
-            2020年12月13日
+            2021年1月23日
         </date>
         
         <div class="post-meta">
             <span>|</span>
             
-            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Linux'>Linux</a></span>
             
         </div>
         
         
         
         <div class="post-content">
-            <ol>
-<li>配置<code>.vscode/launch.json</code>：</li>
-</ol>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
-    <span style="color:#268bd2">&#34;version&#34;</span>: <span style="color:#2aa198">&#34;0.2.0&#34;</span>,
-    <span style="color:#268bd2">&#34;configurations&#34;</span>: [
-        {
-            <span style="color:#268bd2">&#34;name&#34;</span>: <span style="color:#2aa198">&#34;redis启动&#34;</span>,
-            <span style="color:#268bd2">&#34;type&#34;</span>: <span style="color:#2aa198">&#34;cppdbg&#34;</span>,
-            <span style="color:#268bd2">&#34;request&#34;</span>: <span style="color:#2aa198">&#34;launch&#34;</span>,
-            <span style="color:#268bd2">&#34;program&#34;</span>: <span style="color:#2aa198">&#34;${workspaceFolder}/src/redis-server&#34;</span>,
-            <span style="color:#268bd2">&#34;args&#34;</span>: [<span style="color:#2aa198">&#34;${workspaceFolder}/redis.conf&#34;</span>],
-            <span style="color:#268bd2">&#34;stopAtEntry&#34;</span>: <span style="color:#cb4b16">false</span>,
-            <span style="color:#268bd2">&#34;cwd&#34;</span>: <span style="color:#2aa198">&#34;${workspaceFolder}&#34;</span>,
-            <span style="color:#268bd2">&#34;environment&#34;</span>: [],
-            <span style="color:#268bd2">&#34;externalConsole&#34;</span>: <span style="color:#cb4b16">false</span>,
-            <span style="color:#268bd2">&#34;MIMode&#34;</span>: <span style="color:#2aa198">&#34;gdb&#34;</span>,
-            <span style="color:#268bd2">&#34;preLaunchTask&#34;</span>: <span style="color:#2aa198">&#34;make redis&#34;</span>,
-            <span style="color:#268bd2">&#34;setupCommands&#34;</span>: [
-                {
-                    <span style="color:#268bd2">&#34;description&#34;</span>: <span style="color:#2aa198">&#34;为 gdb 启用整齐打印&#34;</span>,
-                    <span style="color:#268bd2">&#34;text&#34;</span>: <span style="color:#2aa198">&#34;-enable-pretty-printing&#34;</span>,
-                    <span style="color:#268bd2">&#34;ignoreFailures&#34;</span>: <span style="color:#cb4b16">true</span>
-                }
-            ]
-        }
-    ]
-}
-</code></pre></div><ol start="2">
-<li>配置<code>.vscode/tasks.json</code>：</li>
-</ol>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
-    <span style="color:#268bd2">&#34;version&#34;</span>: <span style="color:#2aa198">&#34;2.0.0&#34;</span>,
-    <span style="color:#268bd2">&#34;tasks&#34;</span>: [
-        {
-            <span style="color:#268bd2">&#34;label&#34;</span>: <span style="color:#2aa198">&#34;make redis&#34;</span>,
-            <span style="color:#268bd2">&#34;type&#34;</span>: <span style="color:#2aa198">&#34;shell&#34;</span>,
-            <span style="color:#268bd2">&#34;command&#34;</span>: <span style="color:#2aa198">&#34;make&#34;</span>,
-            <span style="color:#268bd2">&#34;args&#34;</span>: [
-                <span style="color:#2aa198">&#34;CFLAGS=\&#34;-g -O0\&#34;&#34;</span>
-            ],
-            <span style="color:#268bd2">&#34;options&#34;</span>: {
-                <span style="color:#268bd2">&#34;cwd&#34;</span>: <span style="color:#2aa198">&#34;${workspaceFolder}/src&#34;</span>
-            }
-        }
-    ]
-}
-</code></pre></div><ol start="3">
-<li>Start Debugging</li>
-</ol>
+            <p>大部分 Linux 中已经不再使用<code>net-tools</code>来进行网络配置了（包括我目前在用的 Manjaro 也是），所以有必要熟悉<code>iproute2</code>相关的命令。<code>net-tools</code>中主要使用<code>ifconfig</code>、<code>route</code>、<code>arp</code>和<code>netstat</code>，而<code>iproute2</code>中也有对应的<code>ip</code>和<code>ss</code>命令来替代。</p>
+<table>
+<thead>
+<tr>
+<th>net-tools</th>
+<th>iproute2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ifconfig</td>
+<td>ip link/ip addr</td>
+</tr>
+<tr>
+<td>route</td>
+<td>ip route</td>
+</tr>
+<tr>
+<td>arp</td>
+<td>ip neigh</td>
+</tr>
+<tr>
+<td>netstat</td>
+<td>ss</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ip">ip</h2>
+<p>这个是<code>iproute2</code>中主要的命令，可以替代<code>net-tools</code>的<code>ifconfig</code>、<code>route</code>和<code>arp</code>。</p>
+<h3 id="ip-link">ip link</h3>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看网络设备，但是不会查看到ip</span>
+ip link
+<span style="color:#586e75"># 启动/关闭某个网卡</span>
+ip link <span style="color:#b58900">set</span> interface up/down
+</code></pre></div><h3 id="ip-addr">ip addr</h3>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看每个网络设备上的ip</span>
+ip addr
+<span style="color:#586e75"># 查看指定的网卡</span>
+ip addr show dev device
+<span style="color:#586e75"># 为指定网卡添加/删除ip地址</span>
+ip addr add/del IPv4/IPv6 dev device
+<span style="color:#586e75"># 清除指定网卡的所有ip</span>
+ip addr flush dev device
+</code></pre></div><h3 id="ip-route">ip route</h3>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看路由表</span>
+ip route
+<span style="color:#586e75"># 启动/关闭某个网卡</span>
+ip link <span style="color:#b58900">set</span> interface up/down
+</code></pre></div><p><code>ip route</code>和<code>route</code>显示的格式不太一样：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-node1 vagrant<span style="color:#719e07">]</span><span style="color:#586e75"># ip route</span>
+default via 192.168.9.1 dev eth1 proto dhcp metric <span style="color:#2aa198">100</span> 
+default via 10.0.2.2 dev eth0 proto dhcp metric <span style="color:#2aa198">101</span> 
+10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric <span style="color:#2aa198">101</span> 
+192.168.9.0/24 dev eth1 proto kernel scope link src 192.168.9.107 metric <span style="color:#2aa198">100</span> 
+</code></pre></div><p>以<code>default via 192.168.9.1 dev eth1 proto dhcp metric 100 </code>为例简单解读：</p>
+<p>目标网段不在路由记录中时，网络请求都经过网卡 eth1 发送给网关 192.168.9.1。</p>
+<p>以<code>10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric 101  </code>为例简单解读：</p>
+<p>默认发送给 10.0.2.0/24 的网络请求，都经过网卡 eth0 发出去寻找目标 IP，src 表示 eth0 网卡的 IP 地址。（同一网段内的两台机器不需要经过网关）</p>
+<h3 id="ip-neigh">ip neigh</h3>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看arp表</span>
+ip neigh
+<span style="color:#586e75"># 添加ARP</span>
+ip neigh add IPv4 lladdr mac dev divice
+<span style="color:#586e75"># 删除ARP</span>
+ip neigh del IPv4 dev device
+</code></pre></div><h2 id="ss">ss</h2>
+<p><code>ss</code>和<code>netstat</code>的选项基本一样，这里就不记录了。</p>
 
         </div>
 

@@ -79,6 +79,52 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/">查询语句的访问方式</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年1月5日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='https://rudychow.github.io/categories/MySQL'>MySQL</a>
+            
+        </div>
+        
+        <div class="post-content">
+            简单总结一下 MySQL 表的访问方式： 等值 const： 最多只能有一个匹配记录，这个方式应用在聚簇索引或唯一索引上。 eq_ref： 和 const 差不多的性能，不过用在连表上。当连接的……
+            <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/">Join算法</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年1月3日
+        </date>
+        
+        <div class="post-meta meta-category">
+            |
+            
+            <a href='https://rudychow.github.io/categories/MySQL'>MySQL</a>
+            
+        </div>
+        
+        <div class="post-content">
+            MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。 Hash Join Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段： build 构建阶段下，MySQL 会将小的表作为构建，构建的……
+            <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/">阅读全文</a></p>
+        </div>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/">事务</a>
             </h1>
         </header>
@@ -260,33 +306,30 @@
         </div>
     </article>
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://rudychow.github.io/post/MySQL/MySQL%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/">MySQL索引相关概念（1）</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2020年8月17日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='https://rudychow.github.io/categories/MySQL'>MySQL</a>
-            
-        </div>
-        
-        <div class="post-content">
-            前缀索引（Index Prefixes） 前缀索引，即是你可以通过字段的前N个字符去创建一个索引。当你想为TEXT或者BLOB字段创建索引时，必须指定长度。 ## 创建测……
-            <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/MySQL%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/">阅读全文</a></p>
-        </div>
-    </article>
-    
 
     
 
 
+
+<ol class="page-navigator">
+    
+
+    
+    <li  class="current">
+        <a href="https://rudychow.github.io/categories/MySQL/">1</a>
+    </li>
+    
+    <li >
+        <a href="https://rudychow.github.io/categories/MySQL/page/2/">2</a>
+    </li>
+    
+
+    
+    <li class="next">
+        <a href="https://rudychow.github.io/categories/MySQL/page/2/">下一页</a>
+    </li>
+    
+</ol>
 
 
 
@@ -338,6 +381,18 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://rudychow.github.io/post/Linux/iproute2/" title="iproute2">iproute2</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/" title="查询语句的访问方式">查询语句的访问方式</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/" title="Join算法">Join算法</a>
+    </li>
+    
+    <li>
         <a href="https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/" title="事务">事务</a>
     </li>
     
@@ -365,18 +420,6 @@
         <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
     </li>
     
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎">《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/" title="Redis源码阅读阶段总结">Redis源码阅读阶段总结</a>
-    </li>
-    
 </ul>
     </section>
 
@@ -386,9 +429,9 @@
         <h3 class="widget-title"><a href="/categories">分类</a></h3>
 <ul class="widget-list">
     
-    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (2)</a></li>
     
-    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (9)</a></li>
+    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (11)</a></li>
     
     <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
     
