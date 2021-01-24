@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-cn">
 <head>
-	<meta name="generator" content="Hugo 0.79.0" />
+	<meta name="generator" content="Hugo 0.80.0" />
 
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -66,6 +66,52 @@
                 <div class="col-8" id="main">
                     
 <div class="res-cons">
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/" title="Calico个人理解">Calico个人理解</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年1月24日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/K8S'>K8S</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            docker 的桥接网络 开启 docker 进程后，docker 会开启虚拟网桥（可以理解为 Linux 内的虚拟交换机）。 通过ip addr可以看到系统多出一个网卡docker0，通常 IP 是172.17……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Linux/iproute2/" title="iproute2">iproute2</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2021年1月23日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Linux'>Linux</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            大部分 Linux 中已经不再使用net-tools来进行网络配置了（包括我目前在用的 Manjaro 也是），所以有必要熟悉iproute2相关的命令。net-tools中主要使用ifc……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Linux/iproute2/">阅读全文</a></p>
+    </article>
     
     <article class="post">
         <header>
@@ -251,52 +297,6 @@
         <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/">阅读全文</a></p>
     </article>
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2020年12月5日
-        </date>
-        
-        <div class="post-meta">
-            <span>|</span>
-            
-            <span class="meta-category"><a href='https://rudychow.github.io/categories/MySQL'>MySQL</a></span>
-            
-        </div>
-        
-        <div class="post-content">
-            这一章节重点在 bin log 以及 InnoDB 存储引擎文件。 参数文件 MySQL 实例启动时，会先读一个配置参数文件，用来寻找数据库的各种文件所在位置以及指定某些初始化参数，用户可以通过怕命令m……
-        </div>
-        <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/">阅读全文</a></p>
-    </article>
-    
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2020年12月4日
-        </date>
-        
-        <div class="post-meta">
-            <span>|</span>
-            
-            <span class="meta-category"><a href='https://rudychow.github.io/categories/MySQL'>MySQL</a></span>
-            
-        </div>
-        
-        <div class="post-content">
-            这一章节随便拿出一小节都可以单独写一篇文章，这里仅做笔记和总结。 体系架构 后台线程 InnoDB 存储引擎是多线程的模型，因此后台有多个不同的后台线程，负责处理不同的任务。 Master Thread……
-        </div>
-        <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/">阅读全文</a></p>
-    </article>
-    
     
 
 
@@ -319,6 +319,10 @@
     
     <li >
         <a href="https://rudychow.github.io/page/4/">4</a>
+    </li>
+    
+    <li >
+        <a href="https://rudychow.github.io/page/5/">5</a>
     </li>
     
 
@@ -379,6 +383,14 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/" title="Calico个人理解">Calico个人理解</a>
+    </li>
+    
+    <li>
+        <a href="https://rudychow.github.io/post/Linux/iproute2/" title="iproute2">iproute2</a>
+    </li>
+    
+    <li>
         <a href="https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/" title="查询语句的访问方式">查询语句的访问方式</a>
     </li>
     
@@ -410,14 +422,6 @@
         <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
     </li>
     
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" title="《InnoDB存储引擎》笔记：InnoDB存储引擎">《InnoDB存储引擎》笔记：InnoDB存储引擎</a>
-    </li>
-    
 </ul>
     </section>
 
@@ -427,7 +431,9 @@
         <h3 class="widget-title"><a href="/categories">分类</a></h3>
 <ul class="widget-list">
     
-    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (1)</a></li>
+    <li><a href="https://rudychow.github.io/categories/K8S/">K8S (1)</a></li>
+    
+    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (2)</a></li>
     
     <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (11)</a></li>
     

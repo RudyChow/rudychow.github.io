@@ -6,7 +6,25 @@
     <description>Recent content in Posts on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 05 Jan 2021 23:38:36 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 24 Jan 2021 12:41:09 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Calico个人理解</title>
+      <link>https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/</link>
+      <pubDate>Sun, 24 Jan 2021 12:41:09 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/</guid>
+      <description>docker 的桥接网络 开启 docker 进程后，docker 会开启虚拟网桥（可以理解为 Linux 内的虚拟交换机）。 通过ip addr可以看到系统多出一个网卡docker0，通常 IP 是172.17</description>
+    </item>
+    
+    <item>
+      <title>iproute2</title>
+      <link>https://rudychow.github.io/post/Linux/iproute2/</link>
+      <pubDate>Sat, 23 Jan 2021 13:59:11 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/Linux/iproute2/</guid>
+      <description>大部分 Linux 中已经不再使用net-tools来进行网络配置了（包括我目前在用的 Manjaro 也是），所以有必要熟悉iproute2相关的命令。net-tools中主要使用ifc</description>
+    </item>
+    
     <item>
       <title>查询语句的访问方式</title>
       <link>https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/</link>
@@ -306,10 +324,10 @@
     
     <item>
       <title>Linux源码：select浅析</title>
-      <link>https://rudychow.github.io/post/Linux%E6%BA%90%E7%A0%81select/</link>
+      <link>https://rudychow.github.io/post/Linux/Linux%E6%BA%90%E7%A0%81select/</link>
       <pubDate>Wed, 09 Sep 2020 22:28:29 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Linux%E6%BA%90%E7%A0%81select/</guid>
+      <guid>https://rudychow.github.io/post/Linux/Linux%E6%BA%90%E7%A0%81select/</guid>
       <description>因为 Linux 源码中 select 的代码量不多，所以尝试阅读一下 select 的源码。阅读过程主要以读懂基础流程为主，对于尚未理解或者过于难懂的地方暂时略过。（下面以 Linux5.7 为准） 通过man 2 sel</description>
     </item>
     

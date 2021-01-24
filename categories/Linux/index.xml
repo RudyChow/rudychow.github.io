@@ -6,13 +6,22 @@
     <description>Recent content in Linux on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Wed, 09 Sep 2020 22:28:29 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/Linux/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 23 Jan 2021 13:59:11 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/Linux/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>iproute2</title>
+      <link>https://rudychow.github.io/post/Linux/iproute2/</link>
+      <pubDate>Sat, 23 Jan 2021 13:59:11 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/Linux/iproute2/</guid>
+      <description>大部分 Linux 中已经不再使用net-tools来进行网络配置了（包括我目前在用的 Manjaro 也是），所以有必要熟悉iproute2相关的命令。net-tools中主要使用ifc</description>
+    </item>
+    
     <item>
       <title>Linux源码：select浅析</title>
-      <link>https://rudychow.github.io/post/Linux%E6%BA%90%E7%A0%81select/</link>
+      <link>https://rudychow.github.io/post/Linux/Linux%E6%BA%90%E7%A0%81select/</link>
       <pubDate>Wed, 09 Sep 2020 22:28:29 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Linux%E6%BA%90%E7%A0%81select/</guid>
+      <guid>https://rudychow.github.io/post/Linux/Linux%E6%BA%90%E7%A0%81select/</guid>
       <description>因为 Linux 源码中 select 的代码量不多，所以尝试阅读一下 select 的源码。阅读过程主要以读懂基础流程为主，对于尚未理解或者过于难懂的地方暂时略过。（下面以 Linux5.7 为准） 通过man 2 sel</description>
     </item>
     
