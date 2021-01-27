@@ -70,6 +70,29 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年12月6日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/MySQL'>MySQL</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            结合最近的学习总结一下 redo log 相关的知识，以及回答之前的困惑。 redo log 与 bin log 这两个日志是我之前经常迷惑的地方，因为两者在不同层面上都能实现恢复数据的效果。 要了解两者的区……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/" title="《InnoDB存储引擎》笔记：文件">《InnoDB存储引擎》笔记：文件</a>
             </h1>
         </header>
@@ -274,29 +297,6 @@
         <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/">阅读全文</a></p>
     </article>
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/" title="Redis源码：pub和sub">Redis源码：pub和sub</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2020年10月28日
-        </date>
-        
-        <div class="post-meta">
-            <span>|</span>
-            
-            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
-            
-        </div>
-        
-        <div class="post-content">
-            Redis 中使用订阅与发布同样可以达到 block 的效果。 数据结构 客户端： typedef struct client { dict *pubsub_channels; /* 普通订阅，key是channel，value为null */ list *pubsub_patterns; /* 匹配模式的订阅*/ } client; 服务端……
-        </div>
-        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/">阅读全文</a></p>
-    </article>
-    
     
 
 
@@ -387,6 +387,10 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/" title="Ingress Nginx 部署">Ingress Nginx 部署</a>
+    </li>
+    
+    <li>
         <a href="https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/" title="Calico个人理解">Calico个人理解</a>
     </li>
     
@@ -422,10 +426,6 @@
         <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
     </li>
     
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
-    </li>
-    
 </ul>
     </section>
 
@@ -435,7 +435,7 @@
         <h3 class="widget-title"><a href="/categories">分类</a></h3>
 <ul class="widget-list">
     
-    <li><a href="https://rudychow.github.io/categories/K8S/">K8S (1)</a></li>
+    <li><a href="https://rudychow.github.io/categories/K8S/">K8S (2)</a></li>
     
     <li><a href="https://rudychow.github.io/categories/Linux/">Linux (2)</a></li>
     

@@ -6,20 +6,20 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Nginx客户端断开连接的日志记录 | Rudy&#39;s blog</title>
-    <meta property="og:title" content="Nginx客户端断开连接的日志记录 - Rudy&#39;s blog">
+    <title>Ingress Nginx 部署 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="Ingress Nginx 部署 - Rudy&#39;s blog">
     <meta property="og:type" content="article">
         
-    <meta property="article:published_time" content='2020-07-20T23:27:34&#43;08:00'>
+    <meta property="article:published_time" content='2021-01-27T20:01:41&#43;08:00'>
         
         
-    <meta property="article:modified_time" content='2020-07-20T23:27:34&#43;08:00'>
+    <meta property="article:modified_time" content='2021-01-27T20:01:41&#43;08:00'>
         
     <meta name="Keywords" content="">
-    <meta name="description" content="Nginx客户端断开连接的日志记录">
+    <meta name="description" content="Ingress Nginx 部署">
         
     <meta name="author" content="Rudy">
-    <meta property="og:url" content="https://rudychow.github.io/post/Nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/">
+    <meta property="og:url" content="https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 
     <link rel="stylesheet" href='/css/normalize.css'>
@@ -134,17 +134,7 @@
 <div class="post-toc" style="position: absolute; top: 188px;">
     <h2 class="post-toc-title">文章目录</h2>
     <div class="post-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#测试环境">测试环境</a>
-      <ul>
-        <li><a href="#场景1主动断开连接">场景1：主动断开连接</a></li>
-        <li><a href="#场景2异常断开连接">场景2：异常断开连接</a></li>
-      </ul>
-    </li>
-    <li><a href="#结语">结语</a></li>
-  </ul>
-</nav>
+        <nav id="TableOfContents"></nav>
     </div>
 </div>
 <script type="text/javascript">
@@ -176,68 +166,132 @@
 </script>
     <article class="post">
         <header>
-            <h1 class="post-title">Nginx客户端断开连接的日志记录</h1>
+            <h1 class="post-title">Ingress Nginx 部署</h1>
         </header>
         <date class="post-meta meta-date">
-            2020年7月20日
+            2021年1月27日
         </date>
         
         <div class="post-meta">
             <span>|</span>
             
-            <span class="meta-category"><a href='https://rudychow.github.io/categories/Nginx'>Nginx</a></span>
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/K8S'>K8S</a></span>
             
         </div>
         
         
         
         <div class="post-content">
-            <p>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。
-同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。</p>
-<h2 id="测试环境">测试环境</h2>
-<pre><code>+----------+        +---------+        +----------+
-|          |        |         |        |          |
-|          |  http  |         |upstream|  server  |
-|  client  &lt;--------&gt;  Nginx  +-------&gt;+          |
-|          |        |         |        |sleep(20s)|
-|          |        |         |        |          |
-+----------+        +---------+        +----------+
-
-</code></pre><h3 id="场景1主动断开连接">场景1：主动断开连接</h3>
-<p>测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。</p>
-<p>经过抓包得到客户端和服务端的连接信息：</p>
-<p>
-        <a data-fancybox="gallery" href="/pics/nginx-client-close-200.png">
-            <img class="mx-auto" alt="nginx-client-close-200" src="/pics/nginx-client-close-200.png" />
-        </a>
-    </p>
-<p>通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。</p>
-<p>此时Nginx记录的日志如下：</p>
-<pre><code>172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] &quot;GET / HTTP/1.1&quot; 499 0 &quot;-&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&quot; &quot;-&quot;
-</code></pre><blockquote>
-<p>HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">/*
-</span><span style="color:#586e75">* HTTP does not define the code for the case when a client closed
-</span><span style="color:#586e75">* the connection while we are processing its request so we introduce
-</span><span style="color:#586e75">* own code to log such situation when a client has closed the connection
-</span><span style="color:#586e75">* before we even try to send the HTTP header to it
-</span><span style="color:#586e75">*/</span>
-<span style="color:#719e07">#define NGX_HTTP_CLIENT_CLOSED_REQUEST     499
-</span></code></pre></div></blockquote>
-<h3 id="场景2异常断开连接">场景2：异常断开连接</h3>
-<p>测试行为：手机对Nginx发起请求，并在Nginx响应前切换网络环境，以达到异常断开目的，此后观察结果</p>
-<p>
-        <a data-fancybox="gallery" href="/pics/nginx-client-close-499.png">
-            <img class="mx-auto" alt="nginx-client-close-200" src="/pics/nginx-client-close-499.png" />
-        </a>
-    </p>
-<p>序号106中，Nginx已经处理完server的请求，并且响应结果给客户端。</p>
-<pre><code>172.20.0.1 - - [20/Jul/2020:14:44:16 +0000] &quot;GET / HTTP/1.1&quot; 200 22 &quot;-&quot; &quot;Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1&quot; &quot;-&quot;
-</code></pre><p>序号107～289，是服务端对客户端进行的重传。</p>
-<p>序号318，服务端对客户端发起RST，强制中断连接。</p>
-<h2 id="结语">结语</h2>
-<p>在客户端主动断开时（即TCP正常地发起挥手行为），Nginx会进行状态码为499的日志记录。</p>
-<p>在客户端异常断开时（网络切换、断网等等原因），Nginx会记录200的成功日志。至于为什么，只有后面看Nginx源码才能知道原因。</p>
+            <p>前提：</p>
+<ol>
+<li>ingress 中 Nginx 的组件有两个，一个是 kubernetes 提供的，叫<a href="https://github.com/kubernetes/ingress-nginx"><code>Ingress Nginx</code></a>，一个是 Nginx 提供的，叫<a href="https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/"><code>Nginx ingress</code></a>，这里以<code>Ingress Nginx</code>为例。</li>
+<li>因为网上大部分的安装教程因为版本和时间的差别，导致很多问题，所以此处以<a href="https://kubernetes.github.io/ingress-nginx/deploy/">官网文档</a>为准。</li>
+<li>我所使用的 k8s 版本是 1.20.2。</li>
+</ol>
+<p>安装步骤：</p>
+<ol>
+<li>
+<p>执行 yaml</p>
+<p>因为自己是裸机环境，所以按照官网教程的<code>Bare-metal</code>去进行部署，需要执行<code>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.43.0/deploy/static/provider/baremetal/deploy.yaml</code>。</p>
+<p>这里会自动拉取<code>k8s.gcr.io/ingress-nginx/controller:v0.43.0@sha256:9bba603b99bf25f6d117cf1235b6598c16033ad027b143c90fa5b3cc583c5713</code>镜像。由于某些原因，可以通过先提前拉取别人做好的 image。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ docker pull pollyduan/ingress-nginx-controller:v0.43.0
+$ docker tag pollyduan/ingress-nginx-controller:v0.43.0  k8s.gcr.io/ingress-nginx/controller:v0.43.0
+</code></pre></div><p>由于 yaml 拉取镜像时会进行镜像校验，所以需要下载 yaml 下来并且去掉校验和。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ sed -i <span style="color:#2aa198">&#39;s/@sha256:9bba603b99bf25f6d117cf1235b6598c16033ad027b143c90fa5b3cc583c5713//&#39;</span> ingress-nginx.yaml
+</code></pre></div><p>安装完后测试是否成功。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># kubectl get svc -n ingress-nginx</span>
+NAME                                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span style="color:#719e07">(</span>S<span style="color:#719e07">)</span>                      AGE
+ingress-nginx-controller             NodePort    10.96.168.229   &lt;none&gt;        80:31445/TCP,443:31344/TCP   44m
+ingress-nginx-controller-admission   ClusterIP   10.96.4.89      &lt;none&gt;        443/TCP                      44m
+<span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># curl 10.96.168.229</span>
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;404 Not Found&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+&lt;center&gt;&lt;h1&gt;404 Not Found&lt;/h1&gt;&lt;/center&gt;
+&lt;hr&gt;&lt;center&gt;nginx&lt;/center&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+<span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># curl 192.168.9.154:31445</span>
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;404 Not Found&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+&lt;center&gt;&lt;h1&gt;404 Not Found&lt;/h1&gt;&lt;/center&gt;
+&lt;hr&gt;&lt;center&gt;nginx&lt;/center&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div></li>
+<li>
+<p>安装 web 服务</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ kubectl create deployment web --image<span style="color:#719e07">=</span>nginx:alpine --port<span style="color:#719e07">=</span><span style="color:#2aa198">80</span>
+$ kubectl expose deployment web --port<span style="color:#719e07">=</span><span style="color:#2aa198">80</span>
+</code></pre></div><p>测试是否成功。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># kubectl get svc</span>
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span style="color:#719e07">(</span>S<span style="color:#719e07">)</span>   AGE
+kubernetes   ClusterIP   10.96.0.1       &lt;none&gt;        443/TCP   2d4h
+web          ClusterIP   10.96.197.137   &lt;none&gt;        80/TCP    116s
+<span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># curl 10.96.142.120</span>
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Welcome to nginx!&lt;/title&gt;
+&lt;style&gt;
+    body <span style="color:#719e07">{</span>
+        width: 35em;
+        margin: <span style="color:#2aa198">0</span> auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    <span style="color:#719e07">}</span>
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;
+&lt;p&gt;If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.&lt;/p&gt;
+   
+&lt;p&gt;For online documentation and support please refer to
+&lt;a <span style="color:#268bd2">href</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;http://nginx.org/&#34;</span>&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;
+Commercial support is available at
+&lt;a <span style="color:#268bd2">href</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;http://nginx.com/&#34;</span>&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;
+   
+&lt;p&gt;&lt;em&gt;Thank you <span style="color:#719e07">for</span> using nginx.&lt;/em&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div></li>
+<li>
+<p>创建 ingress 规则</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ kubectl create ingress web --rule<span style="color:#719e07">=</span><span style="color:#2aa198">&#34;web.test.info/=web:80&#34;</span>
+</code></pre></div><p>测试是否成功。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># curl 192.168.9.107:31445 -H &#34;Host: web.test.info&#34;</span>
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Welcome to nginx!&lt;/title&gt;
+&lt;style&gt;
+    body <span style="color:#719e07">{</span>
+        width: 35em;
+        margin: <span style="color:#2aa198">0</span> auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    <span style="color:#719e07">}</span>
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;
+&lt;p&gt;If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.&lt;/p&gt;
+   
+&lt;p&gt;For online documentation and support please refer to
+&lt;a <span style="color:#268bd2">href</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;http://nginx.org/&#34;</span>&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;
+Commercial support is available at
+&lt;a <span style="color:#268bd2">href</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;http://nginx.com/&#34;</span>&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;
+   
+&lt;p&gt;&lt;em&gt;Thank you <span style="color:#719e07">for</span> using nginx.&lt;/em&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div><p>因为是默认的 NodePort 模式，所以需要域名加端口访问。如果不想带有端口，可以把 ingress-nginx-controller 的 Deployment 改成 DaemonSet，然后配置 hostNetwork 即可。</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#268bd2">template</span>:
+  <span style="color:#268bd2">spec</span>:
+    <span style="color:#268bd2">hostNetwork</span>: <span style="color:#cb4b16">true</span>
+</code></pre></div></li>
+</ol>
 
         </div>
 

@@ -70,6 +70,29 @@
     <article class="post">
         <header>
             <h1 class="post-title">
+                <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81quicklist/" title="Redis源码：quicklist">Redis源码：quicklist</a>
+            </h1>
+        </header>
+        <date class="post-meta meta-date">
+            2020年10月7日
+        </date>
+        
+        <div class="post-meta">
+            <span>|</span>
+            
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/Redis'>Redis</a></span>
+            
+        </div>
+        
+        <div class="post-content">
+            quicklist 全称是a generic doubly linked quicklist，从全称可以看得出这是一个节点存放 ziplist 的双向链表。我们常用的 list 功能，底层就是使用 quicklist 实现的。 数据结构 // 双向链表结构体 typedef struct quicklist { quicklistNode *head; quicklistNode……
+        </div>
+        <p class="readmore"><a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81quicklist/">阅读全文</a></p>
+    </article>
+    
+    <article class="post">
+        <header>
+            <h1 class="post-title">
                 <a href="https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81ziplist/" title="Redis源码：ziplist">Redis源码：ziplist</a>
             </h1>
         </header>
@@ -274,29 +297,6 @@
         <p class="readmore"><a href="https://rudychow.github.io/post/MySQL/MySQL%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/">阅读全文</a></p>
     </article>
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/" title="线上问题：锁超时">线上问题：锁超时</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2020年7月31日
-        </date>
-        
-        <div class="post-meta">
-            <span>|</span>
-            
-            <span class="meta-category"><a href='https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98'>线上问题</a></span>
-            
-        </div>
-        
-        <div class="post-content">
-            问题记录 门店反馈POS机在用户成功付款时等待很久，并且弹出错误提示。于是查看日志，发现相关接口出现数据库锁超时的报错：Lock wait timeout exceeded; try restarting transaction。……
-        </div>
-        <p class="readmore"><a href="https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/">阅读全文</a></p>
-    </article>
-    
     
 
 
@@ -387,6 +387,10 @@
 <ul class="widget-list">
     
     <li>
+        <a href="https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/" title="Ingress Nginx 部署">Ingress Nginx 部署</a>
+    </li>
+    
+    <li>
         <a href="https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/" title="Calico个人理解">Calico个人理解</a>
     </li>
     
@@ -422,10 +426,6 @@
         <a href="https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" title="InnoDB存储结构">InnoDB存储结构</a>
     </li>
     
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/" title="redo日志">redo日志</a>
-    </li>
-    
 </ul>
     </section>
 
@@ -435,7 +435,7 @@
         <h3 class="widget-title"><a href="/categories">分类</a></h3>
 <ul class="widget-list">
     
-    <li><a href="https://rudychow.github.io/categories/K8S/">K8S (1)</a></li>
+    <li><a href="https://rudychow.github.io/categories/K8S/">K8S (2)</a></li>
     
     <li><a href="https://rudychow.github.io/categories/Linux/">Linux (2)</a></li>
     

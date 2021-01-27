@@ -6,7 +6,16 @@
     <description>Recent content on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sun, 24 Jan 2021 12:41:09 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 27 Jan 2021 20:01:41 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ingress Nginx 部署</title>
+      <link>https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/</link>
+      <pubDate>Wed, 27 Jan 2021 20:01:41 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/</guid>
+      <description>前提： ingress 中 Nginx 的组件有两个，一个是 kubernetes 提供的，叫Ingress Nginx，一个是 Nginx 提供的，叫Nginx ingress，这里以Ingress Nginx为例。 因为网上大</description>
+    </item>
+    
     <item>
       <title>Calico个人理解</title>
       <link>https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/</link>

@@ -3,27 +3,32 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/</loc>
-    <lastmod>2021-01-24T12:41:09+08:00</lastmod>
+    <loc>https://rudychow.github.io/categories/</loc>
+    <lastmod>2021-01-27T20:01:41+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://rudychow.github.io/categories/</loc>
-    <lastmod>2021-01-24T12:41:09+08:00</lastmod>
+    <loc>https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/</loc>
+    <lastmod>2021-01-27T20:01:41+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://rudychow.github.io/categories/K8S/</loc>
-    <lastmod>2021-01-24T12:41:09+08:00</lastmod>
+    <lastmod>2021-01-27T20:01:41+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://rudychow.github.io/post/</loc>
-    <lastmod>2021-01-24T12:41:09+08:00</lastmod>
+    <lastmod>2021-01-27T20:01:41+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://rudychow.github.io/</loc>
+    <lastmod>2021-01-27T20:01:41+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/</loc>
     <lastmod>2021-01-24T12:41:09+08:00</lastmod>
   </url>
   
