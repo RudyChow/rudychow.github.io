@@ -6,7 +6,16 @@
     <description>Recent content on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Wed, 27 Jan 2021 20:01:41 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 06 Feb 2021 14:00:56 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>2021计划</title>
+      <link>https://rudychow.github.io/post/2021%E8%AE%A1%E5%88%92/</link>
+      <pubDate>Sat, 06 Feb 2021 14:00:56 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/2021%E8%AE%A1%E5%88%92/</guid>
+      <description>学习： 至少读一本书 去年完成目标《MySQL技术内幕：InnoDB存储引擎》，今年目标未定，但会围绕自己兴趣或者工作需要进行。 至少看一个开源项目源码 去年完成目标 R</description>
+    </item>
+    
     <item>
       <title>Ingress Nginx 部署</title>
       <link>https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/</link>

@@ -6,21 +6,24 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>K8S | Rudy&#39;s blog</title>
-    <meta property="og:title" content="K8S - Rudy&#39;s blog">
+    <title>2021计划 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="2021计划 - Rudy&#39;s blog">
     <meta property="og:type" content="article">
         
+    <meta property="article:published_time" content='2021-02-06T14:00:56&#43;08:00'>
+        
+        
+    <meta property="article:modified_time" content='2021-02-06T14:00:56&#43;08:00'>
         
     <meta name="Keywords" content="">
-    <meta name="description" content="K8S">
+    <meta name="description" content="2021计划">
         
     <meta name="author" content="Rudy">
-    <meta property="og:url" content="https://rudychow.github.io/categories/K8S/">
+    <meta property="og:url" content="https://rudychow.github.io/post/2021%E8%AE%A1%E5%88%92/">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 
     <link rel="stylesheet" href='/css/normalize.css'>
     <link rel="stylesheet" href='/css/style.css'>
-    <link rel="alternate" type="application/rss+xml+xml" href="https://rudychow.github.io/categories/K8S/index.xml" title="Rudy's blog" />
     <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
     
@@ -48,7 +51,7 @@
             </div>
             <div>
                 <nav id="nav-menu" class="clearfix">
-                    <a class="" href="https://rudychow.github.io/">首页</a>
+                    <a class="current" href="https://rudychow.github.io/">首页</a>
                     
                     <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
                     
@@ -67,68 +70,165 @@
                 <div class="col-8" id="main">
                     
 <div class="res-cons">
-    
-    <h3 class="archive-title">
-        分类
-        <span class="keyword">K8S</span>
-        中的文章
-    </h3>
-    
+    <style type="text/css">
+    .post-toc {
+        position: fixed;
+        width: 200px;
+        margin-left: -210px;
+        padding: 5px 10px;
+        font-family: Athelas, STHeiti, Microsoft Yahei, serif;
+        font-size: 12px;
+        border: 1px solid rgba(0, 0, 0, .07);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.98);
+        background-clip: padding-box;
+        -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, .125);
+        word-wrap: break-word;
+        white-space: nowrap;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        z-index: 999;
+        cursor: pointer;
+        max-height: 70%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
 
-    
+    .post-toc .post-toc-title {
+        width: 100%;
+        margin: 0 auto;
+        font-size: 20px;
+        font-weight: 400;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .post-toc .post-toc-content {
+        font-size: 15px;
+    }
+
+    .post-toc .post-toc-content>nav>ul {
+        margin: 10px 0;
+    }
+
+    .post-toc .post-toc-content ul {
+        padding-left: 20px;
+        list-style: square;
+        margin: 0.5em;
+        line-height: 1.8em;
+    }
+
+    .post-toc .post-toc-content ul ul {
+        padding-left: 15px;
+        display: none;
+    }
+
+    @media print,
+    screen and (max-width:1057px) {
+        .post-toc {
+            display: none;
+        }
+    }
+</style>
+<div class="post-toc" style="position: absolute; top: 188px;">
+    <h2 class="post-toc-title">文章目录</h2>
+    <div class="post-toc-content">
+        <nav id="TableOfContents"></nav>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var postToc = $(".post-toc");
+        if (postToc.length) {
+            var leftPos = $("#main").offset().left;
+            if(leftPos<220){
+                postToc.css({"width":leftPos-10,"margin-left":(0-leftPos)})
+            }
+
+            var t = postToc.offset().top - 20,
+                a = {
+                    start: {
+                        position: "absolute",
+                        top: t
+                    },
+                    process: {
+                        position: "fixed",
+                        top: 20
+                    },
+                };
+            $(window).scroll(function () {
+                var e = $(window).scrollTop();
+                e < t ? postToc.css(a.start) : postToc.css(a.process)
+            })
+        }
+    })
+</script>
     <article class="post">
         <header>
-            <h1 class="post-title">
-                <a href="https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/">Ingress Nginx 部署</a>
-            </h1>
+            <h1 class="post-title">2021计划</h1>
         </header>
         <date class="post-meta meta-date">
-            2021年1月27日
+            2021年2月6日
         </date>
         
-        <div class="post-meta meta-category">
-            |
+        <div class="post-meta">
+            <span>|</span>
             
-            <a href='https://rudychow.github.io/categories/K8S'>K8S</a>
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/%E6%80%BB%E7%BB%93%E4%B8%8E%E8%AE%A1%E5%88%92'>总结与计划</a></span>
             
         </div>
         
+        
+        
         <div class="post-content">
-            前提： ingress 中 Nginx 的组件有两个，一个是 kubernetes 提供的，叫Ingress Nginx，一个是 Nginx 提供的，叫Nginx ingress，这里以Ingress Nginx为例。 因为网上大……
-            <p class="readmore"><a href="https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/">阅读全文</a></p>
+            <p>学习：</p>
+<ul>
+<li>
+<p>至少读一本书</p>
+<p>去年完成目标《MySQL技术内幕：InnoDB存储引擎》，今年目标未定，但会围绕自己兴趣或者工作需要进行。</p>
+</li>
+<li>
+<p>至少看一个开源项目源码</p>
+<p>去年完成目标 Redis，今年暂定是 Nginx 或 Docker。</p>
+</li>
+</ul>
+<p>生活：</p>
+<ul>
+<li>
+<p>坚持运动，体重保持在 140 斤内</p>
+<p>去年增肌到 150 斤，无奈身边人都觉得太胖了，于是又减脂到 140 斤，后面长时间也会维持在这个体重内。</p>
+<p>去年还完成了人生最重要的一件事——取掉右手肱骨的钢板。即使医生一直劝说手术的风险，还签了责任告知，最后我还是选择做了手术，现在还是心有余悸。手术后手臂恢复还算不错，健身时的各种不适感明显减少了，甚至可以做俯卧撑了。希望今年能在保证身体正常的前提下，进行更多的运动。</p>
+</li>
+<li>
+<p>十分钟内能解决的事情不要拖</p>
+<p>比如吃完饭后马上洗碗，洗完澡如果不再进食就顺便刷牙等等。这些事情分开做的时间也是一样的，但是顺手完成了心里愉悦度会高很多。再也不想准备上床睡觉时，突然想到碗还没洗，又或者还没刷牙时又要爬起来做事情。</p>
+</li>
+<li>
+<p>进行一次出行</p>
+<p>去年在疫情爆发前去了泰国，但是在 2020 年由于疫情，取消了出行的计划，希望今年可以在预期内出行。</p>
+</li>
+</ul>
+
+        </div>
+
+        
+
+
+        
+
+
+        <div class="post-meta meta-tags">
+            
+            没有标签
+            
         </div>
     </article>
     
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/">Calico个人理解</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2021年1月24日
-        </date>
-        
-        <div class="post-meta meta-category">
-            |
-            
-            <a href='https://rudychow.github.io/categories/K8S'>K8S</a>
-            
-        </div>
-        
-        <div class="post-content">
-            docker 的桥接网络 开启 docker 进程后，docker 会开启虚拟网桥（可以理解为 Linux 内的虚拟交换机）。 通过ip addr可以看到系统多出一个网卡docker0，通常 IP 是172.17……
-            <p class="readmore"><a href="https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/">阅读全文</a></p>
-        </div>
-    </article>
     
 
     
-
-
-
-
-
+    
 </div>
 
                     <footer id="footer">
@@ -151,6 +251,16 @@
 </footer>
 
 
+    
+    <script type="text/javascript">
+        window.MathJax = {
+            tex2jax: {
+                inlineMath: [['$', '$']],
+                processEscapes: true
+                }
+            };
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
 
 <a id="rocket" href="#top"></a>
 <script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
