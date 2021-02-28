@@ -44,12 +44,12 @@
     </item>
     
     <item>
-      <title>B&#43;树二叉查询</title>
-      <link>https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/</link>
+      <title>B&#43;树查询</title>
+      <link>https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E6%9F%A5%E8%AF%A2/</link>
       <pubDate>Sun, 13 Dec 2020 17:53:23 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/</guid>
-      <description>B+树是通过二叉查找树，再由平衡二叉树，B数演化而来。 我们知道从一组有序数字数组中查找目标记录，使用二分查找法（Binary Search）是一种有效的方式，复杂</description>
+      <guid>https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E6%9F%A5%E8%AF%A2/</guid>
+      <description>B+ 树是一种多路平衡树，通过 B 树演化而来。 我们知道从一组有序数字数组中查找目标记录，使用二分查找法（Binary Search）是一种有效的方式，复杂度达到 O(lo</description>
     </item>
     
     <item>

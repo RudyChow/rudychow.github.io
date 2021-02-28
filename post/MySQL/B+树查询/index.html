@@ -6,20 +6,20 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Nginx客户端断开连接的日志记录 | Rudy&#39;s blog</title>
-    <meta property="og:title" content="Nginx客户端断开连接的日志记录 - Rudy&#39;s blog">
+    <title>B&#43;树查询 | Rudy&#39;s blog</title>
+    <meta property="og:title" content="B&#43;树查询 - Rudy&#39;s blog">
     <meta property="og:type" content="article">
         
-    <meta property="article:published_time" content='2020-07-20T23:27:34&#43;08:00'>
+    <meta property="article:published_time" content='2020-12-13T17:53:23&#43;08:00'>
         
         
-    <meta property="article:modified_time" content='2020-07-20T23:27:34&#43;08:00'>
+    <meta property="article:modified_time" content='2020-12-13T17:53:23&#43;08:00'>
         
     <meta name="Keywords" content="">
-    <meta name="description" content="Nginx客户端断开连接的日志记录">
+    <meta name="description" content="B&#43;树查询">
         
     <meta name="author" content="Rudy">
-    <meta property="og:url" content="https://rudychow.github.io/post/Nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/">
+    <meta property="og:url" content="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E6%9F%A5%E8%AF%A2/">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 
     <link rel="stylesheet" href='/css/normalize.css'>
@@ -134,17 +134,7 @@
 <div class="post-toc" style="position: absolute; top: 188px;">
     <h2 class="post-toc-title">文章目录</h2>
     <div class="post-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#测试环境">测试环境</a>
-      <ul>
-        <li><a href="#场景1主动断开连接">场景1：主动断开连接</a></li>
-        <li><a href="#场景2异常断开连接">场景2：异常断开连接</a></li>
-      </ul>
-    </li>
-    <li><a href="#结语">结语</a></li>
-  </ul>
-</nav>
+        <nav id="TableOfContents"></nav>
     </div>
 </div>
 <script type="text/javascript">
@@ -176,68 +166,37 @@
 </script>
     <article class="post">
         <header>
-            <h1 class="post-title">Nginx客户端断开连接的日志记录</h1>
+            <h1 class="post-title">B&#43;树查询</h1>
         </header>
         <date class="post-meta meta-date">
-            2020年7月20日
+            2020年12月13日
         </date>
         
         <div class="post-meta">
             <span>|</span>
             
-            <span class="meta-category"><a href='https://rudychow.github.io/categories/Nginx'>Nginx</a></span>
+            <span class="meta-category"><a href='https://rudychow.github.io/categories/MySQL'>MySQL</a></span>
             
         </div>
         
         
         
         <div class="post-content">
-            <p>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。
-同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。</p>
-<h2 id="测试环境">测试环境</h2>
-<pre><code>+----------+        +---------+        +----------+
-|          |        |         |        |          |
-|          |  http  |         |upstream|  server  |
-|  client  &lt;--------&gt;  Nginx  +-------&gt;+          |
-|          |        |         |        |sleep(20s)|
-|          |        |         |        |          |
-+----------+        +---------+        +----------+
-
-</code></pre><h3 id="场景1主动断开连接">场景1：主动断开连接</h3>
-<p>测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。</p>
-<p>经过抓包得到客户端和服务端的连接信息：</p>
+            <p>B+ 树是一种多路平衡树，通过 B 树演化而来。</p>
+<p>我们知道从一组有序数字数组中查找目标记录，使用二分查找法（Binary Search）是一种有效的方式，复杂度达到 O(log2n)。但是如果要在几个分开的有序数组中找到目标记录，要怎样才比较有效率？</p>
+<p>假设有 4 个数组，每个数组最多只能存放 4 个元素，现在需要在这四个数组中找到目标 10：</p>
+<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go">page1 <span style="color:#719e07">:=</span> []<span style="color:#dc322f">int</span>{<span style="color:#2aa198">1</span>, <span style="color:#2aa198">2</span>, <span style="color:#2aa198">3</span>, <span style="color:#2aa198">4</span>}
+page2 <span style="color:#719e07">:=</span> []<span style="color:#dc322f">int</span>{<span style="color:#2aa198">5</span>, <span style="color:#2aa198">6</span>, <span style="color:#2aa198">7</span>, <span style="color:#2aa198">8</span>}
+page3 <span style="color:#719e07">:=</span> []<span style="color:#dc322f">int</span>{<span style="color:#2aa198">9</span>, <span style="color:#2aa198">10</span>, <span style="color:#2aa198">11</span>, <span style="color:#2aa198">12</span>}
+page4 <span style="color:#719e07">:=</span> []<span style="color:#dc322f">int</span>{<span style="color:#2aa198">13</span>, <span style="color:#2aa198">14</span>, <span style="color:#2aa198">15</span>, <span style="color:#2aa198">16</span>}
+</code></pre></div><p>第一个想法是把所有数组合并起来，再进行二分查找，这样复杂度还是 O(log2n)。上面代码中每一个数组，在 MySQL 中其实是一个<strong>页</strong>，也是 InnoDB 存放在磁盘上的最小单位。如果在 MySQL 中要把所有页的数据合并在一起，再进行二分查找，那么当数据页非常多的时候，内存会非常吃紧，所以这不算是一个好的方案。</p>
+<p>换一个想法，现在从每个数组中取出一个最小数，作为当前数组的代表，此时可以抽取出 1、5、9、13。因为每个数组是有序的，所以这几个代表，可以表示一个区间：1 表示 [1,5) 的区间，5 表示 [5,9) 的区间，9 表示 [9,13) 的区间，13 表示 [13,+∞) 的区间。所以在这 4 个数字中，你仍可以使用二分查找的方式，虽然这里面没有 10 这个数，但是可以得知 10 是属于 9 这个代表的，因为 10 属于 [9,13) 这个区间。最后，通过 9 这个代表，找到<code>page3</code>这个数组，并且在里面通过二分查找的方式找到 10 即可。</p>
+<p>这个从每个数组中抽取出来的代表组成的数组，就是我们常说的索引节点。而上面的每一个数组，则是我们常说的叶子节点，就是存储数据的地方。</p>
 <p>
-        <a data-fancybox="gallery" href="/pics/nginx-client-close-200.png">
-            <img class="mx-auto" alt="nginx-client-close-200" src="/pics/nginx-client-close-200.png" />
+        <a data-fancybox="gallery" href="/pics/mysql/B&#43;tree_binary_search.jpg">
+            <img class="mx-auto" alt="B&#43;srarch" src="/pics/mysql/B&#43;tree_binary_search.jpg" />
         </a>
     </p>
-<p>通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。</p>
-<p>此时Nginx记录的日志如下：</p>
-<pre><code>172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] &quot;GET / HTTP/1.1&quot; 499 0 &quot;-&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&quot; &quot;-&quot;
-</code></pre><blockquote>
-<p>HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">/*
-</span><span style="color:#586e75">* HTTP does not define the code for the case when a client closed
-</span><span style="color:#586e75">* the connection while we are processing its request so we introduce
-</span><span style="color:#586e75">* own code to log such situation when a client has closed the connection
-</span><span style="color:#586e75">* before we even try to send the HTTP header to it
-</span><span style="color:#586e75">*/</span>
-<span style="color:#719e07">#define NGX_HTTP_CLIENT_CLOSED_REQUEST     499
-</span></code></pre></div></blockquote>
-<h3 id="场景2异常断开连接">场景2：异常断开连接</h3>
-<p>测试行为：手机对Nginx发起请求，并在Nginx响应前切换网络环境，以达到异常断开目的，此后观察结果</p>
-<p>
-        <a data-fancybox="gallery" href="/pics/nginx-client-close-499.png">
-            <img class="mx-auto" alt="nginx-client-close-200" src="/pics/nginx-client-close-499.png" />
-        </a>
-    </p>
-<p>序号106中，Nginx已经处理完server的请求，并且响应结果给客户端。</p>
-<pre><code>172.20.0.1 - - [20/Jul/2020:14:44:16 +0000] &quot;GET / HTTP/1.1&quot; 200 22 &quot;-&quot; &quot;Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1&quot; &quot;-&quot;
-</code></pre><p>序号107～289，是服务端对客户端进行的重传。</p>
-<p>序号318，服务端对客户端发起RST，强制中断连接。</p>
-<h2 id="结语">结语</h2>
-<p>在客户端主动断开时（即TCP正常地发起挥手行为），Nginx会进行状态码为499的日志记录。</p>
-<p>在客户端异常断开时（网络切换、断网等等原因），Nginx会记录200的成功日志。至于为什么，只有后面看Nginx源码才能知道原因。</p>
 
         </div>
 

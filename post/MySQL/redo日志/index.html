@@ -220,7 +220,7 @@
 </li>
 </ol>
 <p>可以看出，在 2PC 下事务的提交或者回滚是由 bin log 决定的，可以理解成靠 bin log 做判断，靠 redo log 做恢复操作。</p>
-<p>此外，如果使用双一模式（即<code>innodb_flush_log_at_trx_commit=1</code>和<code>sunc_bin log=1</code>），可以保证 redo log 和 bin log 的持久性。</p>
+<p>此外，如果使用双一模式（即<code>innodb_flush_log_at_trx_commit=1</code>和<code>sync_bin log=1</code>），可以保证 redo log 和 bin log 的持久性。</p>
 <h2 id="redo-buffer-cache">redo buffer cache</h2>
 <p>InnoDB 将 redo log 首先写入 redo buffer cache，之后通过一定频率写入到 redo log 中。redo buffer cache 里面又分成若干个页，每个页大小为 512B，这也是最小写入单位，所以 redo log 的写入不需要 doublewrite。redo buffer cache 的大小可以通过参数<code>innodb_log_buffer_size</code>进行修改。</p>
 <p>参数<code>innodb_flush_log_at_trx_commit</code>控制着 redo buffer cache 的刷盘时机，默认值是 1：</p>
@@ -368,7 +368,7 @@
     </li>
     
     <li>
-        <a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E4%BA%8C%E5%8F%89%E6%9F%A5%E8%AF%A2/" title="B&#43;树二叉查询">B&#43;树二叉查询</a>
+        <a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E6%9F%A5%E8%AF%A2/" title="B&#43;树查询">B&#43;树查询</a>
     </li>
     
     <li>
