@@ -194,7 +194,7 @@
             <p>Redis 与事务相关的命令有：<code>multi</code>、<code>discard</code>、<code>exec</code>和<code>watch</code>。</p>
 <p><code>multi</code>、<code>discard</code>和<code>exec</code>这是一组命令，与<code>MySQL</code>的<code>begin</code>、<code>rollback</code>和<code>commit</code>有相似之处。<code>watch</code>则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。</p>
 <h2 id="数据结构">数据结构</h2>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 事务状态
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 事务状态
 </span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> multiState {
     multiCmd <span style="color:#719e07">*</span>commands;     <span style="color:#586e75">/* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */</span>
     <span style="color:#dc322f">int</span> count;              <span style="color:#586e75">/* 一共有多少个待处理的命令 */</span>
@@ -224,7 +224,7 @@
 
 </code></pre></div><h2 id="状态">状态</h2>
 <p>与事务相关的几个客户端状态有：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">#define CLIENT_MULTI (1&lt;&lt;3)   </span><span style="color:#586e75">/* 处于事务开启状态 */</span><span style="color:#719e07">
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">#define CLIENT_MULTI (1&lt;&lt;3)   </span><span style="color:#586e75">/* 处于事务开启状态 */</span><span style="color:#719e07">
 </span><span style="color:#719e07">#define CLIENT_DIRTY_CAS (1&lt;&lt;5) </span><span style="color:#586e75">/* watch的key发生了改变 */</span><span style="color:#719e07">
 </span><span style="color:#719e07">#define CLIENT_DIRTY_EXEC (1&lt;&lt;12)  </span><span style="color:#586e75">/* 发生错误时，exec会失败，此时处于失败状态 */</span><span style="color:#719e07">
 </span></code></pre></div><p>当执行<code>multi</code>后，客户端就会处于<code>CLIENT_MULTI</code>的状态。</p>
@@ -235,7 +235,7 @@
 <p>开启事务的逻辑很简单，就是单纯给客户端叠加<code>CLIENT_MULTI</code>的状态。另外，Redis 不支持嵌套事务。</p>
 <p>另外需要记录的一点是，当客户端处于<code>CLIENT_MULTI</code>状态时，为了保证事务原子性、除了<code>exec</code>、<code>discard</code>、<code>multi</code>和<code>watch</code>以外的其它命令，都不再是调用<code>call</code>函数，而是调用<code>queueMultiCommand</code>。</p>
 <p>具体代码在<code>src/server.c</code>的<code>processCommand</code>：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">    <span style="color:#586e75">/* Exec the command */</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">    <span style="color:#586e75">/* Exec the command */</span>
     <span style="color:#719e07">if</span> (c<span style="color:#719e07">-&gt;</span>flags <span style="color:#719e07">&amp;</span> CLIENT_MULTI <span style="color:#719e07">&amp;&amp;</span>
         c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>proc <span style="color:#719e07">!=</span> execCommand <span style="color:#719e07">&amp;&amp;</span> c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>proc <span style="color:#719e07">!=</span> discardCommand <span style="color:#719e07">&amp;&amp;</span>
         c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>proc <span style="color:#719e07">!=</span> multiCommand <span style="color:#719e07">&amp;&amp;</span> c<span style="color:#719e07">-&gt;</span>cmd<span style="color:#719e07">-&gt;</span>proc <span style="color:#719e07">!=</span> watchCommand)

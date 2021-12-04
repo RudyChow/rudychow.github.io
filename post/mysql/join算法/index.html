@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Join算法 | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。
+Hash Join Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段：
+  build
+构建阶段下，MySQL 会将小的表作为构建，构建的 HashTable 以连接条件为 key，行数据为 value。一旦所有的数据都存储在 HashTable 中，就完成了构建阶段。
+当构建阶段中，如果内存中的 HashTable 被用完，则其余数据会溢出到缓存块中，并以另一个 hash 算法去决定写入哪个缓存块。内存中的 HashTable 由变量join_buffer_size控制。
+  probe
+探测阶段下，MySQL 从另一个表中读取每一行。对于每一行，都会使用连接条件的值作为查找键去查看 HashTable 是否有匹配的数据。对于每一个匹配项，就向客户端发送一个合并行。
+如果 build 阶段溢出了，那么 probe 阶段下也会把循环的每一行写入缓存块。由于写入缓冲块和 build 阶段时用的是同一个 hash 算法，所以他们的缓存块号是一致的。当内存的 HashTable 已经匹配完，依次加载每一个对应的 build 和 probe 的缓存块进内存，再重新执行 probe 逻辑即可。
+  在这个版本中，Hash Join 有几个限制条件：
+ 只能用在没有索引的等值的连接条件 只能用在内连，即不支持left join、right join、semijoin和antijoin。  但是在 8.">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/mysql/join%E7%AE%97%E6%B3%95/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Join算法" />
+<meta property="og:description" content="MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。
+Hash Join Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段：
+  build
+构建阶段下，MySQL 会将小的表作为构建，构建的 HashTable 以连接条件为 key，行数据为 value。一旦所有的数据都存储在 HashTable 中，就完成了构建阶段。
+当构建阶段中，如果内存中的 HashTable 被用完，则其余数据会溢出到缓存块中，并以另一个 hash 算法去决定写入哪个缓存块。内存中的 HashTable 由变量join_buffer_size控制。
+  probe
+探测阶段下，MySQL 从另一个表中读取每一行。对于每一行，都会使用连接条件的值作为查找键去查看 HashTable 是否有匹配的数据。对于每一个匹配项，就向客户端发送一个合并行。
+如果 build 阶段溢出了，那么 probe 阶段下也会把循环的每一行写入缓存块。由于写入缓冲块和 build 阶段时用的是同一个 hash 算法，所以他们的缓存块号是一致的。当内存的 HashTable 已经匹配完，依次加载每一个对应的 build 和 probe 的缓存块进内存，再重新执行 probe 逻辑即可。
+  在这个版本中，Hash Join 有几个限制条件：
+ 只能用在没有索引的等值的连接条件 只能用在内连，即不支持left join、right join、semijoin和antijoin。  但是在 8." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/mysql/join%E7%AE%97%E6%B3%95/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-01-03T23:42:34&#43;08:00" />
+<meta property="article:modified_time" content="2021-01-03T23:42:34&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Join算法"/>
+<meta name="twitter:description" content="MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。
+Hash Join Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段：
+  build
+构建阶段下，MySQL 会将小的表作为构建，构建的 HashTable 以连接条件为 key，行数据为 value。一旦所有的数据都存储在 HashTable 中，就完成了构建阶段。
+当构建阶段中，如果内存中的 HashTable 被用完，则其余数据会溢出到缓存块中，并以另一个 hash 算法去决定写入哪个缓存块。内存中的 HashTable 由变量join_buffer_size控制。
+  probe
+探测阶段下，MySQL 从另一个表中读取每一行。对于每一行，都会使用连接条件的值作为查找键去查看 HashTable 是否有匹配的数据。对于每一个匹配项，就向客户端发送一个合并行。
+如果 build 阶段溢出了，那么 probe 阶段下也会把循环的每一行写入缓存块。由于写入缓冲块和 build 阶段时用的是同一个 hash 算法，所以他们的缓存块号是一致的。当内存的 HashTable 已经匹配完，依次加载每一个对应的 build 和 probe 的缓存块进内存，再重新执行 probe 逻辑即可。
+  在这个版本中，Hash Join 有几个限制条件：
+ 只能用在没有索引的等值的连接条件 只能用在内连，即不支持left join、right join、semijoin和antijoin。  但是在 8."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Join算法",
+      "item": "https://rudychow.github.io/post/mysql/join%E7%AE%97%E6%B3%95/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Join算法",
+  "name": "Join算法",
+  "description": "MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。\nHash Join Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段：\n  build\n构建阶段下，MySQL 会将小的表作为构建，构建的 HashTable 以连接条件为 key，行数据为 value。一旦所有的数据都存储在 HashTable 中，就完成了构建阶段。\n当构建阶段中，如果内存中的 HashTable 被用完，则其余数据会溢出到缓存块中，并以另一个 hash 算法去决定写入哪个缓存块。内存中的 HashTable 由变量join_buffer_size控制。\n  probe\n探测阶段下，MySQL 从另一个表中读取每一行。对于每一行，都会使用连接条件的值作为查找键去查看 HashTable 是否有匹配的数据。对于每一个匹配项，就向客户端发送一个合并行。\n如果 build 阶段溢出了，那么 probe 阶段下也会把循环的每一行写入缓存块。由于写入缓冲块和 build 阶段时用的是同一个 hash 算法，所以他们的缓存块号是一致的。当内存的 HashTable 已经匹配完，依次加载每一个对应的 build 和 probe 的缓存块进内存，再重新执行 probe 逻辑即可。\n  在这个版本中，Hash Join 有几个限制条件：\n 只能用在没有索引的等值的连接条件 只能用在内连，即不支持left join、right join、semijoin和antijoin。  但是在 8.",
+  "keywords": [
+    
+  ],
+  "articleBody": "MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。\nHash Join Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段：\n  build\n构建阶段下，MySQL 会将小的表作为构建，构建的 HashTable 以连接条件为 key，行数据为 value。一旦所有的数据都存储在 HashTable 中，就完成了构建阶段。\n当构建阶段中，如果内存中的 HashTable 被用完，则其余数据会溢出到缓存块中，并以另一个 hash 算法去决定写入哪个缓存块。内存中的 HashTable 由变量join_buffer_size控制。\n  probe\n探测阶段下，MySQL 从另一个表中读取每一行。对于每一行，都会使用连接条件的值作为查找键去查看 HashTable 是否有匹配的数据。对于每一个匹配项，就向客户端发送一个合并行。\n如果 build 阶段溢出了，那么 probe 阶段下也会把循环的每一行写入缓存块。由于写入缓冲块和 build 阶段时用的是同一个 hash 算法，所以他们的缓存块号是一致的。当内存的 HashTable 已经匹配完，依次加载每一个对应的 build 和 probe 的缓存块进内存，再重新执行 probe 逻辑即可。\n  在这个版本中，Hash Join 有几个限制条件：\n 只能用在没有索引的等值的连接条件 只能用在内连，即不支持left join、right join、semijoin和antijoin。  但是在 8.0.20 后的版本，已经没有了这两个限制。（但在这个版本下，non-equi-join下如何进行 build 和 probe，我还没弄清楚）\nNested-Loop Join（NLJ） 由单词就可以看出，这个算法的核心就是嵌套循环，伪代码表示：\nforeach foo in table1{ foreach bar in table2{ if con1 == con2 { mergeRowAndSendClient(foo, bar)\t} } } Index Nested-Loops Join（INLJ） 如果被驱动表的连接条件有索引的话，可能会升级成 INLJ，即不再扫描被驱动表的全表，而是通过扫描被驱动表的索引表去匹配数据。\nBlock Nested-Loops Join（BNL） 当无法使用 INLJ 时，MySQL 会使用普通的 NLJ 算法。由于这个算法效率实在太差，所以 MySQL 进行了优化，即 Block Nested-Loops Join。\n假设表 A 作为驱动表有 m 条记录，表 B 作为被驱动表有 n 条记录。当两个表做连接时，表 B 的记录会被读取 m 次。BNL 的目的就是减少表 B 被读取的次数。\nBNL 的原理就是一次性读取多条记录存放在一个内存缓冲区，然后读取表 B 的记录，和内存缓冲区判断并放入结果集。假如缓冲区的大小能存放 m/2 条数据，则表 B 的记录被读取的次数会减少到 m/2 次。这个缓冲区大小被变量join_buffer_size控制。\n当然这里减少的只是被被驱动表从磁盘读取的次数，也就是减少了磁盘 IO，而算法的时间复杂度还是和 NLJ 一样的。\nBatched Key Access Join（BKA） MySQL 对 NLJ 做了优化，也对 INLJ 做了优化。INLJ 是通过索引查找被驱动表的记录，但是如果要不能索引覆盖的话，则会回表读取数据，所以会有多次随机 IO。Batched Key Access Join 主要优化的点，就是减少回表的随机 IO。同时 BKA 必须开启 MRR。\nBatched Key Access Join 流程：\n 把驱动表的数据批量放入 join buffer 中，就像 BNL 一样。 在 join buffer 中与被驱动表的辅助索引匹配结果，此时不进行回表操作，得到一个主键 id 的结果集。 把结果集批量进行 MRR 处理； 得到最终结果。   MRR 全称是 MULTI-RANGE READ，是存储引擎的一个减少随机 IO 的优化。\n通过二级索引查找数据时，是一条一条进行的，即走一次二级索引，回一次表。回表时的主键 id 可能会跨很多数据页，所以一次二级索引读取可能会产生很多随机 IO。\nMRR 的流程：\n 先将二级索引得到的回表 id 结果集放入缓冲区。 缓冲区满了或者二级索引查询完毕，对缓冲区的 id 进行排序。 按照顺序进行回表，并且将结果集放入结果集缓冲区。   总结 NLJ 类算法主要优化点在于减少随机 IO，可以简单认为 BKA  INLJ  BNL  NLJ。\nHash Join 则直接以空间换取时间，减少了时间复杂度，在最新版中会优先采取这个算法。\n参考 - MySQL hash join 文档\n- MySQL hash join 官方博客\n",
+  "wordCount" : "226",
+  "inLanguage": "en",
+  "datePublished": "2021-01-03T23:42:34+08:00",
+  "dateModified": "2021-01-03T23:42:34+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/mysql/join%E7%AE%97%E6%B3%95/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      Join算法
+    </h1>
+    <div class="post-meta"><span title='2021-01-03 23:42:34 +0800 HKT'>January 3, 2021</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><p>MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。</p>
+<h2 id="hash-join">Hash Join<a hidden class="anchor" aria-hidden="true" href="#hash-join">#</a></h2>
+<p>Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段：</p>
+<ol>
+<li>
+<p>build</p>
+<p>构建阶段下，MySQL 会将小的表作为构建，构建的 HashTable 以连接条件为 key，行数据为 value。一旦所有的数据都存储在 HashTable 中，就完成了构建阶段。</p>
+<p>当构建阶段中，如果内存中的 HashTable 被用完，则其余数据会溢出到缓存块中，并以另一个 hash 算法去决定写入哪个缓存块。内存中的 HashTable 由变量<code>join_buffer_size</code>控制。</p>
+</li>
+<li>
+<p>probe</p>
+<p>探测阶段下，MySQL 从另一个表中读取每一行。对于每一行，都会使用连接条件的值作为查找键去查看 HashTable 是否有匹配的数据。对于每一个匹配项，就向客户端发送一个合并行。</p>
+<p>如果 build 阶段溢出了，那么 probe 阶段下也会把循环的每一行写入缓存块。由于写入缓冲块和 build 阶段时用的是同一个 hash 算法，所以他们的缓存块号是一致的。当内存的 HashTable 已经匹配完，依次加载每一个对应的 build 和 probe 的缓存块进内存，再重新执行 probe 逻辑即可。</p>
+</li>
+</ol>
+<p>在这个版本中，Hash Join 有几个限制条件：</p>
+<ul>
+<li>只能用在没有索引的等值的连接条件</li>
+<li>只能用在内连，即不支持<code>left join</code>、<code>right join</code>、<code>semijoin</code>和<code>antijoin</code>。</li>
+</ul>
+<p>但是在 8.0.20 后的版本，已经没有了这两个限制。（但在这个版本下，<code>non-equi-join</code>下如何进行 build 和 probe，我还没弄清楚）</p>
+<h2 id="nested-loop-joinnlj">Nested-Loop Join（NLJ）<a hidden class="anchor" aria-hidden="true" href="#nested-loop-joinnlj">#</a></h2>
+<p>由单词就可以看出，这个算法的核心就是嵌套循环，伪代码表示：</p>
+<pre tabindex="0"><code>foreach foo in table1{
+	foreach bar  in table2{
+		if con1 == con2 {
+			mergeRowAndSendClient(foo, bar)	
+		}
+	}
+}
+</code></pre><h3 id="index-nested-loops-joininlj">Index Nested-Loops Join（INLJ）<a hidden class="anchor" aria-hidden="true" href="#index-nested-loops-joininlj">#</a></h3>
+<p>如果被驱动表的连接条件有索引的话，可能会升级成 INLJ，即不再扫描被驱动表的全表，而是通过扫描被驱动表的索引表去匹配数据。</p>
+<h3 id="block-nested-loops-joinbnl">Block Nested-Loops Join（BNL）<a hidden class="anchor" aria-hidden="true" href="#block-nested-loops-joinbnl">#</a></h3>
+<p>当无法使用 INLJ 时，MySQL 会使用普通的 NLJ 算法。由于这个算法效率实在太差，所以 MySQL 进行了优化，即 Block Nested-Loops Join。</p>
+<p>假设表 A 作为驱动表有 m 条记录，表 B 作为被驱动表有 n 条记录。当两个表做连接时，表 B 的记录会被读取 m 次。BNL 的目的就是减少表 B 被读取的次数。</p>
+<p>BNL 的原理就是一次性读取多条记录存放在一个内存缓冲区，然后读取表 B 的记录，和内存缓冲区判断并放入结果集。假如缓冲区的大小能存放 m/2 条数据，则表 B 的记录被读取的次数会减少到 m/2 次。这个缓冲区大小被变量<code>join_buffer_size</code>控制。</p>
+<p>当然这里减少的只是被被驱动表从磁盘读取的次数，也就是减少了磁盘 IO，而算法的时间复杂度还是和 NLJ 一样的。</p>
+<h3 id="batched-key-access-joinbka">Batched Key Access Join（BKA）<a hidden class="anchor" aria-hidden="true" href="#batched-key-access-joinbka">#</a></h3>
+<p>MySQL 对 NLJ 做了优化，也对 INLJ 做了优化。INLJ 是通过索引查找被驱动表的记录，但是如果要不能索引覆盖的话，则会回表读取数据，所以会有多次随机 IO。Batched Key Access Join 主要优化的点，就是减少回表的随机 IO。同时 BKA 必须开启 MRR。</p>
+<p>Batched Key Access Join 流程：</p>
+<ol>
+<li>把驱动表的数据批量放入 join buffer 中，就像 BNL 一样。</li>
+<li>在 join buffer 中与被驱动表的辅助索引匹配结果，此时不进行回表操作，得到一个主键 id 的结果集。</li>
+<li>把结果集批量进行 MRR 处理；</li>
+<li>得到最终结果。</li>
+</ol>
+<blockquote>
+<p>MRR 全称是 MULTI-RANGE READ，是存储引擎的一个减少随机 IO 的优化。</p>
+<p>通过二级索引查找数据时，是一条一条进行的，即走一次二级索引，回一次表。回表时的主键 id 可能会跨很多数据页，所以一次二级索引读取可能会产生很多随机 IO。</p>
+<p>MRR 的流程：</p>
+<ol>
+<li>先将二级索引得到的回表 id 结果集放入缓冲区。</li>
+<li>缓冲区满了或者二级索引查询完毕，对缓冲区的 id 进行排序。</li>
+<li>按照顺序进行回表，并且将结果集放入结果集缓冲区。</li>
+</ol>
+</blockquote>
+<h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<p>NLJ 类算法主要优化点在于减少随机 IO，可以简单认为 BKA &gt; INLJ &gt; BNL &gt; NLJ。</p>
+<p>Hash Join 则直接以空间换取时间，减少了时间复杂度，在最新版中会优先采取这个算法。</p>
+<h2 id="参考">参考<a hidden class="anchor" aria-hidden="true" href="#参考">#</a></h2>
+<p>- <a href="https://dev.mysql.com/doc/refman/8.0/en/hash-joins.html">MySQL hash join 文档</a></p>
+<p>- <a href="https://mysqlserverteam.com/hash-join-in-mysql-8/">MySQL hash join 官方博客</a></p>
+
+
+  </div>
+
+  <footer class="post-footer">
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/mysql/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>查询语句的访问方式</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/mysql/%E4%BA%8B%E5%8A%A1/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>事务</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

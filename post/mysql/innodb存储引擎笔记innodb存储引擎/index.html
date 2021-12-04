@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>《InnoDB存储引擎》笔记：InnoDB存储引擎 | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="这一章节随便拿出一小节都可以单独写一篇文章，这里仅做笔记和总结。
+体系架构 后台线程 InnoDB 存储引擎是多线程的模型，因此后台有多个不同的后台线程，负责处理不同的任务。
+Master Thread Master Thread 是一个非常核心的后台线程，主要负责将缓冲池中的数据异步刷新到磁盘，保证数据的一致性，包括脏页的刷新、合并插入缓冲（INSERT BUFFER）、UNDO 页的回收等。
+IO Thread 在 InnoDB 存储引擎中大量使用了 AIO 来处理写 IO 请求，这样可以极大提高数据库的性能，IO Thread 的工作主要是负责这些 IO 请求的回调处理。
+InnoDB 1.0 版本之前共有 4 个 IO Thread，分别是 write、read、insert buffer 和 log IO thread。
+Purge Thread 事务被提交后，所使用的 undolog 可能不再需要，因此需要 Purge Thread 来回收已经使用并分配的 undo 页。在 InnoDB 1.1 版本之前，purge 操作仅在 Master Thread 中完成。而在 InnoDB 1.1 版本开始，purge 操作可以独立到单独的线程中进行，以此来减轻 Master Thread 的工作，从而提高 CPU 的利用率以及提升存储引擎的性能。
+用可可以在 MySQL 数据库的配置文件中添加如下命令来启用独立的 Pruge Thread：
+[mysqld] innodb_purge_threads=1 Page Cleaner Thread Page Cleaner Thread 实在 InnoDB 1.">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="《InnoDB存储引擎》笔记：InnoDB存储引擎" />
+<meta property="og:description" content="这一章节随便拿出一小节都可以单独写一篇文章，这里仅做笔记和总结。
+体系架构 后台线程 InnoDB 存储引擎是多线程的模型，因此后台有多个不同的后台线程，负责处理不同的任务。
+Master Thread Master Thread 是一个非常核心的后台线程，主要负责将缓冲池中的数据异步刷新到磁盘，保证数据的一致性，包括脏页的刷新、合并插入缓冲（INSERT BUFFER）、UNDO 页的回收等。
+IO Thread 在 InnoDB 存储引擎中大量使用了 AIO 来处理写 IO 请求，这样可以极大提高数据库的性能，IO Thread 的工作主要是负责这些 IO 请求的回调处理。
+InnoDB 1.0 版本之前共有 4 个 IO Thread，分别是 write、read、insert buffer 和 log IO thread。
+Purge Thread 事务被提交后，所使用的 undolog 可能不再需要，因此需要 Purge Thread 来回收已经使用并分配的 undo 页。在 InnoDB 1.1 版本之前，purge 操作仅在 Master Thread 中完成。而在 InnoDB 1.1 版本开始，purge 操作可以独立到单独的线程中进行，以此来减轻 Master Thread 的工作，从而提高 CPU 的利用率以及提升存储引擎的性能。
+用可可以在 MySQL 数据库的配置文件中添加如下命令来启用独立的 Pruge Thread：
+[mysqld] innodb_purge_threads=1 Page Cleaner Thread Page Cleaner Thread 实在 InnoDB 1." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-12-04T22:23:00&#43;08:00" />
+<meta property="article:modified_time" content="2020-12-04T22:23:00&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="《InnoDB存储引擎》笔记：InnoDB存储引擎"/>
+<meta name="twitter:description" content="这一章节随便拿出一小节都可以单独写一篇文章，这里仅做笔记和总结。
+体系架构 后台线程 InnoDB 存储引擎是多线程的模型，因此后台有多个不同的后台线程，负责处理不同的任务。
+Master Thread Master Thread 是一个非常核心的后台线程，主要负责将缓冲池中的数据异步刷新到磁盘，保证数据的一致性，包括脏页的刷新、合并插入缓冲（INSERT BUFFER）、UNDO 页的回收等。
+IO Thread 在 InnoDB 存储引擎中大量使用了 AIO 来处理写 IO 请求，这样可以极大提高数据库的性能，IO Thread 的工作主要是负责这些 IO 请求的回调处理。
+InnoDB 1.0 版本之前共有 4 个 IO Thread，分别是 write、read、insert buffer 和 log IO thread。
+Purge Thread 事务被提交后，所使用的 undolog 可能不再需要，因此需要 Purge Thread 来回收已经使用并分配的 undo 页。在 InnoDB 1.1 版本之前，purge 操作仅在 Master Thread 中完成。而在 InnoDB 1.1 版本开始，purge 操作可以独立到单独的线程中进行，以此来减轻 Master Thread 的工作，从而提高 CPU 的利用率以及提升存储引擎的性能。
+用可可以在 MySQL 数据库的配置文件中添加如下命令来启用独立的 Pruge Thread：
+[mysqld] innodb_purge_threads=1 Page Cleaner Thread Page Cleaner Thread 实在 InnoDB 1."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "《InnoDB存储引擎》笔记：InnoDB存储引擎",
+      "item": "https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "《InnoDB存储引擎》笔记：InnoDB存储引擎",
+  "name": "《InnoDB存储引擎》笔记：InnoDB存储引擎",
+  "description": "这一章节随便拿出一小节都可以单独写一篇文章，这里仅做笔记和总结。\n体系架构 后台线程 InnoDB 存储引擎是多线程的模型，因此后台有多个不同的后台线程，负责处理不同的任务。\nMaster Thread Master Thread 是一个非常核心的后台线程，主要负责将缓冲池中的数据异步刷新到磁盘，保证数据的一致性，包括脏页的刷新、合并插入缓冲（INSERT BUFFER）、UNDO 页的回收等。\nIO Thread 在 InnoDB 存储引擎中大量使用了 AIO 来处理写 IO 请求，这样可以极大提高数据库的性能，IO Thread 的工作主要是负责这些 IO 请求的回调处理。\nInnoDB 1.0 版本之前共有 4 个 IO Thread，分别是 write、read、insert buffer 和 log IO thread。\nPurge Thread 事务被提交后，所使用的 undolog 可能不再需要，因此需要 Purge Thread 来回收已经使用并分配的 undo 页。在 InnoDB 1.1 版本之前，purge 操作仅在 Master Thread 中完成。而在 InnoDB 1.1 版本开始，purge 操作可以独立到单独的线程中进行，以此来减轻 Master Thread 的工作，从而提高 CPU 的利用率以及提升存储引擎的性能。\n用可可以在 MySQL 数据库的配置文件中添加如下命令来启用独立的 Pruge Thread：\n[mysqld] innodb_purge_threads=1 Page Cleaner Thread Page Cleaner Thread 实在 InnoDB 1.",
+  "keywords": [
+    
+  ],
+  "articleBody": "这一章节随便拿出一小节都可以单独写一篇文章，这里仅做笔记和总结。\n体系架构 后台线程 InnoDB 存储引擎是多线程的模型，因此后台有多个不同的后台线程，负责处理不同的任务。\nMaster Thread Master Thread 是一个非常核心的后台线程，主要负责将缓冲池中的数据异步刷新到磁盘，保证数据的一致性，包括脏页的刷新、合并插入缓冲（INSERT BUFFER）、UNDO 页的回收等。\nIO Thread 在 InnoDB 存储引擎中大量使用了 AIO 来处理写 IO 请求，这样可以极大提高数据库的性能，IO Thread 的工作主要是负责这些 IO 请求的回调处理。\nInnoDB 1.0 版本之前共有 4 个 IO Thread，分别是 write、read、insert buffer 和 log IO thread。\nPurge Thread 事务被提交后，所使用的 undolog 可能不再需要，因此需要 Purge Thread 来回收已经使用并分配的 undo 页。在 InnoDB 1.1 版本之前，purge 操作仅在 Master Thread 中完成。而在 InnoDB 1.1 版本开始，purge 操作可以独立到单独的线程中进行，以此来减轻 Master Thread 的工作，从而提高 CPU 的利用率以及提升存储引擎的性能。\n用可可以在 MySQL 数据库的配置文件中添加如下命令来启用独立的 Pruge Thread：\n[mysqld] innodb_purge_threads=1 Page Cleaner Thread Page Cleaner Thread 实在 InnoDB 1.2.x 版本中引入的，其作用是将之前版本中脏页的刷新操作都放入到单独的线程中完成。目的是为了减轻原 Master Thread 的工作以及对于用户查询线程的阻塞，进一步提高 InnoDB 存储引擎的性能。\n内存 缓冲池 缓冲池简单来说就是一块内存区域，通过内存的速度来弥补磁盘速度较慢对数据库性能的影响。缓冲池的配置可以通过参数innodb_buffer_pool_size来设置。\n数据库进行读取页的操作，首先将从磁盘读取到的页存放在缓冲池中，这个过程称为将页 FIX 在缓冲池中。下一次再读相同的页时，首先判断该页是否在缓冲池中。若在缓冲池中，称改业在缓冲池中被命中，直接读取该。否则，拂去磁盘上的页。\n对于数据库中页的修改操作，则首先修改在缓冲池中的页，然后再以一定的频率刷新到磁盘上。页从缓冲池刷新回磁盘的操作并不是在每次页发生更新时触发，而是通过一种称为 Checkpoint 的机制刷新回磁盘。\n具体来看，缓冲池中缓存的数据页类型有：索引页、数据页、undo 页、插入缓冲（insert buffer）、自适应哈希索引（adaptive hash index）、InnoDB 存储的锁信息（lock info）、数据字段信息（data dictionary）等。\n从 InnoDb 1.2 版本开始，可以通过表 INNODB_BUFFER_POOL_STATS 来观察缓冲池的运行状态，还可以通过表 INNODB_BUFFER_PAGE_LRU 来观察每个 LRU 列表中每个页的具体信息。\n 个人理解，可以当作 InnoDB 在用户空间中实现了类似内核空间的 page cache 的功能。\n为了更好管理缓冲池中的缓存页，InnoDB 存储引擎会为每一个缓冲区都创建一个缓存控制块，里面存放着缓存页所属的表空间编号、页号、缓存页在缓冲池中的地址、链表节点信息、一些锁信息以及LSN信息等等。\n控制块和缓存页是一一对应的，它们都存放到缓冲池中，控制块存放到缓冲池前面，缓存页存放到缓冲池后面。\ninnodb_buffer_pool_size并不包括控制块的内存大小，也就是说实际上的内存空间一般会比innodb_buffer_pool_size的值要大。\n LRU List、Free List 和 Flush LIst LRU List 缓冲池是一个很大的内存区域，InnoDB 存储引擎是通过 LRU 算法来进行内存管理的。\nInnoDB 存储引擎对传统的 LRU 算法做了一些优化，在 LRU 列表中加入了 midpoint 的位置。新读取到的页，虽然是最新访问的页，但并不是直接放入到 LRU 列表的首部，而是放入到 LRU 列表的 midpoint 位置。默认配置下，该位置在 LRU 列表长度的 5/8 处。midpoint 位置可有参数innodb_old_blocks_pct控制。\n在 InnoDB 存储引擎中，把 midpoint 之后的列表称为 old 列表，之前的列表称为 new 列表。可以简单地理解为 new 列表的页都是最为活跃的热点数据。\nInnoDB 引擎引入了innodb_old_blocks_time（单位是 ms）来进一步管理 LRU 列表。这个参数用来表示读取到 mid 位置后需要等待多久才会被加入到 LRU 列表的热端。\nFree List 数据库刚启动时，LRU List 是空的，即没有任何的页，这时页都存放在 Free 列表中。当需要从缓冲池中分页时，首先从 Free 列表中查找是否有可用的空闲页，若有则将该页从 Free List 列表中删除，放入到 LRU List 中，否则根据 LRU 算法，淘汰 LRU 列表末尾的页，将该内存分配给新的页。\n 书上并没有介绍太关多余 Free List 的信息，下面根据自己理解总结一下。\n在缓冲池初始化之后，会划分成 n 个控制块和对应的缓存页。这时如果读取一个页时，是不知道存放到具体哪个未使用的缓存页上的。所以此时需要有一个地方记录哪些缓冲页是可用的，这就是 Free List 的作用。\nFree List 是一个双向链表，有一个基节点，记录着开始位置和结束位置以及空闲的缓存页数量，其链表节点是对应的控制块指针。当需要使用到缓冲页时直接在 Free List 中移除一个节点，然后在控制块上填充读取页的信息即可。\n另外，InnoDB 会根据表空间号 + 页号作为 key，缓存也作为 value 创建一个哈希表。它会先根据哈希表判断读取页是否有对应的缓存页，如果有则直接读取，没有则从 Free List 中拿。\n还有，Free List 的数量加上 LRU List 的数量有可能不等于缓冲池中缓冲页的数量。因为缓冲池中的页还可能被分配给自适应哈希索引、Lock 信息、Insert Buffer 等页，这部分页不需要 LRU List 维护。\n Flush List 在 LRU 列表中的页被修改后，称该页为脏页，即缓冲池中的页和磁盘上的页的数据产生了不一致。这时数据库会通过 CHECKPOINT 机制将脏页刷回磁盘，而 Flush List 即为脏页列表。需要注意，脏页既存在于 LRU List 中，也存在于 Flush List 中。LRU List 用来管理缓冲池中页的可用性，Flush List 用来管理将页书信回磁盘，二者互不影响。\n 如果每发生一次修改就同步修改到磁盘上对应的页，频繁的磁盘写操作会影响到程序的性能，所以需要 Flush List 来管理脏页，再通过前面提到的 Page Cleaner Thread 来进行数据同步。\nFlush List 的构造和 Free List 差不多。\n 重做日志缓冲 InnoDB 将重做日志首先写入 redo buffer cache，之后通过一定频率写入到重做日志（redo log）中。redo buffer cache 不需要设置太大，重做日志缓冲在以下情况下被刷入到重做日志文件中：\n Master Thread 每一秒将重做日志缓冲刷到重做日志文件。 每个事务提交时会将重做日志缓冲刷新到重做日志文件文件。 当重做日志缓冲池剩余空间小于 1/2 时，重做日志缓冲刷新到重做日志文件。  额外的内存池 InnoDB 对内存的管理是通过一种称为内存堆的方式进行的，对一些数据结构进行内存分配时，需要从额外的内存池中申请，当该区域不够时，会从缓冲池中进行申请。\nCheckpoint Checkpoint 技术的目的是解决以下几个问题：\n  缩短数据库的恢复时间。\n当数据库宕机时，数据库不需要重做所有的日志，因为 Checkpoint 之前的页都已经刷新回磁盘。故数据库值需要对 Checkpoint 后的 redo log 进行恢复，这样就大大缩短了恢复事件。\n  缓冲池不够用时，将脏页刷新到磁盘。\n当缓冲池不够用时，根据 LRU 算法会溢出最近最少使用的页，若此页为脏页，那么需要强制执行 Checkpoint，将脏页刷回磁盘。\n  redo log 不可用时，刷新脏页。\n当前事务数据库系统对 redo log 的设计都是循环使用的，并不是让其无限增大。redo log 可以被重用的部分是指这些 redo log 已经不再需要，即当数据库发生宕机时，数据库恢复操作不需要这部分的 redo log，因此这部分就可以被覆盖重用。若此时 redo log 还需要使用，那么必须强制产生 Checkpoint，将缓冲池中的页至少刷新到当前 redo log 的位置。\n  对于 InnoDB 存储引擎而言，是通过 LSN（Log Sequence Number）来标记版本的。每个页有 LSN，redo log 也有 LSN，Checkpoint 也有 LSN。\n在 InnoDB 内部有两种 Checkpoint：\n  Sharp Checkpoint\n数据库关闭时将所有脏页都刷新回簇盘，这时默认的工作方式，即innodv_fast_shutdown=1。\n  Fuzzy Checkpoint\nInnoDB 存储引擎内部使用 Fuzzy Checkpoint 进行页的刷新，即只刷新一部分脏页，而不是刷新所有脏页回磁盘。\nFuzzy Checkpoint 的几种情况：\n  Master Thread Checkpoint\nMaster Thread 差不多以每秒或者每十秒的速度从缓冲池的脏页列表中刷新一定比例的页回磁盘。这个过程是异步的，用户查询线程不会阻塞。\n  FLUSH_LRU_LIST Checkpoint\nInnoDB 存储引擎需要保证 LRU List 中需要有差不多 100 个空闲页可供使用。倘若没有 100 个可用空闲页，那么 InnoDB 存储引擎会将 LRU List 列表尾端的页移除。如果这些页中有脏页，那么需要进行 Checkpoint。这些页是来自 LRU List，所以称作 FLUSH_LRU_LIST Checkpoint。\n这些检查被放在 Page Cleaner Thread 中进行，并且可以通过参数innodb_lru_scan_depth控制 LRU List 中可用页的数量。\n  Async/Sync Flush Checkpoint\nredo log 不可用的时，此时需要强制将一些页刷新回磁盘，而此时脏页是从 Flush List 中选取的。\n这些刷新操作同样也是在 Page Cleaner Thread 中进行。\n  Dirty Page too much Checkpoint\n脏页数量太多，导致 InnoDB 存储引擎强制进行 Checkpoint，目的是保证缓冲池中有足够可用的页。其由参数innodb_max_dirty_pages_pct控制，表示缓冲池中脏页的数量占据 innodb_max_dirty_pages_pct% 时，强制进行 Checkpoint。\n    Master Thread 这一小节主要介绍了 Master Thread 不同版本的工作方式：\n  InnoDB 1.0x 版本之前\nMaster Thread 具有最高的线程优先级别，内部由多个循环组成：主循环、后台循环、刷新循环、暂停循环。它会根据数据库运行的状态在不同的循环中进行切换。\n  Loop\nLoop 被称为主循环，因为大多数的操作实在这个循环中，有两大部分操作——每秒钟的操作和每十秒的操作。loop 是通过 thread sleep 来实现，意味着事件操作是不精确的，在负载很大的情况可能会有延迟，只能说大概在这个频率下。\n每秒操作包括：\n 刷新 redo log（总是） 合并插入缓冲 至多刷新 100 个 InnoDB 的缓冲池中的脏页到磁盘 如果没有当前用户活动，切换到 backgroud loop  每十秒操作包括：\n 刷新 100 个脏页到磁盘 合并至多 5 个插入缓冲（总是） 删除无用的 undo log（总是） 刷新 100 个或者 10 个脏页到磁盘（总是）    Background Loop\n当前没有用户活动或者数据库关闭，就会切换到这个循环。\n执行操作：\n 删除无用的 undo log（总是） 合并 20 个插入缓冲（总是） 跳回 Loop（总是） 不停刷新 100 个页直到符合条件（可能，跳转到 Flush Loop 中完成）    Flush Loop\n不停刷新 100 个页直到符合条件。\n  Suspend Loop\n若用户启用了 InnoDB 存储引擎，但没有使用任何 InnoDB 存储引擎的表，那么总是处于挂起状态。\n    InnoDB 1.2x 版本之前\n  innodb_io_capacity\n提供了innodb_io_capacity的百分比来控制刷新到磁盘页的数量：\n 在合并插入缓冲时，合并插入缓冲的数量为innodb_io_capacity值的5%。 在从缓冲区刷新脏页时，刷新脏页的数量为innodb_io_capacity。    innodb_max_dirty_pages_pct\n该参数之前的默认值为90，意味着脏页占缓冲池的 90%。InnoDB 存储引擎在每秒刷新缓冲池和 Flush Loop 时会判断这个值，如果大于innodb_max_dirty_pages_pct，才会刷新 100 个脏页，如果有很大的内存，或者数据库服务的压力很大，这时刷新脏页的速度反而会降低。同样，在数据库的恢复阶段可能需要更多的时间。\n从 1.0.x 版本开始，innodb_max_dirty_pages_pct默认值变成 75，这样可以加快刷新脏页的频率，又能保证了磁盘 IO 的负载。\n  innodb_adaptive_flushing\n该值影响每秒刷新脏页的数量。随着innodb_adaptive_flushing参数的引入，InnoDB 存储引擎会通过一个名为buf_flush_get_desired_flush_rate的函数来判断需要刷新脏页最合适的数量。\n  innodb_purge_batch_size\n该参数可以控制每次 Full Purge 回收的 undo 页的数量。默认值为20。\n    InnoDB 1.2x 版本\n刷新脏页的操作从 Master Thread 线程分离到一个单独的 Page Cleaner Thread，从而减轻了 Master Thread 的工作，进一步提高了系统的并发性。\n  关键特性 插入缓冲 Insert Buffer 对于非聚集索引的插入或更新操作，不是每一次直接插入到索引页中，而是先判断插入的非聚集索引页是否在缓冲池中，若在，则直接插入。若不在，则先放入到一个 Insert Buffer 对象中。数据库这个非聚集的索引已经查到叶子节点，而实际并没有，只是存放在另一个位置，然后再以一定的频率和情况进行 Insert Buffer 和辅助索引页子节点的 merge 操作。这时通常能将多个插入合并到一个操作中，因为在一个索引页中，这就大大提高了对于非聚集索引插入的性能。\nInsert Buffer 的使用需要同时满足以下两个条件：\n 索引是辅助索引 索引不是唯一的  Change Buffer Change Buffer 是 Insert Buffer 的升级。InnoDB 存储引擎可以对 DML 操作——INSERT、DELETE、UPDATE 都进行缓冲，他们分别是：Insert Buffer、Delete Buffer、Purge Buffer。\nChange Buffer 和 Insert Buffer 一样，适用的对象依然是非唯一的辅助索引。\n对一条记录进行 UPDATE 操作可能分成两个过程：\n 将记录标记为已删除 真正将记录删除  因此 Delete Buffer 对应 UPDATE 操作的第一个过程，即将记录标记为删除。Purge Buffer 对应 UPDATE 操作的第二个过程，即将记录真正的删除。\nInsert Buffer 的内部实现 Insert Buffer 的数据结构是一棵 B+ 树，这颗树存放在共享表空间中，默认也就是 ibdata1 中。\nMerge Insert Buffer Merge Insert Buffer 可能发生在以下几种情况：\n 辅助索引页被读取到缓冲池时。 Insert Buffer Bitmap 页追踪到该辅助索引页已无可用空间时。 Master Thread。  两次写 doublewrite 带给 InnoDB 存储引擎的是数据页的可靠性。\n当发生数据库宕机时，可能 InnoDB 存储引擎正在写入某个页到表中，而这个页只写了一部分，之后就宕机了，这种情况被称为部分写失效。\n在应用 redo log之前，用户需要一个页的副本，当写入失效发生时，先通过页的副本来还原该页，再进行重做，这就是 doublewrite。\ndoublewrite 由两部分组成，一部分是内存中的 doublewrite buffer，大小为 2MB，另一部分是物理磁盘上共享表空间中连续的 128 个页，即 2 个区，大小同样是 2MB。\n在对缓冲池的脏页进行刷新时，并不直接写磁盘，而是会通过 memcpy 函数将脏页赋值到内存中的 doublewrite buffer，之后通过 doublewrite buffer 再分两次，每次 1MB 顺序地写入共享表空间的物理磁盘上，然后马上调用 fsync 函数，同步磁盘，避免缓冲写带来的问题。在完成 doublewrite 页的写入后，再将 doublewrite buffer 中的页写入各个表空间文件中，此时的写入是离散的。\n redo log 写入的单位是 512 字节，也是磁盘 IO 的最小单位，所以无所谓数据损坏。\n另外可以看出，doublewrite 需要更多的 fsync 操作，这些操作会降低 MySQL 的性能。但是又因为这个是顺序写，性能非常高。牺牲性能来保证数据完整性还是有必要的。\n 自适应哈希索引 InnoDB 存储引擎会监控对标上各索引页的查询，如果观察到建立哈希索引可以带来速度提升，则建立哈希索引，称之为自适应哈希索引（Adaptive Hash Index，AHI）。AHI 是通过缓冲池的 B+ 树页构建而来，因此建立的速度很快，而且不需要对整张表构建哈希索引。\n可以通过参数innodb_adaptive_hash_index来考虑是否启用或禁用此特性。\n 自适应哈希有不少限制：\n 只能用于等值比较，例如=， ，in 无法用于排序 有冲突可能 MySQL自动管理，人为无法干预。   异步 IO 为了提高磁盘操作性能，当前的数据库系统都采用 AIO 的方式来处理磁盘操作，InnoDB 存储引擎也是这样。\n一条 SQL 查询可能扫描多个索引页，也就是多次 IO 操作。用户可以在发出一个 IO 请求后立即再发出另一个 IO 请求，当所有 IO 请求发送完毕后，等待所有 IO 操作的完成，这就是 AIO。\nAIO 的另一个优势是可以进行 IO Merge 操作，也就是将多个 IO 合并为 1 个 IO，这样可以提高 IOPS 的性能。\n在 InnoDB1.1x 之前，AIO 通过 InnoDB 存储引擎中的代码来模拟实现。之后的版本中，则提供了内核级别 AIO 的支持，称为 Native AIO。可以通过参数innodb_use_naative_aio来控制是否启用 Native AIO。\n在 InnoDB 存储引擎中，read ahead 方式的拂去都是通过 AIO 完成，脏页的刷新，即磁盘的写入操作则全部由 AIO 完成。\n刷机邻接页 InnoDB 存储引擎还提供了 Flush Neighbor Page（刷新邻接页）的特性。工作原理是：当刷新一个脏页时，InnoDB 存储引擎会检测该页所在区（extent）的所在页，如果是脏页，那么一起进行刷新。好处是可以通过 AIO 将多个 IO 写入操作合并为一个 IO 操作，但是需要考虑两个问题：\n 可能将不怎么脏的页写入，而该页之后又会很快变成脏页 固态硬盘有着较高的 IOPS，是否还需要这个特性  为此，InnoDB 存储引擎从 1.2.x 版本开始提供了参数innodb_flush_neighbors，用来控制是否启用该特性。\n启用、关闭与恢复   关闭\n在关闭时，参数innodb_fast_shutdown影响着表的存储引擎为 InnoDB 的行为，该值可取 0、1、2，默认为 1。\n 0 表示 MySQL 数据库关闭时，InnoDB 需要完成所有的 full purge 和 merge insert buffer，并且将所有的脏页刷新回磁盘。 1 表示不需要完成上述的 full purge 和 merge insert buffer 操作，但是在缓冲池中的一些数据脏页还是会刷新回磁盘。 2 表示不完成 full purge 和 merge insert buffer 操作，也不将缓冲池中的数据脏页写回磁盘，而是将日志写写入日志文件。这样不会有任何事务的丢失，但是下次 MySQL 数据库启动时，会进行恢复操作。    恢复\n参数innodb_force_recovery影响了整个 InnoDB 存储引擎恢复的状况。该参数默认为 0，代表当发生需要恢复时，进行所有的恢复操作，当不能进行有效恢复时，如数据页发生了 corruption，MySQL 数据库可能发生宕机，并把错误写入错误日志中去。\ninnodb_force_recovery还可以设置为 6 个值：\n 1（SRV_FORCE_IGNORE_CORRUPT）：忽略检查到的 corrupt 页。 2（SRV_FORCE_NO_BACKGROUND）：阻止 Master Thread 线程的运行，如 Master Thread 线程需要进行 full purge 操作，而这会导致 crash。 3（SRV_JFORCE_NO_TRX_UNDO）：不进行事务的回滚操作。 4（SRV_FORCE_NO_IBUF_MERGE）：不进行插入缓冲的合并操作。 5（SRV_FORCE_NO_UNDO_LOG_SCAN）：不查看 Undo Log，InnoDB 存储引擎会将未提交的事务视为已提交。 6（SRV_FORCE_NO_LOG_REDO）：不进行前滚的操作。  当参数innodb_force_recovery大于 0 后，用户可以对表进行 select、create 和 drop 操作，但 insert、update 和 delete 这类 DML 操作是不允许的。\n  ",
+  "wordCount" : "835",
+  "inLanguage": "en",
+  "datePublished": "2020-12-04T22:23:00+08:00",
+  "dateModified": "2020-12-04T22:23:00+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      《InnoDB存储引擎》笔记：InnoDB存储引擎
+    </h1>
+    <div class="post-meta"><span title='2020-12-04 22:23:00 +0800 HKT'>December 4, 2020</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><p>这一章节随便拿出一小节都可以单独写一篇文章，这里仅做笔记和总结。</p>
+<h2 id="体系架构">体系架构<a hidden class="anchor" aria-hidden="true" href="#体系架构">#</a></h2>
+<h3 id="后台线程">后台线程<a hidden class="anchor" aria-hidden="true" href="#后台线程">#</a></h3>
+<p>InnoDB 存储引擎是多线程的模型，因此后台有多个不同的后台线程，负责处理不同的任务。</p>
+<h4 id="master-thread">Master Thread<a hidden class="anchor" aria-hidden="true" href="#master-thread">#</a></h4>
+<p>Master Thread 是一个非常核心的后台线程，主要负责将缓冲池中的数据异步刷新到磁盘，保证数据的一致性，包括脏页的刷新、合并插入缓冲（INSERT BUFFER）、UNDO 页的回收等。</p>
+<h4 id="io-thread">IO Thread<a hidden class="anchor" aria-hidden="true" href="#io-thread">#</a></h4>
+<p>在 InnoDB 存储引擎中大量使用了 AIO 来处理写 IO 请求，这样可以极大提高数据库的性能，IO Thread 的工作主要是负责这些 IO 请求的回调处理。</p>
+<p>InnoDB 1.0 版本之前共有 4 个 IO Thread，分别是 write、read、insert buffer 和 log IO thread。</p>
+<h4 id="purge-thread">Purge Thread<a hidden class="anchor" aria-hidden="true" href="#purge-thread">#</a></h4>
+<p>事务被提交后，所使用的 undolog 可能不再需要，因此需要 Purge Thread 来回收已经使用并分配的 undo 页。在 InnoDB 1.1 版本之前，purge 操作仅在 Master Thread 中完成。而在 InnoDB 1.1 版本开始，purge 操作可以独立到单独的线程中进行，以此来减轻 Master Thread 的工作，从而提高 CPU 的利用率以及提升存储引擎的性能。</p>
+<p>用可可以在 MySQL 数据库的配置文件中添加如下命令来启用独立的 Pruge Thread：</p>
+<pre tabindex="0"><code class="language-cnf" data-lang="cnf">[mysqld]
+innodb_purge_threads=1
+</code></pre><h4 id="page-cleaner-thread">Page Cleaner Thread<a hidden class="anchor" aria-hidden="true" href="#page-cleaner-thread">#</a></h4>
+<p>Page Cleaner Thread 实在 InnoDB 1.2.x 版本中引入的，其作用是将之前版本中脏页的刷新操作都放入到单独的线程中完成。目的是为了减轻原 Master Thread 的工作以及对于用户查询线程的阻塞，进一步提高 InnoDB 存储引擎的性能。</p>
+<h3 id="内存">内存<a hidden class="anchor" aria-hidden="true" href="#内存">#</a></h3>
+<h4 id="缓冲池">缓冲池<a hidden class="anchor" aria-hidden="true" href="#缓冲池">#</a></h4>
+<p>缓冲池简单来说就是一块内存区域，通过内存的速度来弥补磁盘速度较慢对数据库性能的影响。缓冲池的配置可以通过参数<code>innodb_buffer_pool_size</code>来设置。</p>
+<p>数据库进行读取页的操作，首先将从磁盘读取到的页存放在缓冲池中，这个过程称为将页 FIX 在缓冲池中。下一次再读相同的页时，首先判断该页是否在缓冲池中。若在缓冲池中，称改业在缓冲池中被命中，直接读取该。否则，拂去磁盘上的页。</p>
+<p>对于数据库中页的修改操作，则首先修改在缓冲池中的页，然后再以一定的频率刷新到磁盘上。页从缓冲池刷新回磁盘的操作并不是在每次页发生更新时触发，而是通过一种称为 <strong>Checkpoint</strong> 的机制刷新回磁盘。</p>
+<p>具体来看，缓冲池中缓存的数据页类型有：索引页、数据页、undo 页、插入缓冲（insert buffer）、自适应哈希索引（adaptive hash index）、InnoDB 存储的锁信息（lock info）、数据字段信息（data dictionary）等。</p>
+<p>从 InnoDb 1.2 版本开始，可以通过表 INNODB_BUFFER_POOL_STATS 来观察缓冲池的运行状态，还可以通过表 INNODB_BUFFER_PAGE_LRU 来观察每个 LRU 列表中每个页的具体信息。</p>
+<blockquote>
+<p>个人理解，可以当作 InnoDB 在用户空间中实现了类似内核空间的 page cache 的功能。</p>
+<p>为了更好管理缓冲池中的缓存页，InnoDB 存储引擎会为每一个缓冲区都创建一个缓存控制块，里面存放着缓存页所属的表空间编号、页号、缓存页在缓冲池中的地址、链表节点信息、一些锁信息以及<code>LSN</code>信息等等。</p>
+<p>控制块和缓存页是一一对应的，它们都存放到缓冲池中，控制块存放到缓冲池前面，缓存页存放到缓冲池后面。</p>
+<p><code>innodb_buffer_pool_size</code>并不包括控制块的内存大小，也就是说实际上的内存空间一般会比<code>innodb_buffer_pool_size</code>的值要大。</p>
+</blockquote>
+<h4 id="lru-listfree-list-和-flush-list">LRU List、Free List 和 Flush LIst<a hidden class="anchor" aria-hidden="true" href="#lru-listfree-list-和-flush-list">#</a></h4>
+<h5 id="lru-list">LRU List<a hidden class="anchor" aria-hidden="true" href="#lru-list">#</a></h5>
+<p>缓冲池是一个很大的内存区域，InnoDB 存储引擎是通过 LRU 算法来进行内存管理的。</p>
+<p>InnoDB 存储引擎对传统的 LRU 算法做了一些优化，在 LRU 列表中加入了 midpoint 的位置。新读取到的页，虽然是最新访问的页，但并不是直接放入到 LRU 列表的首部，而是放入到 LRU 列表的 midpoint 位置。默认配置下，该位置在 LRU 列表长度的 5/8 处。midpoint 位置可有参数<code>innodb_old_blocks_pct</code>控制。</p>
+<p>在 InnoDB 存储引擎中，把 midpoint 之后的列表称为 old 列表，之前的列表称为 new 列表。可以简单地理解为 new 列表的页都是最为活跃的热点数据。</p>
+<p>InnoDB 引擎引入了<code>innodb_old_blocks_time</code>（单位是 ms）来进一步管理 LRU 列表。这个参数用来表示读取到 mid 位置后需要等待多久才会被加入到 LRU 列表的热端。</p>
+<h5 id="free-list">Free List<a hidden class="anchor" aria-hidden="true" href="#free-list">#</a></h5>
+<p>数据库刚启动时，LRU List 是空的，即没有任何的页，这时页都存放在 Free 列表中。当需要从缓冲池中分页时，首先从 Free 列表中查找是否有可用的空闲页，若有则将该页从 Free List 列表中删除，放入到 LRU List 中，否则根据 LRU 算法，淘汰 LRU 列表末尾的页，将该内存分配给新的页。</p>
+<blockquote>
+<p>书上并没有介绍太关多余 Free List 的信息，下面根据自己理解总结一下。</p>
+<p>在缓冲池初始化之后，会划分成 n 个控制块和对应的缓存页。这时如果读取一个页时，是不知道存放到具体哪个未使用的缓存页上的。所以此时需要有一个地方记录哪些缓冲页是可用的，这就是 Free List 的作用。</p>
+<p>Free List 是一个双向链表，有一个基节点，记录着开始位置和结束位置以及空闲的缓存页数量，其链表节点是对应的控制块指针。当需要使用到缓冲页时直接在 Free List 中移除一个节点，然后在控制块上填充读取页的信息即可。</p>
+<p>另外，InnoDB 会根据表空间号 + 页号作为 key，缓存也作为 value 创建一个哈希表。它会先根据哈希表判断读取页是否有对应的缓存页，如果有则直接读取，没有则从 Free List 中拿。</p>
+<p>还有，Free List 的数量加上 LRU List 的数量有可能不等于缓冲池中缓冲页的数量。因为缓冲池中的页还可能被分配给自适应哈希索引、Lock 信息、Insert Buffer 等页，这部分页不需要 LRU List 维护。</p>
+</blockquote>
+<h5 id="flush-list">Flush List<a hidden class="anchor" aria-hidden="true" href="#flush-list">#</a></h5>
+<p>在 LRU 列表中的页被修改后，称该页为脏页，即缓冲池中的页和磁盘上的页的数据产生了不一致。这时数据库会通过 CHECKPOINT 机制将脏页刷回磁盘，而 Flush List 即为脏页列表。需要注意，脏页既存在于 LRU List 中，也存在于 Flush List 中。LRU List 用来管理缓冲池中页的可用性，Flush List 用来管理将页书信回磁盘，二者互不影响。</p>
+<blockquote>
+<p>如果每发生一次修改就同步修改到磁盘上对应的页，频繁的磁盘写操作会影响到程序的性能，所以需要 Flush List 来管理脏页，再通过前面提到的 Page Cleaner Thread 来进行数据同步。</p>
+<p>Flush List 的构造和 Free List 差不多。</p>
+</blockquote>
+<h4 id="重做日志缓冲">重做日志缓冲<a hidden class="anchor" aria-hidden="true" href="#重做日志缓冲">#</a></h4>
+<p>InnoDB 将重做日志首先写入 redo buffer cache，之后通过一定频率写入到重做日志（redo log）中。redo buffer cache 不需要设置太大，重做日志缓冲在以下情况下被刷入到重做日志文件中：</p>
+<ul>
+<li>Master Thread 每一秒将重做日志缓冲刷到重做日志文件。</li>
+<li>每个事务提交时会将重做日志缓冲刷新到重做日志文件文件。</li>
+<li>当重做日志缓冲池剩余空间小于 1/2 时，重做日志缓冲刷新到重做日志文件。</li>
+</ul>
+<h4 id="额外的内存池">额外的内存池<a hidden class="anchor" aria-hidden="true" href="#额外的内存池">#</a></h4>
+<p>InnoDB 对内存的管理是通过一种称为内存堆的方式进行的，对一些数据结构进行内存分配时，需要从额外的内存池中申请，当该区域不够时，会从缓冲池中进行申请。</p>
+<h2 id="checkpoint">Checkpoint<a hidden class="anchor" aria-hidden="true" href="#checkpoint">#</a></h2>
+<p>Checkpoint 技术的目的是解决以下几个问题：</p>
+<ul>
+<li>
+<p>缩短数据库的恢复时间。</p>
+<p>当数据库宕机时，数据库不需要重做所有的日志，因为 Checkpoint 之前的页都已经刷新回磁盘。故数据库值需要对 Checkpoint 后的 redo log 进行恢复，这样就大大缩短了恢复事件。</p>
+</li>
+<li>
+<p>缓冲池不够用时，将脏页刷新到磁盘。</p>
+<p>当缓冲池不够用时，根据 LRU 算法会溢出最近最少使用的页，若此页为脏页，那么需要强制执行 Checkpoint，将脏页刷回磁盘。</p>
+</li>
+<li>
+<p>redo log 不可用时，刷新脏页。</p>
+<p>当前事务数据库系统对 redo log 的设计都是循环使用的，并不是让其无限增大。redo log 可以被重用的部分是指这些 redo log 已经不再需要，即当数据库发生宕机时，数据库恢复操作不需要这部分的 redo log，因此这部分就可以被覆盖重用。若此时 redo log 还需要使用，那么必须强制产生 Checkpoint，将缓冲池中的页至少刷新到当前 redo log 的位置。</p>
+</li>
+</ul>
+<p>对于 InnoDB 存储引擎而言，是通过 LSN（Log Sequence Number）来标记版本的。每个页有 LSN，redo log 也有 LSN，Checkpoint 也有 LSN。</p>
+<p>在 InnoDB 内部有两种 Checkpoint：</p>
+<ul>
+<li>
+<p>Sharp Checkpoint</p>
+<p>数据库关闭时将所有脏页都刷新回簇盘，这时默认的工作方式，即<code>innodv_fast_shutdown=1</code>。</p>
+</li>
+<li>
+<p>Fuzzy Checkpoint</p>
+<p>InnoDB 存储引擎内部使用 Fuzzy Checkpoint 进行页的刷新，即只刷新一部分脏页，而不是刷新所有脏页回磁盘。</p>
+<p>Fuzzy Checkpoint 的几种情况：</p>
+<ul>
+<li>
+<p>Master Thread Checkpoint</p>
+<p>Master Thread 差不多以每秒或者每十秒的速度从缓冲池的脏页列表中刷新一定比例的页回磁盘。这个过程是异步的，用户查询线程不会阻塞。</p>
+</li>
+<li>
+<p>FLUSH_LRU_LIST Checkpoint</p>
+<p>InnoDB 存储引擎需要保证 LRU List 中需要有差不多 100 个空闲页可供使用。倘若没有 100 个可用空闲页，那么 InnoDB 存储引擎会将 LRU List 列表尾端的页移除。如果这些页中有脏页，那么需要进行 Checkpoint。这些页是来自 LRU List，所以称作 FLUSH_LRU_LIST Checkpoint。</p>
+<p>这些检查被放在 Page Cleaner Thread 中进行，并且可以通过参数<code>innodb_lru_scan_depth</code>控制 LRU List 中可用页的数量。</p>
+</li>
+<li>
+<p>Async/Sync Flush Checkpoint</p>
+<p>redo log 不可用的时，此时需要强制将一些页刷新回磁盘，而此时脏页是从 Flush List 中选取的。</p>
+<p>这些刷新操作同样也是在 Page Cleaner Thread 中进行。</p>
+</li>
+<li>
+<p>Dirty Page too much Checkpoint</p>
+<p>脏页数量太多，导致 InnoDB 存储引擎强制进行 Checkpoint，目的是保证缓冲池中有足够可用的页。其由参数<code>innodb_max_dirty_pages_pct</code>控制，表示缓冲池中脏页的数量占据 innodb_max_dirty_pages_pct% 时，强制进行 Checkpoint。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="master-thread-1">Master Thread<a hidden class="anchor" aria-hidden="true" href="#master-thread-1">#</a></h2>
+<p>这一小节主要介绍了 Master Thread 不同版本的工作方式：</p>
+<ol>
+<li>
+<p>InnoDB 1.0x 版本之前</p>
+<p>Master Thread 具有最高的线程优先级别，内部由多个循环组成：主循环、后台循环、刷新循环、暂停循环。它会根据数据库运行的状态在不同的循环中进行切换。</p>
+<ul>
+<li>
+<p>Loop</p>
+<p>Loop 被称为主循环，因为大多数的操作实在这个循环中，有两大部分操作——每秒钟的操作和每十秒的操作。loop 是通过 thread sleep 来实现，意味着事件操作是不精确的，在负载很大的情况可能会有延迟，只能说大概在这个频率下。</p>
+<p>每秒操作包括：</p>
+<ul>
+<li>刷新 redo log（总是）</li>
+<li>合并插入缓冲</li>
+<li>至多刷新 100 个 InnoDB 的缓冲池中的脏页到磁盘</li>
+<li>如果没有当前用户活动，切换到 backgroud loop</li>
+</ul>
+<p>每十秒操作包括：</p>
+<ul>
+<li>刷新 100 个脏页到磁盘</li>
+<li>合并至多 5 个插入缓冲（总是）</li>
+<li>删除无用的 undo log（总是）</li>
+<li>刷新 100 个或者 10 个脏页到磁盘（总是）</li>
+</ul>
+</li>
+<li>
+<p>Background Loop</p>
+<p>当前没有用户活动或者数据库关闭，就会切换到这个循环。</p>
+<p>执行操作：</p>
+<ul>
+<li>删除无用的 undo log（总是）</li>
+<li>合并 20 个插入缓冲（总是）</li>
+<li>跳回 Loop（总是）</li>
+<li>不停刷新 100 个页直到符合条件（可能，跳转到 Flush Loop 中完成）</li>
+</ul>
+</li>
+<li>
+<p>Flush Loop</p>
+<p>不停刷新 100 个页直到符合条件。</p>
+</li>
+<li>
+<p>Suspend Loop</p>
+<p>若用户启用了 InnoDB 存储引擎，但没有使用任何 InnoDB 存储引擎的表，那么总是处于挂起状态。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>InnoDB 1.2x 版本之前</p>
+<ul>
+<li>
+<p>innodb_io_capacity</p>
+<p>提供了<code>innodb_io_capacity</code>的百分比来控制刷新到磁盘页的数量：</p>
+<ul>
+<li>在合并插入缓冲时，合并插入缓冲的数量为<code>innodb_io_capacity</code>值的5%。</li>
+<li>在从缓冲区刷新脏页时，刷新脏页的数量为<code>innodb_io_capacity</code>。</li>
+</ul>
+</li>
+<li>
+<p>innodb_max_dirty_pages_pct</p>
+<p>该参数之前的默认值为90，意味着脏页占缓冲池的 90%。InnoDB 存储引擎在每秒刷新缓冲池和 Flush Loop 时会判断这个值，如果大于<code>innodb_max_dirty_pages_pct</code>，才会刷新 100 个脏页，如果有很大的内存，或者数据库服务的压力很大，这时刷新脏页的速度反而会降低。同样，在数据库的恢复阶段可能需要更多的时间。</p>
+<p>从 1.0.x 版本开始，<code>innodb_max_dirty_pages_pct</code>默认值变成 75，这样可以加快刷新脏页的频率，又能保证了磁盘 IO 的负载。</p>
+</li>
+<li>
+<p>innodb_adaptive_flushing</p>
+<p>该值影响每秒刷新脏页的数量。随着<code>innodb_adaptive_flushing</code>参数的引入，InnoDB 存储引擎会通过一个名为<code>buf_flush_get_desired_flush_rate</code>的函数来判断需要刷新脏页最合适的数量。</p>
+</li>
+<li>
+<p>innodb_purge_batch_size</p>
+<p>该参数可以控制每次 Full Purge 回收的 undo 页的数量。默认值为20。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>InnoDB 1.2x 版本</p>
+<p>刷新脏页的操作从 Master Thread 线程分离到一个单独的 Page Cleaner Thread，从而减轻了 Master Thread 的工作，进一步提高了系统的并发性。</p>
+</li>
+</ol>
+<h2 id="关键特性">关键特性<a hidden class="anchor" aria-hidden="true" href="#关键特性">#</a></h2>
+<h3 id="插入缓冲">插入缓冲<a hidden class="anchor" aria-hidden="true" href="#插入缓冲">#</a></h3>
+<h4 id="insert-buffer">Insert Buffer<a hidden class="anchor" aria-hidden="true" href="#insert-buffer">#</a></h4>
+<p>对于非聚集索引的插入或更新操作，不是每一次直接插入到索引页中，而是先判断插入的非聚集索引页是否在缓冲池中，若在，则直接插入。若不在，则先放入到一个 Insert Buffer 对象中。数据库这个非聚集的索引已经查到叶子节点，而实际并没有，只是存放在另一个位置，然后再以一定的频率和情况进行 Insert Buffer 和辅助索引页子节点的 merge 操作。这时通常能将多个插入合并到一个操作中，因为在一个索引页中，这就大大提高了对于非聚集索引插入的性能。</p>
+<p>Insert Buffer 的使用需要同时满足以下两个条件：</p>
+<ul>
+<li>索引是辅助索引</li>
+<li>索引不是唯一的</li>
+</ul>
+<h4 id="change-buffer">Change Buffer<a hidden class="anchor" aria-hidden="true" href="#change-buffer">#</a></h4>
+<p>Change Buffer 是 Insert Buffer 的升级。InnoDB 存储引擎可以对 DML 操作——INSERT、DELETE、UPDATE 都进行缓冲，他们分别是：Insert Buffer、Delete Buffer、Purge Buffer。</p>
+<p>Change Buffer 和 Insert Buffer 一样，适用的对象依然是非唯一的辅助索引。</p>
+<p>对一条记录进行 UPDATE 操作可能分成两个过程：</p>
+<ul>
+<li>将记录标记为已删除</li>
+<li>真正将记录删除</li>
+</ul>
+<p>因此 Delete Buffer 对应 UPDATE 操作的第一个过程，即将记录标记为删除。Purge Buffer 对应 UPDATE 操作的第二个过程，即将记录真正的删除。</p>
+<h4 id="insert-buffer-的内部实现">Insert Buffer 的内部实现<a hidden class="anchor" aria-hidden="true" href="#insert-buffer-的内部实现">#</a></h4>
+<p>Insert Buffer 的数据结构是一棵 B+ 树，这颗树存放在共享表空间中，默认也就是 ibdata1 中。</p>
+<h4 id="merge-insert-buffer">Merge Insert Buffer<a hidden class="anchor" aria-hidden="true" href="#merge-insert-buffer">#</a></h4>
+<p>Merge Insert Buffer 可能发生在以下几种情况：</p>
+<ul>
+<li>辅助索引页被读取到缓冲池时。</li>
+<li>Insert Buffer Bitmap 页追踪到该辅助索引页已无可用空间时。</li>
+<li>Master Thread。</li>
+</ul>
+<h3 id="两次写">两次写<a hidden class="anchor" aria-hidden="true" href="#两次写">#</a></h3>
+<p>doublewrite 带给 InnoDB 存储引擎的是数据页的可靠性。</p>
+<p>当发生数据库宕机时，可能 InnoDB 存储引擎正在写入某个页到表中，而这个页只写了一部分，之后就宕机了，这种情况被称为部分写失效。</p>
+<p>在应用 redo log之前，用户需要一个页的副本，当写入失效发生时，先通过页的副本来还原该页，再进行重做，这就是 doublewrite。</p>
+<p>doublewrite 由两部分组成，一部分是内存中的 doublewrite buffer，大小为 2MB，另一部分是物理磁盘上共享表空间中连续的 128 个页，即 2 个区，大小同样是 2MB。</p>
+<p>在对缓冲池的脏页进行刷新时，并不直接写磁盘，而是会通过 memcpy 函数将脏页赋值到内存中的 doublewrite buffer，之后通过 doublewrite buffer 再分两次，每次 1MB 顺序地写入共享表空间的物理磁盘上，然后马上调用 fsync 函数，同步磁盘，避免缓冲写带来的问题。在完成 doublewrite 页的写入后，再将 doublewrite buffer 中的页写入各个表空间文件中，此时的写入是离散的。</p>
+<blockquote>
+<p>redo log 写入的单位是 512 字节，也是磁盘 IO 的最小单位，所以无所谓数据损坏。</p>
+<p>另外可以看出，doublewrite 需要更多的 fsync 操作，这些操作会降低 MySQL 的性能。但是又因为这个是顺序写，性能非常高。牺牲性能来保证数据完整性还是有必要的。</p>
+</blockquote>
+<h3 id="自适应哈希索引">自适应哈希索引<a hidden class="anchor" aria-hidden="true" href="#自适应哈希索引">#</a></h3>
+<p>InnoDB 存储引擎会监控对标上各索引页的查询，如果观察到建立哈希索引可以带来速度提升，则建立哈希索引，称之为自适应哈希索引（Adaptive Hash Index，AHI）。AHI 是通过缓冲池的 B+ 树页构建而来，因此建立的速度很快，而且不需要对整张表构建哈希索引。</p>
+<p>可以通过参数<code>innodb_adaptive_hash_index</code>来考虑是否启用或禁用此特性。</p>
+<blockquote>
+<p>自适应哈希有不少限制：</p>
+<ol>
+<li>只能用于等值比较，例如=， &lt;=&gt;，in</li>
+<li>无法用于排序</li>
+<li>有冲突可能</li>
+<li>MySQL自动管理，人为无法干预。</li>
+</ol>
+</blockquote>
+<h3 id="异步-io">异步 IO<a hidden class="anchor" aria-hidden="true" href="#异步-io">#</a></h3>
+<p>为了提高磁盘操作性能，当前的数据库系统都采用 AIO 的方式来处理磁盘操作，InnoDB 存储引擎也是这样。</p>
+<p>一条 SQL 查询可能扫描多个索引页，也就是多次 IO 操作。用户可以在发出一个 IO 请求后立即再发出另一个 IO 请求，当所有 IO 请求发送完毕后，等待所有 IO 操作的完成，这就是 AIO。</p>
+<p>AIO 的另一个优势是可以进行 IO Merge 操作，也就是将多个 IO 合并为 1 个 IO，这样可以提高 IOPS 的性能。</p>
+<p>在 InnoDB1.1x 之前，AIO 通过 InnoDB 存储引擎中的代码来模拟实现。之后的版本中，则提供了内核级别 AIO 的支持，称为 Native AIO。可以通过参数<code>innodb_use_naative_aio</code>来控制是否启用 Native AIO。</p>
+<p>在 InnoDB 存储引擎中，read ahead 方式的拂去都是通过 AIO 完成，脏页的刷新，即磁盘的写入操作则全部由 AIO 完成。</p>
+<h3 id="刷机邻接页">刷机邻接页<a hidden class="anchor" aria-hidden="true" href="#刷机邻接页">#</a></h3>
+<p>InnoDB 存储引擎还提供了 Flush Neighbor Page（刷新邻接页）的特性。工作原理是：当刷新一个脏页时，InnoDB 存储引擎会检测该页所在区（extent）的所在页，如果是脏页，那么一起进行刷新。好处是可以通过 AIO 将多个 IO 写入操作合并为一个 IO 操作，但是需要考虑两个问题：</p>
+<ul>
+<li>可能将不怎么脏的页写入，而该页之后又会很快变成脏页</li>
+<li>固态硬盘有着较高的 IOPS，是否还需要这个特性</li>
+</ul>
+<p>为此，InnoDB 存储引擎从 1.2.x 版本开始提供了参数<code>innodb_flush_neighbors</code>，用来控制是否启用该特性。</p>
+<h2 id="启用关闭与恢复">启用、关闭与恢复<a hidden class="anchor" aria-hidden="true" href="#启用关闭与恢复">#</a></h2>
+<ul>
+<li>
+<p>关闭</p>
+<p>在关闭时，参数<code>innodb_fast_shutdown</code>影响着表的存储引擎为 InnoDB 的行为，该值可取 0、1、2，默认为 1。</p>
+<ul>
+<li>0 表示 MySQL 数据库关闭时，InnoDB 需要完成所有的 full purge 和 merge insert buffer，并且将所有的脏页刷新回磁盘。</li>
+<li>1 表示不需要完成上述的 full purge 和 merge insert buffer 操作，但是在缓冲池中的一些数据脏页还是会刷新回磁盘。</li>
+<li>2 表示不完成 full purge 和 merge insert buffer 操作，也不将缓冲池中的数据脏页写回磁盘，而是将日志写写入日志文件。这样不会有任何事务的丢失，但是下次 MySQL 数据库启动时，会进行恢复操作。</li>
+</ul>
+</li>
+<li>
+<p>恢复</p>
+<p>参数<code>innodb_force_recovery</code>影响了整个 InnoDB 存储引擎恢复的状况。该参数默认为 0，代表当发生需要恢复时，进行所有的恢复操作，当不能进行有效恢复时，如数据页发生了 corruption，MySQL 数据库可能发生宕机，并把错误写入错误日志中去。</p>
+<p><code>innodb_force_recovery</code>还可以设置为 6 个值：</p>
+<ul>
+<li>1（SRV_FORCE_IGNORE_CORRUPT）：忽略检查到的 corrupt 页。</li>
+<li>2（SRV_FORCE_NO_BACKGROUND）：阻止 Master Thread 线程的运行，如 Master Thread 线程需要进行 full purge 操作，而这会导致 crash。</li>
+<li>3（SRV_JFORCE_NO_TRX_UNDO）：不进行事务的回滚操作。</li>
+<li>4（SRV_FORCE_NO_IBUF_MERGE）：不进行插入缓冲的合并操作。</li>
+<li>5（SRV_FORCE_NO_UNDO_LOG_SCAN）：不查看 Undo Log，InnoDB 存储引擎会将未提交的事务视为已提交。</li>
+<li>6（SRV_FORCE_NO_LOG_REDO）：不进行前滚的操作。</li>
+</ul>
+<p>当参数<code>innodb_force_recovery</code>大于 0 后，用户可以对表进行 select、create 和  drop 操作，但 insert、update 和 delete 这类 DML 操作是不允许的。</p>
+</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>《InnoDB存储引擎》笔记：文件</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0mysql%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

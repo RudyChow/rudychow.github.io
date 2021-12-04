@@ -191,7 +191,7 @@
 <p>客户端默认使用第一个数据库，其间可以使用<code>select</code>进行 db 的切换。</p>
 <h2 id="初始化">初始化</h2>
 <p>db 的初始化是在<code>initServer</code>中进行。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 分配空间
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 分配空间
 </span><span style="color:#586e75"></span>server.db <span style="color:#719e07">=</span> zmalloc(<span style="color:#719e07">sizeof</span>(redisDb)<span style="color:#719e07">*</span>server.dbnum);
 <span style="color:#586e75">// 遍历数组，并且初始化每个变量
 </span><span style="color:#586e75"></span><span style="color:#719e07">for</span> (j <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>; j <span style="color:#719e07">&lt;</span> server.dbnum; j<span style="color:#719e07">++</span>) {
@@ -206,7 +206,7 @@
 }
 </code></pre></div><h2 id="数据结构">数据结构</h2>
 <p>对应的结构体如下：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> redisDb {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> redisDb {
     dict <span style="color:#719e07">*</span>dict;                 <span style="color:#586e75">/* The keyspace for this DB */</span>
     dict <span style="color:#719e07">*</span>expires;              <span style="color:#586e75">/* Timeout of keys with a timeout set */</span>
     dict <span style="color:#719e07">*</span>blocking_keys;        <span style="color:#586e75">/* Keys with clients waiting for data (BLPOP)*/</span>

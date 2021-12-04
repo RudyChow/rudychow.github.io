@@ -214,7 +214,7 @@
 </ul>
 <h2 id="调用链">调用链</h2>
 <p>缓存策略的入口在<code>processCommand</code>里，这里会调用<code>freeMemoryIfNeededAndSafe</code>，然后调用<code>freeMemoryIfNeeded</code>。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">processCommand</span>(client <span style="color:#719e07">*</span>c) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">processCommand</span>(client <span style="color:#719e07">*</span>c) {
     <span style="color:#586e75">/* Handle the maxmemory directive.
 </span><span style="color:#586e75">     *
 </span><span style="color:#586e75">     * Note that we do not want to reclaim memory if we are here re-entering

@@ -192,7 +192,7 @@
             <p>Redis 的时间事件相比起文件事件简单不少（以 <a href="https://github.com/redis/redis/tree/5.0.9">Redis5.0.9</a> 为例）。</p>
 <h2 id="aeeventloop">aeEventLoop</h2>
 <p><code>aeEventLoop</code>是<code>Redis</code>全局的结构体对象，所有跟事件有关的数据和状态都存储在这上面：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 只展示时间事件相关属性
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 只展示时间事件相关属性
 </span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeEventLoop {
     <span style="color:#dc322f">long</span> <span style="color:#dc322f">long</span> timeEventNextId;   <span style="color:#586e75">/* 自增id */</span>
     time_t lastTime; <span style="color:#586e75">/* 每次执行时间事件循环的时间 */</span>
@@ -210,7 +210,7 @@
 <li>
 <p><code>timeEventHead</code></p>
 <p>所有的时间事件形成一个双向链表，<code>aeEventLoop</code>存放这链表头部，具体结构体：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeTimeEvent {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeTimeEvent {
     <span style="color:#dc322f">long</span> <span style="color:#dc322f">long</span> id; <span style="color:#586e75">/* time event identifier. */</span>
     <span style="color:#dc322f">long</span> when_sec; <span style="color:#586e75">/* seconds */</span>
     <span style="color:#dc322f">long</span> when_ms; <span style="color:#586e75">/* milliseconds */</span>

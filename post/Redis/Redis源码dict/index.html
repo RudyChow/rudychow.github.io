@@ -194,7 +194,7 @@
         <div class="post-content">
             <p>dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。</p>
 <h2 id="数据结构">数据结构</h2>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 字典
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 字典
 </span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> dict {
     dictType <span style="color:#719e07">*</span>type;
     <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>privdata;
@@ -204,7 +204,7 @@
 } dict;
 <span style="color:#586e75">// 字典的函数
 </span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> dictType {
-    uint64_t (<span style="color:#719e07">*</span>hashFunction)(<span style="color:#719e07">const</span> <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>key);
+    <span style="color:#dc322f">uint64_t</span> (<span style="color:#719e07">*</span>hashFunction)(<span style="color:#719e07">const</span> <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>key);
     <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>(<span style="color:#719e07">*</span>keyDup)(<span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>privdata, <span style="color:#719e07">const</span> <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>key);
     <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>(<span style="color:#719e07">*</span>valDup)(<span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>privdata, <span style="color:#719e07">const</span> <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>obj);
     <span style="color:#dc322f">int</span> (<span style="color:#719e07">*</span>keyCompare)(<span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>privdata, <span style="color:#719e07">const</span> <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>key1, <span style="color:#719e07">const</span> <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>key2);
@@ -223,8 +223,8 @@
     <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>key;
     <span style="color:#719e07">union</span> {
         <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>val;
-        uint64_t u64;
-        int64_t s64;
+        <span style="color:#dc322f">uint64_t</span> u64;
+        <span style="color:#dc322f">int64_t</span> s64;
         <span style="color:#dc322f">double</span> d;
     } v;
     <span style="color:#719e07">struct</span> dictEntry <span style="color:#719e07">*</span>next;
@@ -262,7 +262,7 @@
 <p>hashtable 是我们再熟悉不过的数据结构了，Redis 中的 hashtable 比常见的 hashtable 多了一层 dict 的概念。</p>
 <p>dict 的 type 属性是一些函数的结构体，privdata 是创建字典时自定义的属性，iterators 则是正在遍历的迭代器的个数。</p>
 <p>dict 中重要的属性是<code>ht[2]</code>和<code>rehashidx</code>，它用来实现<strong>rehash</strong>。在 Redis 中，rehash 的过程是渐进式的，并非一次性完成。在源码中通过调用<code>_dictRehashStep</code>中<code>dictRehash</code>进行：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">dictRehash</span>(dict <span style="color:#719e07">*</span>d, <span style="color:#dc322f">int</span> n) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">dictRehash</span>(dict <span style="color:#719e07">*</span>d, <span style="color:#dc322f">int</span> n) {
     <span style="color:#dc322f">int</span> empty_visits <span style="color:#719e07">=</span> n<span style="color:#719e07">*</span><span style="color:#2aa198">10</span>; <span style="color:#586e75">/* Max number of empty buckets to visit. */</span>
     <span style="color:#719e07">if</span> (<span style="color:#719e07">!</span>dictIsRehashing(d)) <span style="color:#719e07">return</span> <span style="color:#2aa198">0</span>;
 
@@ -279,7 +279,7 @@
         de <span style="color:#719e07">=</span> d<span style="color:#719e07">-&gt;</span>ht[<span style="color:#2aa198">0</span>].table[d<span style="color:#719e07">-&gt;</span>rehashidx];
         <span style="color:#586e75">/* Move all the keys in this bucket from the old to the new hash HT */</span>
         <span style="color:#719e07">while</span>(de) {
-            uint64_t h;
+            <span style="color:#dc322f">uint64_t</span> h;
 
             nextde <span style="color:#719e07">=</span> de<span style="color:#719e07">-&gt;</span>next;
             <span style="color:#586e75">/* Get the index in the new hash table */</span>
@@ -318,7 +318,7 @@
 </ol>
 <h4 id="负载因子">负载因子</h4>
 <p>dictht 的负载因子是根据<code>d-&gt;ht[0].used/d-&gt;ht[0].size</code>计算得出的，如果大于 5 则表示可以扩容。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">static</span> <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> dict_force_resize_ratio <span style="color:#719e07">=</span> <span style="color:#2aa198">5</span>;
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">static</span> <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> dict_force_resize_ratio <span style="color:#719e07">=</span> <span style="color:#2aa198">5</span>;
 
 <span style="color:#719e07">static</span> <span style="color:#dc322f">int</span> <span style="color:#268bd2">_dictExpandIfNeeded</span>(dict <span style="color:#719e07">*</span>d)
 {

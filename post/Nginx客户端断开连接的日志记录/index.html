@@ -195,7 +195,7 @@
             <p>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。
 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。</p>
 <h2 id="测试环境">测试环境</h2>
-<pre><code>+----------+        +---------+        +----------+
+<pre tabindex="0"><code>+----------+        +---------+        +----------+
 |          |        |         |        |          |
 |          |  http  |         |upstream|  server  |
 |  client  &lt;--------&gt;  Nginx  +-------&gt;+          |
@@ -213,10 +213,10 @@
     </p>
 <p>通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。</p>
 <p>此时Nginx记录的日志如下：</p>
-<pre><code>172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] &quot;GET / HTTP/1.1&quot; 499 0 &quot;-&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&quot; &quot;-&quot;
+<pre tabindex="0"><code>172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] &quot;GET / HTTP/1.1&quot; 499 0 &quot;-&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&quot; &quot;-&quot;
 </code></pre><blockquote>
 <p>HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">/*
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">/*
 </span><span style="color:#586e75">* HTTP does not define the code for the case when a client closed
 </span><span style="color:#586e75">* the connection while we are processing its request so we introduce
 </span><span style="color:#586e75">* own code to log such situation when a client has closed the connection
@@ -232,7 +232,7 @@
         </a>
     </p>
 <p>序号106中，Nginx已经处理完server的请求，并且响应结果给客户端。</p>
-<pre><code>172.20.0.1 - - [20/Jul/2020:14:44:16 +0000] &quot;GET / HTTP/1.1&quot; 200 22 &quot;-&quot; &quot;Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1&quot; &quot;-&quot;
+<pre tabindex="0"><code>172.20.0.1 - - [20/Jul/2020:14:44:16 +0000] &quot;GET / HTTP/1.1&quot; 200 22 &quot;-&quot; &quot;Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1&quot; &quot;-&quot;
 </code></pre><p>序号107～289，是服务端对客户端进行的重传。</p>
 <p>序号318，服务端对客户端发起RST，强制中断连接。</p>
 <h2 id="结语">结语</h2>

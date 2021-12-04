@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Nginx客户端断开连接的日志记录 | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。
+测试环境 &#43;----------&#43; &#43;---------&#43; &#43;----------&#43; | | | | | | | | http | |upstream| server | | client &lt;--------&gt; Nginx &#43;-------&gt;&#43; | | | | | |sleep(20s)| | | | | | | &#43;----------&#43; &#43;---------&#43; &#43;----------&#43; 场景1：主动断开连接 测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。
+经过抓包得到客户端和服务端的连接信息：
+通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。
+此时Nginx记录的日志如下：
+172.20.0.1 - - [20/Jul/2020:15:03:19 &#43;0000] &quot;GET / HTTP/1.1&quot; 499 0 &quot;-&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&quot; &quot;-&quot;  HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Nginx客户端断开连接的日志记录" />
+<meta property="og:description" content="最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。
+测试环境 &#43;----------&#43; &#43;---------&#43; &#43;----------&#43; | | | | | | | | http | |upstream| server | | client &lt;--------&gt; Nginx &#43;-------&gt;&#43; | | | | | |sleep(20s)| | | | | | | &#43;----------&#43; &#43;---------&#43; &#43;----------&#43; 场景1：主动断开连接 测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。
+经过抓包得到客户端和服务端的连接信息：
+通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。
+此时Nginx记录的日志如下：
+172.20.0.1 - - [20/Jul/2020:15:03:19 &#43;0000] &quot;GET / HTTP/1.1&quot; 499 0 &quot;-&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&quot; &quot;-&quot;  HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-07-20T23:27:34&#43;08:00" />
+<meta property="article:modified_time" content="2020-07-20T23:27:34&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Nginx客户端断开连接的日志记录"/>
+<meta name="twitter:description" content="最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。
+测试环境 &#43;----------&#43; &#43;---------&#43; &#43;----------&#43; | | | | | | | | http | |upstream| server | | client &lt;--------&gt; Nginx &#43;-------&gt;&#43; | | | | | |sleep(20s)| | | | | | | &#43;----------&#43; &#43;---------&#43; &#43;----------&#43; 场景1：主动断开连接 测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。
+经过抓包得到客户端和服务端的连接信息：
+通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。
+此时Nginx记录的日志如下：
+172.20.0.1 - - [20/Jul/2020:15:03:19 &#43;0000] &quot;GET / HTTP/1.1&quot; 499 0 &quot;-&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&quot; &quot;-&quot;  HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Nginx客户端断开连接的日志记录",
+      "item": "https://rudychow.github.io/post/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Nginx客户端断开连接的日志记录",
+  "name": "Nginx客户端断开连接的日志记录",
+  "description": "最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。\n测试环境 +----------+ +---------+ +----------+ | | | | | | | | http | |upstream| server | | client \u0026lt;--------\u0026gt; Nginx +-------\u0026gt;+ | | | | | |sleep(20s)| | | | | | | +----------+ +---------+ +----------+ 场景1：主动断开连接 测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。\n经过抓包得到客户端和服务端的连接信息：\n通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。\n此时Nginx记录的日志如下：\n172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] \u0026quot;GET / HTTP/1.1\u0026quot; 499 0 \u0026quot;-\u0026quot; \u0026quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36\u0026quot; \u0026quot;-\u0026quot;  HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。",
+  "keywords": [
+    
+  ],
+  "articleBody": "最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。\n测试环境 +----------+ +---------+ +----------+ | | | | | | | | http | |upstream| server | | client  Nginx +-------+ | | | | | |sleep(20s)| | | | | | | +----------+ +---------+ +----------+ 场景1：主动断开连接 测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。\n经过抓包得到客户端和服务端的连接信息：\n通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。\n此时Nginx记录的日志如下：\n172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] \"GET / HTTP/1.1\" 499 0 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36\" \"-\"  HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。\n/* * HTTP does not define the code for the case when a client closed * the connection while we are processing its request so we introduce * own code to log such situation when a client has closed the connection * before we even try to send the HTTP header to it */ #define NGX_HTTP_CLIENT_CLOSED_REQUEST 499  场景2：异常断开连接 测试行为：手机对Nginx发起请求，并在Nginx响应前切换网络环境，以达到异常断开目的，此后观察结果\n序号106中，Nginx已经处理完server的请求，并且响应结果给客户端。\n172.20.0.1 - - [20/Jul/2020:14:44:16 +0000] \"GET / HTTP/1.1\" 200 22 \"-\" \"Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1\" \"-\" 序号107～289，是服务端对客户端进行的重传。\n序号318，服务端对客户端发起RST，强制中断连接。\n结语 在客户端主动断开时（即TCP正常地发起挥手行为），Nginx会进行状态码为499的日志记录。\n在客户端异常断开时（网络切换、断网等等原因），Nginx会记录200的成功日志。至于为什么，只有后面看Nginx源码才能知道原因。\n",
+  "wordCount" : "164",
+  "inLanguage": "en",
+  "datePublished": "2020-07-20T23:27:34+08:00",
+  "dateModified": "2020-07-20T23:27:34+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      Nginx客户端断开连接的日志记录
+    </h1>
+    <div class="post-meta"><span title='2020-07-20 23:27:34 +0800 HKT'>July 20, 2020</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><p>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。
+同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。</p>
+<h2 id="测试环境">测试环境<a hidden class="anchor" aria-hidden="true" href="#测试环境">#</a></h2>
+<pre tabindex="0"><code>+----------+        +---------+        +----------+
+|          |        |         |        |          |
+|          |  http  |         |upstream|  server  |
+|  client  &lt;--------&gt;  Nginx  +-------&gt;+          |
+|          |        |         |        |sleep(20s)|
+|          |        |         |        |          |
++----------+        +---------+        +----------+
+
+</code></pre><h3 id="场景1主动断开连接">场景1：主动断开连接<a hidden class="anchor" aria-hidden="true" href="#场景1主动断开连接">#</a></h3>
+<p>测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。</p>
+<p>经过抓包得到客户端和服务端的连接信息：</p>
+<p><img loading="lazy" src="/pics/nginx-client-close-200.png" alt="nginx-client-close-200"  />
+</p>
+<p>通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。</p>
+<p>此时Nginx记录的日志如下：</p>
+<pre tabindex="0"><code>172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] &quot;GET / HTTP/1.1&quot; 499 0 &quot;-&quot; &quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&quot; &quot;-&quot;
+</code></pre><blockquote>
+<p>HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/*
+</span><span style="color:#75715e">* HTTP does not define the code for the case when a client closed
+</span><span style="color:#75715e">* the connection while we are processing its request so we introduce
+</span><span style="color:#75715e">* own code to log such situation when a client has closed the connection
+</span><span style="color:#75715e">* before we even try to send the HTTP header to it
+</span><span style="color:#75715e">*/</span>
+<span style="color:#75715e">#define NGX_HTTP_CLIENT_CLOSED_REQUEST     499
+</span></code></pre></div></blockquote>
+<h3 id="场景2异常断开连接">场景2：异常断开连接<a hidden class="anchor" aria-hidden="true" href="#场景2异常断开连接">#</a></h3>
+<p>测试行为：手机对Nginx发起请求，并在Nginx响应前切换网络环境，以达到异常断开目的，此后观察结果</p>
+<p><img loading="lazy" src="/pics/nginx-client-close-499.png" alt="nginx-client-close-200"  />
+</p>
+<p>序号106中，Nginx已经处理完server的请求，并且响应结果给客户端。</p>
+<pre tabindex="0"><code>172.20.0.1 - - [20/Jul/2020:14:44:16 +0000] &quot;GET / HTTP/1.1&quot; 200 22 &quot;-&quot; &quot;Mozilla/5.0 (iPhone; CPU iPhone OS 13_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Mobile/15E148 Safari/604.1&quot; &quot;-&quot;
+</code></pre><p>序号107～289，是服务端对客户端进行的重传。</p>
+<p>序号318，服务端对客户端发起RST，强制中断连接。</p>
+<h2 id="结语">结语<a hidden class="anchor" aria-hidden="true" href="#结语">#</a></h2>
+<p>在客户端主动断开时（即TCP正常地发起挥手行为），Nginx会进行状态码为499的日志记录。</p>
+<p>在客户端异常断开时（网络切换、断网等等原因），Nginx会记录200的成功日志。至于为什么，只有后面看Nginx源码才能知道原因。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>线上问题：锁超时</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E5%88%B0%E5%BA%95%E6%98%AF%E5%87%A0%E6%AC%A1%E8%AF%B7%E6%B1%82/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>线上问题：到底是几次请求？</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

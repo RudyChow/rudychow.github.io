@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Redis源码：dict | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。
+数据结构 // 字典 typedef struct dict { dictType *type; void *privdata; dictht ht[2]; long rehashidx; /* rehashing not in progress if rehashidx == -1 */ unsigned long iterators; /* number of iterators currently running */ } dict; // 字典的函数 typedef struct dictType { uint64_t (*hashFunction)(const void *key); void *(*keyDup)(void *privdata, const void *key); void *(*valDup)(void *privdata, const void *obj); int (*keyCompare)(void *privdata, const void *key1, const void *key2); void (*keyDestructor)(void *privdata, void *key); void (*valDestructor)(void *privdata, void *obj); } dictType; // hashtable结构体 typedef struct dictht { dictEntry **table; unsigned long size; unsigned long sizemask; unsigned long used; } dictht; // hashtable节点，存放key value typedef struct dictEntry { void *key; union { void *val; uint64_t u64; int64_t s64; double d; } v; struct dictEntry *next; } dictEntry; hashtable Redis 主要使用dictht和dictEntry这两个结构体来实现基本的 hashtable，实现原理和常见的 hashtable 差不多。">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81dict/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Redis源码：dict" />
+<meta property="og:description" content="dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。
+数据结构 // 字典 typedef struct dict { dictType *type; void *privdata; dictht ht[2]; long rehashidx; /* rehashing not in progress if rehashidx == -1 */ unsigned long iterators; /* number of iterators currently running */ } dict; // 字典的函数 typedef struct dictType { uint64_t (*hashFunction)(const void *key); void *(*keyDup)(void *privdata, const void *key); void *(*valDup)(void *privdata, const void *obj); int (*keyCompare)(void *privdata, const void *key1, const void *key2); void (*keyDestructor)(void *privdata, void *key); void (*valDestructor)(void *privdata, void *obj); } dictType; // hashtable结构体 typedef struct dictht { dictEntry **table; unsigned long size; unsigned long sizemask; unsigned long used; } dictht; // hashtable节点，存放key value typedef struct dictEntry { void *key; union { void *val; uint64_t u64; int64_t s64; double d; } v; struct dictEntry *next; } dictEntry; hashtable Redis 主要使用dictht和dictEntry这两个结构体来实现基本的 hashtable，实现原理和常见的 hashtable 差不多。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81dict/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-10-07T22:26:33&#43;08:00" />
+<meta property="article:modified_time" content="2020-10-07T22:26:33&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Redis源码：dict"/>
+<meta name="twitter:description" content="dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。
+数据结构 // 字典 typedef struct dict { dictType *type; void *privdata; dictht ht[2]; long rehashidx; /* rehashing not in progress if rehashidx == -1 */ unsigned long iterators; /* number of iterators currently running */ } dict; // 字典的函数 typedef struct dictType { uint64_t (*hashFunction)(const void *key); void *(*keyDup)(void *privdata, const void *key); void *(*valDup)(void *privdata, const void *obj); int (*keyCompare)(void *privdata, const void *key1, const void *key2); void (*keyDestructor)(void *privdata, void *key); void (*valDestructor)(void *privdata, void *obj); } dictType; // hashtable结构体 typedef struct dictht { dictEntry **table; unsigned long size; unsigned long sizemask; unsigned long used; } dictht; // hashtable节点，存放key value typedef struct dictEntry { void *key; union { void *val; uint64_t u64; int64_t s64; double d; } v; struct dictEntry *next; } dictEntry; hashtable Redis 主要使用dictht和dictEntry这两个结构体来实现基本的 hashtable，实现原理和常见的 hashtable 差不多。"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Redis源码：dict",
+      "item": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81dict/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Redis源码：dict",
+  "name": "Redis源码：dict",
+  "description": "dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。\n数据结构 // 字典 typedef struct dict { dictType *type; void *privdata; dictht ht[2]; long rehashidx; /* rehashing not in progress if rehashidx == -1 */ unsigned long iterators; /* number of iterators currently running */ } dict; // 字典的函数 typedef struct dictType { uint64_t (*hashFunction)(const void *key); void *(*keyDup)(void *privdata, const void *key); void *(*valDup)(void *privdata, const void *obj); int (*keyCompare)(void *privdata, const void *key1, const void *key2); void (*keyDestructor)(void *privdata, void *key); void (*valDestructor)(void *privdata, void *obj); } dictType; // hashtable结构体 typedef struct dictht { dictEntry **table; unsigned long size; unsigned long sizemask; unsigned long used; } dictht; // hashtable节点，存放key value typedef struct dictEntry { void *key; union { void *val; uint64_t u64; int64_t s64; double d; } v; struct dictEntry *next; } dictEntry; hashtable Redis 主要使用dictht和dictEntry这两个结构体来实现基本的 hashtable，实现原理和常见的 hashtable 差不多。",
+  "keywords": [
+    
+  ],
+  "articleBody": "dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。\n数据结构 // 字典 typedef struct dict { dictType *type; void *privdata; dictht ht[2]; long rehashidx; /* rehashing not in progress if rehashidx == -1 */ unsigned long iterators; /* number of iterators currently running */ } dict; // 字典的函数 typedef struct dictType { uint64_t (*hashFunction)(const void *key); void *(*keyDup)(void *privdata, const void *key); void *(*valDup)(void *privdata, const void *obj); int (*keyCompare)(void *privdata, const void *key1, const void *key2); void (*keyDestructor)(void *privdata, void *key); void (*valDestructor)(void *privdata, void *obj); } dictType; // hashtable结构体 typedef struct dictht { dictEntry **table; unsigned long size; unsigned long sizemask; unsigned long used; } dictht; // hashtable节点，存放key value typedef struct dictEntry { void *key; union { void *val; uint64_t u64; int64_t s64; double d; } v; struct dictEntry *next; } dictEntry; hashtable Redis 主要使用dictht和dictEntry这两个结构体来实现基本的 hashtable，实现原理和常见的 hashtable 差不多。\n  dictht\n这个是 hashtable 的主体。\n table 存放的是dictEntry数组。 size 表示数组长度，2^n。 sizemask 是掩码，值是 size - 1，用来计算索引值。 used 是dictht拥有的节点数量。    dictEntry\n这个是dictht的节点。\n key 就是键。 v 就是值。 next 是指向下一个节点的指针，用来解决 hash 冲突，可见是使用的拉链法，即一个单向链表。    一个简单的 dichht 大概如图：\ndict hashtable 是我们再熟悉不过的数据结构了，Redis 中的 hashtable 比常见的 hashtable 多了一层 dict 的概念。\ndict 的 type 属性是一些函数的结构体，privdata 是创建字典时自定义的属性，iterators 则是正在遍历的迭代器的个数。\ndict 中重要的属性是ht[2]和rehashidx，它用来实现rehash。在 Redis 中，rehash 的过程是渐进式的，并非一次性完成。在源码中通过调用_dictRehashStep中dictRehash进行：\nint dictRehash(dict *d, int n) { int empty_visits = n*10; /* Max number of empty buckets to visit. */ if (!dictIsRehashing(d)) return 0; while(n-- \u0026\u0026 d-ht[0].used != 0) { dictEntry *de, *nextde; /* Note that rehashidx can't overflow as we are sure there are more * elements because ht[0].used != 0 */ assert(d-ht[0].size  (unsigned long)d-rehashidx); while(d-ht[0].table[d-rehashidx] == NULL) { d-rehashidx++; if (--empty_visits == 0) return 1; } de = d-ht[0].table[d-rehashidx]; /* Move all the keys in this bucket from the old to the new hash HT */ while(de) { uint64_t h; nextde = de-next; /* Get the index in the new hash table */ h = dictHashKey(d, de-key) \u0026 d-ht[1].sizemask; de-next = d-ht[1].table[h]; d-ht[1].table[h] = de; d-ht[0].used--; d-ht[1].used++; de = nextde; } d-ht[0].table[d-rehashidx] = NULL; d-rehashidx++; } /* Check if we already rehashed the whole table... */ if (d-ht[0].used == 0) { zfree(d-ht[0].table); d-ht[0] = d-ht[1]; _dictReset(\u0026d-ht[1]); d-rehashidx = -1; return 0; } /* More to rehash... */ return 1; } 定位了一下_dictRehashStep，dict 在进行增删改查时都会一步步推进 rehash 的进度。新增操作时，只会针对ht[1]进行操作，但是删除、修改和查询都会对两个 dictht 进行操作。\nrehash dict 中的 rehashidx 记录着 rehash 的进度。rehash 时是根据ht[0]的 table 的槽位一个一个递进的。rehashidx = -1时，表示 dict 此时没有进行 rehash，当rehashidx = 0时，表示 rehash 的进度进行到ht[0]的 table 对应的下标中。\n简述 rehash 的过程：\n ht[0]此时还存在数据，设定循环数 n 开始进入循环。 根据 rehashidx 定位到ht[0]的 rehash 进度，如果ht[0].table[rehashidx]为 null，则rehashidx++。 如果槽位上有数据，则把该槽位上链表的所有数据 rehash 到ht[1]中，最后rehashidx++且清空ht[0]table[rehashidx]数据。 完成循环后，如果ht[0].used == 0，则让 dict 使用 rehash 完成后的ht[1]作为ht[0]数据，并且重置rehashidx = -1。  负载因子 dictht 的负载因子是根据d-ht[0].used/d-ht[0].size计算得出的，如果大于 5 则表示可以扩容。\nstatic unsigned int dict_force_resize_ratio = 5; static int _dictExpandIfNeeded(dict *d) { /* Incremental rehashing already in progress. Return. */ if (dictIsRehashing(d)) return DICT_OK; /* If the hash table is empty expand it to the initial size. */ if (d-ht[0].size == 0) return dictExpand(d, DICT_HT_INITIAL_SIZE); /* If we reached the 1:1 ratio, and we are allowed to resize the hash * table (global setting) or we should avoid it but the ratio between * elements/buckets is over the \"safe\" threshold, we resize doubling * the number of buckets. */ if (d-ht[0].used = d-ht[0].size \u0026\u0026 (dict_can_resize || d-ht[0].used/d-ht[0].size  dict_force_resize_ratio)) { return dictExpand(d, d-ht[0].used*2); } return DICT_OK; } 结语 Redis 的 dict 也相对简单，大部分都和普通的 hashtable 相似，只要理解 rehash 就可以了。\n",
+  "wordCount" : "526",
+  "inLanguage": "en",
+  "datePublished": "2020-10-07T22:26:33+08:00",
+  "dateModified": "2020-10-07T22:26:33+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81dict/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      Redis源码：dict
+    </h1>
+    <div class="post-meta"><span title='2020-10-07 22:26:33 +0800 HKT'>October 7, 2020</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><p>dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。</p>
+<h2 id="数据结构">数据结构<a hidden class="anchor" aria-hidden="true" href="#数据结构">#</a></h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// 字典
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> dict {
+    dictType <span style="color:#f92672">*</span>type;
+    <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>privdata;
+    dictht ht[<span style="color:#ae81ff">2</span>];
+    <span style="color:#66d9ef">long</span> rehashidx; <span style="color:#75715e">/* rehashing not in progress if rehashidx == -1 */</span>
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span> iterators; <span style="color:#75715e">/* number of iterators currently running */</span>
+} dict;
+<span style="color:#75715e">// 字典的函数
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> dictType {
+    <span style="color:#66d9ef">uint64_t</span> (<span style="color:#f92672">*</span>hashFunction)(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>key);
+    <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>(<span style="color:#f92672">*</span>keyDup)(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>privdata, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>key);
+    <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>(<span style="color:#f92672">*</span>valDup)(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>privdata, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>obj);
+    <span style="color:#66d9ef">int</span> (<span style="color:#f92672">*</span>keyCompare)(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>privdata, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>key1, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>key2);
+    <span style="color:#66d9ef">void</span> (<span style="color:#f92672">*</span>keyDestructor)(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>privdata, <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>key);
+    <span style="color:#66d9ef">void</span> (<span style="color:#f92672">*</span>valDestructor)(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>privdata, <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>obj);
+} dictType;
+<span style="color:#75715e">// hashtable结构体
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> dictht {
+    dictEntry <span style="color:#f92672">**</span>table;
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span> size;
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span> sizemask;
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span> used;
+} dictht;
+<span style="color:#75715e">// hashtable节点，存放key value
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> dictEntry {
+    <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>key;
+    <span style="color:#66d9ef">union</span> {
+        <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>val;
+        <span style="color:#66d9ef">uint64_t</span> u64;
+        <span style="color:#66d9ef">int64_t</span> s64;
+        <span style="color:#66d9ef">double</span> d;
+    } v;
+    <span style="color:#66d9ef">struct</span> dictEntry <span style="color:#f92672">*</span>next;
+} dictEntry;
+</code></pre></div><h3 id="hashtable">hashtable<a hidden class="anchor" aria-hidden="true" href="#hashtable">#</a></h3>
+<p>Redis 主要使用<code>dictht</code>和<code>dictEntry</code>这两个结构体来实现基本的 hashtable，实现原理和常见的 hashtable 差不多。</p>
+<ul>
+<li>
+<p>dictht</p>
+<p>这个是 hashtable 的主体。</p>
+<ul>
+<li>table 存放的是<code>dictEntry</code>数组。</li>
+<li>size 表示数组长度，2^n。</li>
+<li>sizemask 是掩码，值是 size - 1，用来计算索引值。</li>
+<li>used 是<code>dictht</code>拥有的节点数量。</li>
+</ul>
+</li>
+<li>
+<p>dictEntry</p>
+<p>这个是<code>dictht</code>的节点。</p>
+<ul>
+<li>key 就是键。</li>
+<li>v 就是值。</li>
+<li>next 是指向下一个节点的指针，用来<strong>解决 hash 冲突</strong>，可见是使用的<strong>拉链法</strong>，即一个单向链表。</li>
+</ul>
+</li>
+</ul>
+<p>一个简单的 dichht 大概如图：</p>
+<p><img loading="lazy" src="/pics/redis/dict/dict_dictht.jpg" alt="dict_dictht"  />
+</p>
+<h3 id="dict">dict<a hidden class="anchor" aria-hidden="true" href="#dict">#</a></h3>
+<p>hashtable 是我们再熟悉不过的数据结构了，Redis 中的 hashtable 比常见的 hashtable 多了一层 dict 的概念。</p>
+<p>dict 的 type 属性是一些函数的结构体，privdata 是创建字典时自定义的属性，iterators 则是正在遍历的迭代器的个数。</p>
+<p>dict 中重要的属性是<code>ht[2]</code>和<code>rehashidx</code>，它用来实现<strong>rehash</strong>。在 Redis 中，rehash 的过程是渐进式的，并非一次性完成。在源码中通过调用<code>_dictRehashStep</code>中<code>dictRehash</code>进行：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">dictRehash</span>(dict <span style="color:#f92672">*</span>d, <span style="color:#66d9ef">int</span> n) {
+    <span style="color:#66d9ef">int</span> empty_visits <span style="color:#f92672">=</span> n<span style="color:#f92672">*</span><span style="color:#ae81ff">10</span>; <span style="color:#75715e">/* Max number of empty buckets to visit. */</span>
+    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>dictIsRehashing(d)) <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+
+    <span style="color:#66d9ef">while</span>(n<span style="color:#f92672">--</span> <span style="color:#f92672">&amp;&amp;</span> d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].used <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span>) {
+        dictEntry <span style="color:#f92672">*</span>de, <span style="color:#f92672">*</span>nextde;
+
+        <span style="color:#75715e">/* Note that rehashidx can&#39;t overflow as we are sure there are more
+</span><span style="color:#75715e">         * elements because ht[0].used != 0 */</span>
+        assert(d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].size <span style="color:#f92672">&gt;</span> (<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span>)d<span style="color:#f92672">-&gt;</span>rehashidx);
+        <span style="color:#66d9ef">while</span>(d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].table[d<span style="color:#f92672">-&gt;</span>rehashidx] <span style="color:#f92672">==</span> NULL) {
+            d<span style="color:#f92672">-&gt;</span>rehashidx<span style="color:#f92672">++</span>;
+            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">--</span>empty_visits <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">1</span>;
+        }
+        de <span style="color:#f92672">=</span> d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].table[d<span style="color:#f92672">-&gt;</span>rehashidx];
+        <span style="color:#75715e">/* Move all the keys in this bucket from the old to the new hash HT */</span>
+        <span style="color:#66d9ef">while</span>(de) {
+            <span style="color:#66d9ef">uint64_t</span> h;
+
+            nextde <span style="color:#f92672">=</span> de<span style="color:#f92672">-&gt;</span>next;
+            <span style="color:#75715e">/* Get the index in the new hash table */</span>
+            h <span style="color:#f92672">=</span> dictHashKey(d, de<span style="color:#f92672">-&gt;</span>key) <span style="color:#f92672">&amp;</span> d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">1</span>].sizemask;
+            de<span style="color:#f92672">-&gt;</span>next <span style="color:#f92672">=</span> d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">1</span>].table[h];
+            d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">1</span>].table[h] <span style="color:#f92672">=</span> de;
+            d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].used<span style="color:#f92672">--</span>;
+            d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">1</span>].used<span style="color:#f92672">++</span>;
+            de <span style="color:#f92672">=</span> nextde;
+        }
+        d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].table[d<span style="color:#f92672">-&gt;</span>rehashidx] <span style="color:#f92672">=</span> NULL;
+        d<span style="color:#f92672">-&gt;</span>rehashidx<span style="color:#f92672">++</span>;
+    }
+
+    <span style="color:#75715e">/* Check if we already rehashed the whole table... */</span>
+    <span style="color:#66d9ef">if</span> (d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].used <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) {
+        zfree(d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].table);
+        d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">=</span> d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">1</span>];
+        _dictReset(<span style="color:#f92672">&amp;</span>d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">1</span>]);
+        d<span style="color:#f92672">-&gt;</span>rehashidx <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+        <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+    }
+
+    <span style="color:#75715e">/* More to rehash... */</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">1</span>;
+}
+</code></pre></div><p>定位了一下<code>_dictRehashStep</code>，dict 在进行增删改查时都会一步步推进 rehash 的进度。新增操作时，只会针对<code>ht[1]</code>进行操作，但是删除、修改和查询都会对两个 dictht 进行操作。</p>
+<h4 id="rehash">rehash<a hidden class="anchor" aria-hidden="true" href="#rehash">#</a></h4>
+<p>dict 中的 rehashidx 记录着 rehash 的进度。rehash 时是根据<code>ht[0]</code>的 table 的槽位一个一个递进的。<code>rehashidx = -1</code>时，表示 dict 此时没有进行 rehash，当<code>rehashidx &gt;= 0</code>时，表示 rehash 的进度进行到<code>ht[0]</code>的 table 对应的下标中。</p>
+<p>简述 rehash 的过程：</p>
+<ol>
+<li><code>ht[0]</code>此时还存在数据，设定循环数 n 开始进入循环。</li>
+<li>根据 rehashidx 定位到<code>ht[0]</code>的 rehash 进度，如果<code>ht[0].table[rehashidx]</code>为 null，则<code>rehashidx++</code>。</li>
+<li>如果槽位上有数据，则把该槽位上链表的所有数据 rehash 到<code>ht[1]</code>中，最后<code>rehashidx++</code>且清空<code>ht[0]table[rehashidx]</code>数据。</li>
+<li>完成循环后，如果<code>ht[0].used == 0</code>，则让 dict 使用 rehash 完成后的<code>ht[1]</code>作为<code>ht[0]</code>数据，并且重置<code>rehashidx = -1</code>。</li>
+</ol>
+<h4 id="负载因子">负载因子<a hidden class="anchor" aria-hidden="true" href="#负载因子">#</a></h4>
+<p>dictht 的负载因子是根据<code>d-&gt;ht[0].used/d-&gt;ht[0].size</code>计算得出的，如果大于 5 则表示可以扩容。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> dict_force_resize_ratio <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;
+
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">_dictExpandIfNeeded</span>(dict <span style="color:#f92672">*</span>d)
+{
+    <span style="color:#75715e">/* Incremental rehashing already in progress. Return. */</span>
+    <span style="color:#66d9ef">if</span> (dictIsRehashing(d)) <span style="color:#66d9ef">return</span> DICT_OK;
+
+    <span style="color:#75715e">/* If the hash table is empty expand it to the initial size. */</span>
+    <span style="color:#66d9ef">if</span> (d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].size <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) <span style="color:#66d9ef">return</span> dictExpand(d, DICT_HT_INITIAL_SIZE);
+
+    <span style="color:#75715e">/* If we reached the 1:1 ratio, and we are allowed to resize the hash
+</span><span style="color:#75715e">     * table (global setting) or we should avoid it but the ratio between
+</span><span style="color:#75715e">     * elements/buckets is over the &#34;safe&#34; threshold, we resize doubling
+</span><span style="color:#75715e">     * the number of buckets. */</span>
+    <span style="color:#66d9ef">if</span> (d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].used <span style="color:#f92672">&gt;=</span> d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].size <span style="color:#f92672">&amp;&amp;</span>
+        (dict_can_resize <span style="color:#f92672">||</span>
+         d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].used<span style="color:#f92672">/</span>d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].size <span style="color:#f92672">&gt;</span> dict_force_resize_ratio))
+    {
+        <span style="color:#66d9ef">return</span> dictExpand(d, d<span style="color:#f92672">-&gt;</span>ht[<span style="color:#ae81ff">0</span>].used<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>);
+    }
+    <span style="color:#66d9ef">return</span> DICT_OK;
+}
+</code></pre></div><h2 id="结语">结语<a hidden class="anchor" aria-hidden="true" href="#结语">#</a></h2>
+<p>Redis 的 dict 也相对简单，大部分都和普通的 hashtable 相似，只要理解 rehash 就可以了。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81intset/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>Redis源码：intset</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81quicklist/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>Redis源码：quicklist</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

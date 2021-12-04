@@ -197,9 +197,9 @@
             <p>sds 全称是<code>simple dynamic string</code>，是 Redis 用来实现字符串的一个数据结构。</p>
 <h2 id="数据结构">数据结构</h2>
 <p>在 C 中，简单的动态字符串结构通常会记录长度和内容：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> string {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> string {
     <span style="color:#dc322f">char</span> <span style="color:#719e07">*</span>buf;<span style="color:#586e75">// 字符指针
-</span><span style="color:#586e75"></span>    uint32_t len; <span style="color:#586e75">// 字符串长度
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">uint32_t</span> len; <span style="color:#586e75">// 字符串长度
 </span><span style="color:#586e75"></span>};
 </code></pre></div><p>同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：</p>
 <ul>
@@ -213,7 +213,7 @@
         </a>
     </p>
 <p>我们再看一下源码里的<code>sds</code>以及<code>header</code>：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#dc322f">char</span> <span style="color:#719e07">*</span>sds;
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#dc322f">char</span> <span style="color:#719e07">*</span>sds;
 
 <span style="color:#586e75">/* Note: sdshdr5 is never used, we just access the flags byte directly.
 </span><span style="color:#586e75"> * However is here to document the layout of type 5 SDS strings. */</span>
@@ -222,26 +222,26 @@
     <span style="color:#dc322f">char</span> buf[];
 };
 <span style="color:#719e07">struct</span> <span style="color:#268bd2">__attribute__</span> ((__packed__)) sdshdr8 {
-    uint8_t len; <span style="color:#586e75">/* used */</span>
-    uint8_t alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
+    <span style="color:#dc322f">uint8_t</span> len; <span style="color:#586e75">/* used */</span>
+    <span style="color:#dc322f">uint8_t</span> alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
     <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> flags; <span style="color:#586e75">/* 3 lsb of type, 5 unused bits */</span>
     <span style="color:#dc322f">char</span> buf[];
 };
 <span style="color:#719e07">struct</span> <span style="color:#268bd2">__attribute__</span> ((__packed__)) sdshdr16 {
-    uint16_t len; <span style="color:#586e75">/* used */</span>
-    uint16_t alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
+    <span style="color:#dc322f">uint16_t</span> len; <span style="color:#586e75">/* used */</span>
+    <span style="color:#dc322f">uint16_t</span> alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
     <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> flags; <span style="color:#586e75">/* 3 lsb of type, 5 unused bits */</span>
     <span style="color:#dc322f">char</span> buf[];
 };
 <span style="color:#719e07">struct</span> <span style="color:#268bd2">__attribute__</span> ((__packed__)) sdshdr32 {
-    uint32_t len; <span style="color:#586e75">/* used */</span>
-    uint32_t alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
+    <span style="color:#dc322f">uint32_t</span> len; <span style="color:#586e75">/* used */</span>
+    <span style="color:#dc322f">uint32_t</span> alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
     <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> flags; <span style="color:#586e75">/* 3 lsb of type, 5 unused bits */</span>
     <span style="color:#dc322f">char</span> buf[];
 };
 <span style="color:#719e07">struct</span> <span style="color:#268bd2">__attribute__</span> ((__packed__)) sdshdr64 {
-    uint64_t len; <span style="color:#586e75">/* used */</span>
-    uint64_t alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
+    <span style="color:#dc322f">uint64_t</span> len; <span style="color:#586e75">/* used */</span>
+    <span style="color:#dc322f">uint64_t</span> alloc; <span style="color:#586e75">/* excluding the header and null terminator */</span>
     <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">char</span> flags; <span style="color:#586e75">/* 3 lsb of type, 5 unused bits */</span>
     <span style="color:#dc322f">char</span> buf[];
 };
@@ -290,7 +290,7 @@
 </ul>
 <h2 id="结语">结语</h2>
 <p>以前看《Redis设计与实现》时，关于 Redis 早期版本的数据结构并非如此像上面那样，当时的数据结构如下：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> sdshdr {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> sdshdr {
     <span style="color:#dc322f">int</span> len;
     <span style="color:#dc322f">int</span> free;
     <span style="color:#dc322f">char</span> buf[];

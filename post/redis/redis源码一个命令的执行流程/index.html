@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Redis源码：一个命令的执行流程 | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析：
+  建立连接
+建立连接要从acceptTcpHandler这个函数说起。
+前面说过，Redis 初始化服务时，会创建一个事件循环eventLoop。在 Redis 监听端口时，会给对应的 socket 绑定一个文件事件，且该事件的回调函数就是acceptTcpHandler。也就是说，任何连接到这个端口的客户端，Redis 都会调用acceptTcpHandler这个函数。
+刚初始化后，等待客户端连接时的eventLoop（此处 fd 假设为 0）：
+回调函数的整个调用链：acceptTcpHandler-&gt;acceptCommonHandler-&gt;createClient。
+简单说明一下acceptTcpHandler的代码逻辑：Redis 最多会循环 1000 次accept客户端来得到对应的客户端 fd，并且每一次循环中会调用acceptCommonHandler函数。所以我们的目标转移到acceptCommonHandler函数上。
+acceptCommonHandler的代码也很简单，最重要的是就是调用createClient函数，其余都是一些边界条件判断以及数据状态更新。
+createClient做了什么？注册对应客户端 fd 的可读事件函数readQueryFromClient以及初始化client对象并且 push 到server的客户端链表里。
+连接创建后的事件循环：
+  发送命令
+与客户端建立连接后，事件循环中就多了一个对应的文件描述符的读事件。只要客户端发送数据，在 Redis 进入到事件循环中就会调用对应事件的回调函数readQueryFromClient。
+首先简述一下发送命令的调用链：readQueryFromClient-&gt;processInputBufferAndReplicate-&gt;processInputBuffer-&gt;processCommand-&gt;call。
+  readQueryFromClient
+这是 Redis 接受客户端请求后的回调函数，主要的逻辑就是读取 client 的 fd 的数据，并且存入 client 的 querybuf 变量中，然后调用processInputBufferAndReplicate。
+  processInputBufferAndReplicate
+因为客户端有可能用于主从节点，这一步其实就是对第三步的封装。主要是进行 client 类型的判断，如果是普通 client 就直接调用processInputBuffer。
+  processInputBuffer
+这一步是解析客户端的输入流中的 RESP 协议，转换成 Redis 中对应的参数，即 client 的 argv 变量。">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Redis源码：一个命令的执行流程" />
+<meta property="og:description" content="一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析：
+  建立连接
+建立连接要从acceptTcpHandler这个函数说起。
+前面说过，Redis 初始化服务时，会创建一个事件循环eventLoop。在 Redis 监听端口时，会给对应的 socket 绑定一个文件事件，且该事件的回调函数就是acceptTcpHandler。也就是说，任何连接到这个端口的客户端，Redis 都会调用acceptTcpHandler这个函数。
+刚初始化后，等待客户端连接时的eventLoop（此处 fd 假设为 0）：
+回调函数的整个调用链：acceptTcpHandler-&gt;acceptCommonHandler-&gt;createClient。
+简单说明一下acceptTcpHandler的代码逻辑：Redis 最多会循环 1000 次accept客户端来得到对应的客户端 fd，并且每一次循环中会调用acceptCommonHandler函数。所以我们的目标转移到acceptCommonHandler函数上。
+acceptCommonHandler的代码也很简单，最重要的是就是调用createClient函数，其余都是一些边界条件判断以及数据状态更新。
+createClient做了什么？注册对应客户端 fd 的可读事件函数readQueryFromClient以及初始化client对象并且 push 到server的客户端链表里。
+连接创建后的事件循环：
+  发送命令
+与客户端建立连接后，事件循环中就多了一个对应的文件描述符的读事件。只要客户端发送数据，在 Redis 进入到事件循环中就会调用对应事件的回调函数readQueryFromClient。
+首先简述一下发送命令的调用链：readQueryFromClient-&gt;processInputBufferAndReplicate-&gt;processInputBuffer-&gt;processCommand-&gt;call。
+  readQueryFromClient
+这是 Redis 接受客户端请求后的回调函数，主要的逻辑就是读取 client 的 fd 的数据，并且存入 client 的 querybuf 变量中，然后调用processInputBufferAndReplicate。
+  processInputBufferAndReplicate
+因为客户端有可能用于主从节点，这一步其实就是对第三步的封装。主要是进行 client 类型的判断，如果是普通 client 就直接调用processInputBuffer。
+  processInputBuffer
+这一步是解析客户端的输入流中的 RESP 协议，转换成 Redis 中对应的参数，即 client 的 argv 变量。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-10-15T11:23:53&#43;08:00" />
+<meta property="article:modified_time" content="2020-10-15T11:23:53&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Redis源码：一个命令的执行流程"/>
+<meta name="twitter:description" content="一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析：
+  建立连接
+建立连接要从acceptTcpHandler这个函数说起。
+前面说过，Redis 初始化服务时，会创建一个事件循环eventLoop。在 Redis 监听端口时，会给对应的 socket 绑定一个文件事件，且该事件的回调函数就是acceptTcpHandler。也就是说，任何连接到这个端口的客户端，Redis 都会调用acceptTcpHandler这个函数。
+刚初始化后，等待客户端连接时的eventLoop（此处 fd 假设为 0）：
+回调函数的整个调用链：acceptTcpHandler-&gt;acceptCommonHandler-&gt;createClient。
+简单说明一下acceptTcpHandler的代码逻辑：Redis 最多会循环 1000 次accept客户端来得到对应的客户端 fd，并且每一次循环中会调用acceptCommonHandler函数。所以我们的目标转移到acceptCommonHandler函数上。
+acceptCommonHandler的代码也很简单，最重要的是就是调用createClient函数，其余都是一些边界条件判断以及数据状态更新。
+createClient做了什么？注册对应客户端 fd 的可读事件函数readQueryFromClient以及初始化client对象并且 push 到server的客户端链表里。
+连接创建后的事件循环：
+  发送命令
+与客户端建立连接后，事件循环中就多了一个对应的文件描述符的读事件。只要客户端发送数据，在 Redis 进入到事件循环中就会调用对应事件的回调函数readQueryFromClient。
+首先简述一下发送命令的调用链：readQueryFromClient-&gt;processInputBufferAndReplicate-&gt;processInputBuffer-&gt;processCommand-&gt;call。
+  readQueryFromClient
+这是 Redis 接受客户端请求后的回调函数，主要的逻辑就是读取 client 的 fd 的数据，并且存入 client 的 querybuf 变量中，然后调用processInputBufferAndReplicate。
+  processInputBufferAndReplicate
+因为客户端有可能用于主从节点，这一步其实就是对第三步的封装。主要是进行 client 类型的判断，如果是普通 client 就直接调用processInputBuffer。
+  processInputBuffer
+这一步是解析客户端的输入流中的 RESP 协议，转换成 Redis 中对应的参数，即 client 的 argv 变量。"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Redis源码：一个命令的执行流程",
+      "item": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Redis源码：一个命令的执行流程",
+  "name": "Redis源码：一个命令的执行流程",
+  "description": "一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析：\n  建立连接\n建立连接要从acceptTcpHandler这个函数说起。\n前面说过，Redis 初始化服务时，会创建一个事件循环eventLoop。在 Redis 监听端口时，会给对应的 socket 绑定一个文件事件，且该事件的回调函数就是acceptTcpHandler。也就是说，任何连接到这个端口的客户端，Redis 都会调用acceptTcpHandler这个函数。\n刚初始化后，等待客户端连接时的eventLoop（此处 fd 假设为 0）：\n回调函数的整个调用链：acceptTcpHandler-\u0026gt;acceptCommonHandler-\u0026gt;createClient。\n简单说明一下acceptTcpHandler的代码逻辑：Redis 最多会循环 1000 次accept客户端来得到对应的客户端 fd，并且每一次循环中会调用acceptCommonHandler函数。所以我们的目标转移到acceptCommonHandler函数上。\nacceptCommonHandler的代码也很简单，最重要的是就是调用createClient函数，其余都是一些边界条件判断以及数据状态更新。\ncreateClient做了什么？注册对应客户端 fd 的可读事件函数readQueryFromClient以及初始化client对象并且 push 到server的客户端链表里。\n连接创建后的事件循环：\n  发送命令\n与客户端建立连接后，事件循环中就多了一个对应的文件描述符的读事件。只要客户端发送数据，在 Redis 进入到事件循环中就会调用对应事件的回调函数readQueryFromClient。\n首先简述一下发送命令的调用链：readQueryFromClient-\u0026gt;processInputBufferAndReplicate-\u0026gt;processInputBuffer-\u0026gt;processCommand-\u0026gt;call。\n  readQueryFromClient\n这是 Redis 接受客户端请求后的回调函数，主要的逻辑就是读取 client 的 fd 的数据，并且存入 client 的 querybuf 变量中，然后调用processInputBufferAndReplicate。\n  processInputBufferAndReplicate\n因为客户端有可能用于主从节点，这一步其实就是对第三步的封装。主要是进行 client 类型的判断，如果是普通 client 就直接调用processInputBuffer。\n  processInputBuffer\n这一步是解析客户端的输入流中的 RESP 协议，转换成 Redis 中对应的参数，即 client 的 argv 变量。",
+  "keywords": [
+    
+  ],
+  "articleBody": "一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析：\n  建立连接\n建立连接要从acceptTcpHandler这个函数说起。\n前面说过，Redis 初始化服务时，会创建一个事件循环eventLoop。在 Redis 监听端口时，会给对应的 socket 绑定一个文件事件，且该事件的回调函数就是acceptTcpHandler。也就是说，任何连接到这个端口的客户端，Redis 都会调用acceptTcpHandler这个函数。\n刚初始化后，等待客户端连接时的eventLoop（此处 fd 假设为 0）：\n回调函数的整个调用链：acceptTcpHandler-acceptCommonHandler-createClient。\n简单说明一下acceptTcpHandler的代码逻辑：Redis 最多会循环 1000 次accept客户端来得到对应的客户端 fd，并且每一次循环中会调用acceptCommonHandler函数。所以我们的目标转移到acceptCommonHandler函数上。\nacceptCommonHandler的代码也很简单，最重要的是就是调用createClient函数，其余都是一些边界条件判断以及数据状态更新。\ncreateClient做了什么？注册对应客户端 fd 的可读事件函数readQueryFromClient以及初始化client对象并且 push 到server的客户端链表里。\n连接创建后的事件循环：\n  发送命令\n与客户端建立连接后，事件循环中就多了一个对应的文件描述符的读事件。只要客户端发送数据，在 Redis 进入到事件循环中就会调用对应事件的回调函数readQueryFromClient。\n首先简述一下发送命令的调用链：readQueryFromClient-processInputBufferAndReplicate-processInputBuffer-processCommand-call。\n  readQueryFromClient\n这是 Redis 接受客户端请求后的回调函数，主要的逻辑就是读取 client 的 fd 的数据，并且存入 client 的 querybuf 变量中，然后调用processInputBufferAndReplicate。\n  processInputBufferAndReplicate\n因为客户端有可能用于主从节点，这一步其实就是对第三步的封装。主要是进行 client 类型的判断，如果是普通 client 就直接调用processInputBuffer。\n  processInputBuffer\n这一步是解析客户端的输入流中的 RESP 协议，转换成 Redis 中对应的参数，即 client 的 argv 变量。\n  processCommand\n根据函数的名称就可以知道，这一步就是运行指令的。\nserver 里有个成员变量commands，这个字典存放着 Redis 里可以接收的命令及对应的回调函数。在阅读源码时，通过redisCommandTable这个全局数组，可以迅速定位到你想要找的命令的函数。\n  call\n找到命令对应的回调函数再进行调用，将响应写入 client 的 buf。期间还会进行慢日志的写入、AOF写入等等。\n    得到结果\n客户端并不会在 Redis 执行完命令后直接得到响应结果，而是要等 Redis 的事件循环进行到下一次循环中。\n在每一次事件循环前，Redis 都会执行一次beforeSleep函数。在beforeSleep函数中，Redis 会调用 handleClientsWithPendingWrites来处理需要响应的客户端。\nRedis 会先尝试直接write数据给客户端，如果写完后仍有数据，则会给客户端的 fd 注册一个写事件函数sendReplyToClient，让 Redis 在事件循环中可以调用写事件。\n  ",
+  "wordCount" : "87",
+  "inLanguage": "en",
+  "datePublished": "2020-10-15T11:23:53+08:00",
+  "dateModified": "2020-10-15T11:23:53+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      Redis源码：一个命令的执行流程
+    </h1>
+    <div class="post-meta"><span title='2020-10-15 11:23:53 +0800 HKT'>October 15, 2020</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><p>一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析：</p>
+<ol>
+<li>
+<p>建立连接</p>
+<p>建立连接要从<code>acceptTcpHandler</code>这个函数说起。</p>
+<p>前面说过，Redis 初始化服务时，会创建一个事件循环<code>eventLoop</code>。在 Redis 监听端口时，会给对应的 socket 绑定一个文件事件，且该事件的回调函数就是<code>acceptTcpHandler</code>。也就是说，任何连接到这个端口的客户端，Redis 都会调用<code>acceptTcpHandler</code>这个函数。</p>
+<p>刚初始化后，等待客户端连接时的<code>eventLoop</code>（此处 fd 假设为 0）：</p>
+<p><img loading="lazy" src="/pics/redis/flow/%e5%91%bd%e4%bb%a4%e6%89%a7%e8%a1%8c%e8%bf%87%e7%a8%8b.jpg" alt="命令执行过程"  />
+</p>
+<p>回调函数的整个调用链：<code>acceptTcpHandler</code>-&gt;<code>acceptCommonHandler</code>-&gt;<code>createClient</code>。</p>
+<p>简单说明一下<code>acceptTcpHandler</code>的代码逻辑：Redis 最多会循环 1000 次<code>accept</code>客户端来得到对应的客户端 fd，并且每一次循环中会调用<code>acceptCommonHandler</code>函数。所以我们的目标转移到<code>acceptCommonHandler</code>函数上。</p>
+<p><code>acceptCommonHandler</code>的代码也很简单，最重要的是就是调用<code>createClient</code>函数，其余都是一些边界条件判断以及数据状态更新。</p>
+<p><code>createClient</code>做了什么？注册对应客户端 fd 的可读事件函数<code>readQueryFromClient</code>以及初始化<code>client</code>对象并且 push 到<code>server</code>的客户端链表里。</p>
+<p>连接创建后的事件循环：</p>
+<p><img loading="lazy" src="/pics/redis/flow/%e5%91%bd%e4%bb%a4%e6%89%a7%e8%a1%8c%e8%bf%87%e7%a8%8b_1.jpg" alt="命令执行过程"  />
+</p>
+</li>
+<li>
+<p>发送命令</p>
+<p>与客户端建立连接后，事件循环中就多了一个对应的文件描述符的读事件。只要客户端发送数据，在 Redis 进入到事件循环中就会调用对应事件的回调函数<code>readQueryFromClient</code>。</p>
+<p>首先简述一下发送命令的调用链：<code>readQueryFromClient</code>-&gt;<code>processInputBufferAndReplicate</code>-&gt;<code>processInputBuffer</code>-&gt;<code>processCommand</code>-&gt;<code>call</code>。</p>
+<ol>
+<li>
+<p>readQueryFromClient</p>
+<p>这是 Redis 接受客户端请求后的回调函数，主要的逻辑就是读取 client 的 fd 的数据，并且存入 client 的 querybuf 变量中，然后调用<code>processInputBufferAndReplicate</code>。</p>
+</li>
+<li>
+<p>processInputBufferAndReplicate</p>
+<p>因为客户端有可能用于主从节点，这一步其实就是对第三步的封装。主要是进行 client 类型的判断，如果是普通 client 就直接调用<code>processInputBuffer</code>。</p>
+</li>
+<li>
+<p>processInputBuffer</p>
+<p>这一步是解析客户端的输入流中的 RESP 协议，转换成 Redis 中对应的参数，即 client 的 argv 变量。</p>
+</li>
+<li>
+<p>processCommand</p>
+<p>根据函数的名称就可以知道，这一步就是运行指令的。</p>
+<p>server 里有个成员变量<code>commands</code>，这个字典存放着 Redis 里可以接收的命令及对应的回调函数。在阅读源码时，通过<code>redisCommandTable</code>这个全局数组，可以迅速定位到你想要找的命令的函数。</p>
+</li>
+<li>
+<p>call</p>
+<p>找到命令对应的回调函数再进行调用，将响应写入 client 的 buf。期间还会进行慢日志的写入、AOF写入等等。</p>
+</li>
+</ol>
+</li>
+<li>
+<p>得到结果</p>
+<p>客户端并不会在 Redis 执行完命令后直接得到响应结果，而是要等 Redis 的事件循环进行到下一次循环中。</p>
+<p>在每一次事件循环前，Redis 都会执行一次<code>beforeSleep</code>函数。在<code>beforeSleep</code>函数中，Redis 会调用<code>    handleClientsWithPendingWrites</code>来处理需要响应的客户端。</p>
+<p>Redis 会先尝试直接<code>write</code>数据给客户端，如果写完后仍有数据，则会给客户端的 fd 注册一个写事件函数<code>sendReplyToClient</code>，让 Redis 在事件循环中可以调用写事件。</p>
+</li>
+</ol>
+
+
+  </div>
+
+  <footer class="post-footer">
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>Redis源码：从bpop看block</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81redisdb/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>Redis源码：redisDB</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

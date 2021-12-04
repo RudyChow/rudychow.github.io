@@ -198,7 +198,7 @@
 <p>当执行<code>save</code>或者<code>bgsave</code>时，Redis 就会进行一次<code>RDB</code>的持久化。如果数据量比较大的情况下，执行<code>save</code>是一个比较耗时的动作，所以会阻塞客户端。<code>bgsave</code>可以又称作<code>background save</code>，用来解决<code>save</code>阻塞的情况，此时会<code>fork</code>出一个子进程来执行<code>save</code>命令。</p>
 <h3 id="save">save</h3>
 <p>先看<code>save</code>对应的<code>saveCommand</code>源码：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">saveCommand</span>(client <span style="color:#719e07">*</span>c) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">saveCommand</span>(client <span style="color:#719e07">*</span>c) {
     <span style="color:#719e07">if</span> (server.rdb_child_pid <span style="color:#719e07">!=</span> <span style="color:#719e07">-</span><span style="color:#2aa198">1</span>) {
         addReplyError(c,<span style="color:#2aa198">&#34;Background save already in progress&#34;</span>);
         <span style="color:#719e07">return</span>;
@@ -215,7 +215,7 @@
 <p><code>rdbSave</code>则是 Redis 实现<code>RDB</code>持久化的主要函数，这里 Redis 会调用自己封装的 io 操作库 rio 来写入数据。</p>
 <h3 id="bgsave">bgsave</h3>
 <p><code>bgsave</code>对应的<code>bgsaveCommand</code>源码：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">bgsaveCommand</span>(client <span style="color:#719e07">*</span>c) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">bgsaveCommand</span>(client <span style="color:#719e07">*</span>c) {
     <span style="color:#dc322f">int</span> schedule <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
 
     <span style="color:#586e75">/* The SCHEDULE option changes the behavior of BGSAVE when an AOF rewrite
@@ -257,7 +257,7 @@
 <p>Redis 通过配置参数可以实现定时备份<code>RDB</code>，相关配置格式：<code>save [second] [changes]</code>。</p>
 <p>Redis 在每次时间事件循环中，如果没有<code>RDB</code>或者<code>AOF</code>的子进程在运行，则会判断当前策略是否满足备份。如果满足，Redis 会调用<code>rdbSaveBackground</code>进行异步备份。</p>
 <p>具体的代码：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">for</span> (j <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>; j <span style="color:#719e07">&lt;</span> server.saveparamslen; j<span style="color:#719e07">++</span>) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">for</span> (j <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>; j <span style="color:#719e07">&lt;</span> server.saveparamslen; j<span style="color:#719e07">++</span>) {
     <span style="color:#719e07">struct</span> saveparam <span style="color:#719e07">*</span>sp <span style="color:#719e07">=</span> server.saveparams<span style="color:#719e07">+</span>j;
 
     <span style="color:#586e75">/* Save if we reached the given amount of changes,
@@ -279,7 +279,7 @@
     }
 }
 </code></pre></div><p>通过源码可以看得出，有几个变量是跟备份策略有关的：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// rdb的保存策略，对应的配置文件中 save [second] [changes]
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// rdb的保存策略，对应的配置文件中 save [second] [changes]
 </span><span style="color:#586e75"></span><span style="color:#719e07">struct</span> saveparam {
     time_t seconds;
     <span style="color:#dc322f">int</span> changes;

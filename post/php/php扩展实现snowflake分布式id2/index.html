@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>PHP扩展：实现snowflake分布式id（2） | Rudy&#39;s blog</title>
+<meta name="keywords" content="算法, PHP" />
+<meta name="description" content="前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO）
+解压后，进入到ext目录，里面有个PHP脚本：ext_skel.php。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。
+$ php ext_skel.php --ext snowflake Copying config scripts... done Copying sources... done Copying tests... done Success. The extension is now ready to be compiled. To do so, use the following steps: cd /path/to/php-src/snowflake phpize ./configure make Don&#39;t forget to run tests once the compilation is done: make test Thank you for using PHP! 我们的扩展脚手架已经搭成，准备进入扩展开发阶段。
+ 网络上的教程大部分都是执行ext_skel的 bash 脚本。 实际上，在PHP 7.3.0之后，开发组为了更好适配 Windows 下的 PHP 扩展开发，重新设计了ext_skel这个脚本。现在需要使用php ext_skel.php来代替原来的脚本，意味着没有更多其他的依赖。">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="PHP扩展：实现snowflake分布式id（2）" />
+<meta property="og:description" content="前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO）
+解压后，进入到ext目录，里面有个PHP脚本：ext_skel.php。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。
+$ php ext_skel.php --ext snowflake Copying config scripts... done Copying sources... done Copying tests... done Success. The extension is now ready to be compiled. To do so, use the following steps: cd /path/to/php-src/snowflake phpize ./configure make Don&#39;t forget to run tests once the compilation is done: make test Thank you for using PHP! 我们的扩展脚手架已经搭成，准备进入扩展开发阶段。
+ 网络上的教程大部分都是执行ext_skel的 bash 脚本。 实际上，在PHP 7.3.0之后，开发组为了更好适配 Windows 下的 PHP 扩展开发，重新设计了ext_skel这个脚本。现在需要使用php ext_skel.php来代替原来的脚本，意味着没有更多其他的依赖。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-08-28T00:29:51&#43;08:00" />
+<meta property="article:modified_time" content="2020-08-28T00:29:51&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="PHP扩展：实现snowflake分布式id（2）"/>
+<meta name="twitter:description" content="前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO）
+解压后，进入到ext目录，里面有个PHP脚本：ext_skel.php。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。
+$ php ext_skel.php --ext snowflake Copying config scripts... done Copying sources... done Copying tests... done Success. The extension is now ready to be compiled. To do so, use the following steps: cd /path/to/php-src/snowflake phpize ./configure make Don&#39;t forget to run tests once the compilation is done: make test Thank you for using PHP! 我们的扩展脚手架已经搭成，准备进入扩展开发阶段。
+ 网络上的教程大部分都是执行ext_skel的 bash 脚本。 实际上，在PHP 7.3.0之后，开发组为了更好适配 Windows 下的 PHP 扩展开发，重新设计了ext_skel这个脚本。现在需要使用php ext_skel.php来代替原来的脚本，意味着没有更多其他的依赖。"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "PHP扩展：实现snowflake分布式id（2）",
+      "item": "https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "PHP扩展：实现snowflake分布式id（2）",
+  "name": "PHP扩展：实现snowflake分布式id（2）",
+  "description": "前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO）\n解压后，进入到ext目录，里面有个PHP脚本：ext_skel.php。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。\n$ php ext_skel.php --ext snowflake Copying config scripts... done Copying sources... done Copying tests... done Success. The extension is now ready to be compiled. To do so, use the following steps: cd /path/to/php-src/snowflake phpize ./configure make Don\u0026#39;t forget to run tests once the compilation is done: make test Thank you for using PHP! 我们的扩展脚手架已经搭成，准备进入扩展开发阶段。\n 网络上的教程大部分都是执行ext_skel的 bash 脚本。 实际上，在PHP 7.3.0之后，开发组为了更好适配 Windows 下的 PHP 扩展开发，重新设计了ext_skel这个脚本。现在需要使用php ext_skel.php来代替原来的脚本，意味着没有更多其他的依赖。",
+  "keywords": [
+    "算法", "PHP"
+  ],
+  "articleBody": "前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO）\n解压后，进入到ext目录，里面有个PHP脚本：ext_skel.php。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。\n$ php ext_skel.php --ext snowflake Copying config scripts... done Copying sources... done Copying tests... done Success. The extension is now ready to be compiled. To do so, use the following steps: cd /path/to/php-src/snowflake phpize ./configure make Don't forget to run tests once the compilation is done: make test Thank you for using PHP! 我们的扩展脚手架已经搭成，准备进入扩展开发阶段。\n 网络上的教程大部分都是执行ext_skel的 bash 脚本。 实际上，在PHP 7.3.0之后，开发组为了更好适配 Windows 下的 PHP 扩展开发，重新设计了ext_skel这个脚本。现在需要使用php ext_skel.php来代替原来的脚本，意味着没有更多其他的依赖。\n当然还有其它许多方式可以用来开发 PHP 的扩展，比如PHP-CPP、PHP-X、Zephir、php-go等等。因为想体验一把原始的PHP扩展开发所以选择了ext_skel。\n 开发工作 目标是实现一个Snowflake类，具体结构大概是这样：\nclass Snowflake { private $epoch; private $workerId; private $dataCenterId; private $seqNum; private $lastTime; /** * @param integer $epoch * @param integer $workerId * @param integer $dataCenterId * * @exception params out of range */ public function __construct(int $epoch, int $workerId = 0, int $dataCenterId = 0) { } /** * @return integer * * @exception clock moved backwards */ public function generateId() { } } 目录说明 $ tree . ├── config.m4 ├── config.w32 ├── php_snowflake.h ├── snowflake.c └── tests ├── 001.phpt ├── 002.phpt └── 003.phpt 1 directory, 7 files 脚手架生成的目录主要由三部分构成：\n  构建文件：config.m4和config.w32\n扩展的config.m4文件告诉UNIX构建系统哪些扩展configure选项是支持的，你需要哪些扩展库，以及哪些源文件要编译成它的一部分。对所有经常使用的autoconf宏，包括PHP特定的及autoconf内建的。 config.w32文件的用法与config.m4文件类似，但有两点决定性的不同：首先，它是用于 Windows 构建的，其次，它是使用JavaScript编写的。 在使用php ext_skel.php时也可以通过参数--onlywindows或--onlyunix来指定生成的config文件。\n  开发文件：php_snowflake.h和snowflake.c\n这个就是C的头文件和源文件，也是我们主要开发的地方。\n  测试文件：tests以及*.phpt\n这里主要是用于扩展测试，后面再展开说明。\n  开发 清除不需要的代码 由于使用ext_skel生成的脚手架中会自动帮我们注册一些 demo 方法，如snowflake_test1和snowflake_test2。我们的目的是开发一个扩展类，所以需要先清理掉一些不需要的代码。\n清理干净后的源文件：\n/* snowflake extension for PHP */ #ifdef HAVE_CONFIG_H #include \"config.h\"#endif  #include \"php.h\"#include \"ext/standard/info.h\"#include \"php_snowflake.h\" /* For compatibility with older PHP versions */ #ifndef ZEND_PARSE_PARAMETERS_NONE #define ZEND_PARSE_PARAMETERS_NONE() \\ ZEND_PARSE_PARAMETERS_START(0, 0) \\ ZEND_PARSE_PARAMETERS_END() #endif  /* {{{ PHP_RINIT_FUNCTION */ PHP_RINIT_FUNCTION(snowflake) { #if defined(ZTS) \u0026\u0026 defined(COMPILE_DL_SNOWFLAKE) \tZEND_TSRMLS_CACHE_UPDATE(); #endif  return SUCCESS; } /* }}} */ /* {{{ PHP_MINFO_FUNCTION */ PHP_MINFO_FUNCTION(snowflake) { php_info_print_table_start(); php_info_print_table_header(2, \"snowflake support\", \"enabled\"); php_info_print_table_end(); } /* }}} */ /* {{{ snowflake_module_entry */ zend_module_entry snowflake_module_entry = { STANDARD_MODULE_HEADER, \"snowflake\",\t/* Extension name */ NULL,\t/* zend_function_entry */ NULL,\t/* PHP_MINIT - Module initialization */ NULL,\t/* PHP_MSHUTDOWN - Module shutdown */ PHP_RINIT(snowflake), /* PHP_RINIT - Request initialization */ NULL,\t/* PHP_RSHUTDOWN - Request shutdown */ PHP_MINFO(snowflake), /* PHP_MINFO - Module info */ PHP_SNOWFLAKE_VERSION, /* Version */ STANDARD_MODULE_PROPERTIES}; /* }}} */ #ifdef COMPILE_DL_SNOWFLAKE #ifdef ZTS ZEND_TSRMLS_CACHE_DEFINE() #endif ZEND_GET_MODULE(snowflake) #endif  留下来的代码，主要是用于 PHP 的生命周期。 在 PHP 程序启动中，会依次调用扩展中的PHP_MINIT_FUNCTION、PHP_RINIT_FUNCTION、PHP_RSHUTDOWN_FUNCTION和PHP_MSHUTDOWN_FUNCTION函数。\n  PHP_MINIT_FUNCTION\nMINIT的全称是Module Initialization。PHP 启动后把每个扩展定义的PHP_MINIT_FUNCTION函数执行一遍。在这个时间里，扩展可以定义一些自己的常量、类、资源等所有会被用户端的 PHP 脚本用到的东西。\n  PHP_RINIT_FUNCTION\nRINIT的全称是Request Initialization。当一个页面请求到来时候，PHP 会迅速开辟一个新的环境，并重新扫描自己的各个扩展，遍历执行它们各自的RINIT方法。 这时候一个扩展可能会初始化在本次请求中会使用到的变量等， 还会初始化用户端（即 PHP 脚本）中的变量之类的，内核预置了PHP_RINIT_FUNCTION这个宏函数来帮我们实现这个功能。\n  PHP_RSHUTDOWN_FUNCTION\nRSHUTDOWN的全称是Request Shutdown。PHP 在一个请求结束时，会执行所有已加载扩展的 RSHUTDOWN 方法。\n  PHP_MSHUTDOWN_FUNCTION\nMSHUTDOWN的全称是Module Shutdown。PHP 在程序完成关闭时，会执行所有已加载扩展的 MSHUTDOWN 方法。\n  代码中还保留了PHP_MINFO_FUNCTION的函数，这个是用来说明对应扩展的信息，可以在phpinfo中查看到我们在这个函数里注册的信息。\nzend_module_entry是你在扩展中需要定义的结构体，PHP 运行时会通过ZEND_GET_MODULE的宏函数来获取到该结构体变量。\n注册Snowflake类结构 我们要在模块加载的阶段就注册我们的类，所以需要实现PHP_MINIT_FUNCTION函数，并且传入snowflake_module_entry中。\n接下来还要定义zend_class_entry结构体，并且使用INIT_CLASS_ENTRY去初始化这个变量，最后使用zend_register_internal_class把这个类注册到 PHP 中。同时在模块加载函数中，我们得把函数和成员变量也一并进行定义。\n// 第一步 定义一个zend_class_entry的指针，后续在函数中通过该变量获取到类 zend_class_entry *snowflake_ce; // 第二步 定义好类的函数数组 // 在这里我们通过 PHP_ME 来确定我们需要的类的函数 // PHP_ME 是 PHP_METHOD_ENTRY 的缩写，参数依次是 类名、函数名、参数和函数类型，如 ZEND_ACC_PUBLIC 表示 public， ZEND_ACC_CTOR 表示构造函数 const zend_function_entry snowflake_functions[] = { PHP_ME(Snowflake, __construct, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR) PHP_ME(Snowflake, generateId, NULL, ZEND_ACC_PUBLIC) PHP_FE_END}; // 类的构造函数以及generateId函数，后续开发在这两个函数体中进行 PHP_METHOD(Snowflake, __construct){} PHP_METHOD(Snowflake, generateId){} PHP_MINIT_FUNCTION(snowflake) { // 第三步 定义 zend_class_entry 并且初始化 \tzend_class_entry ce; // 初始化的第二个参数是类名，第三个参数是函数数组，就是第二步定义好的 \tINIT_CLASS_ENTRY(ce, \"Snowflake\", snowflake_functions); // 第四步 把类注册到 PHP 中，并且返回一个指针变量，后续我们开发中都是使用 snowflake_ce 来操作类 \tsnowflake_ce = zend_register_internal_class(\u0026ce); // 第五步 声明类的成员变量  // zend_declare_property_long 表示声明一个long类型的成员变量，参数依次是 类的指针，成员变量名，成员变量名的长度，变量的默认值以及变量的类型  // 还可以通过 zend_declare_property 函数去声明变量，这里不展开说明 \tzend_declare_property_long(snowflake_ce, \"epoch\", sizeof(\"epoch\") - 1, 0, ZEND_ACC_PRIVATE); zend_declare_property_long(snowflake_ce, \"workerId\", sizeof(\"workerId\") - 1, 0, ZEND_ACC_PRIVATE); zend_declare_property_long(snowflake_ce, \"dataCenterId\", sizeof(\"dataCenterId\") - 1, 0, ZEND_ACC_PRIVATE); zend_declare_property_long(snowflake_ce, \"seqNum\", sizeof(\"seqNum\") - 1, 0, ZEND_ACC_PRIVATE); zend_declare_property_long(snowflake_ce, \"lastTime\", sizeof(\"lastTime\") - 1, 0, ZEND_ACC_PRIVATE); return SUCCESS; } // 第六步 把 MINIT 函数注册进 snowflake_module_entry 里 zend_module_entry snowflake_module_entry = { STANDARD_MODULE_HEADER, \"snowflake\",\tNULL,\tPHP_MINIT(snowflake), // 注册进来 \tNULL,\tPHP_RINIT(snowflake), NULL,\tPHP_MINFO(snowflake), PHP_SNOWFLAKE_VERSION, STANDARD_MODULE_PROPERTIES}; 逻辑编写 接下来只需要在PHP_METHOD(Snowflake, __construct){}和PHP_METHOD(Snowflake, generateId){}两个函数中像 C 一样编写相应的代码逻辑即可。但是首先需要认识一些ZEND_API和宏：\n  解析参数\nZEND_PARSE_PARAMETERS_START和ZEND_PARSE_PARAMETERS_END这两个宏是成对出现，用来解析函数的参数。ZEND_PARSE_PARAMETERS_START需要填写两个参数：最小参数数量和最大参数数量。\n在ZEND_PARSE_PARAMETERS_START和ZEND_PARSE_PARAMETERS_END之间需要用Z_PARAM_*系列的宏函数去解析具体的参数值。其中Z_PARAM_OPTIONAL表示这个宏后面的都是可选参数。\n这些宏函数是 PHP7 开始的功能，称作FAST_ZPP，用来代替以前的zend_parse_parameters的方式去读取参数，性能较之前有提升。\n  成员变量\n前面提到过zend_declare_property_long用来声明类的成员变量。但是在开发过程中，我们需要读和修改成员变量，这时候需要使用zend_update_property_long和zend_read_property这两个函数。\n  参数返回\n在函数中，我们需要用RETURN_*系列的宏函数去返回参数。\n  了解完这些参数后，编写代码就简单了许多。\n/* 获取ms */ zend_long getMs() { struct timeval now; gettimeofday(\u0026now, NULL); return now.tv_sec * 1000 + now.tv_usec / 1000; } // 构造方法 PHP_METHOD(Snowflake, __construct) { // 定义参数 \tzend_long epoch = 0, workerId = 0, dataCenterId = 0; // 7.0后新提供的方式 FAST-ZPP \t// 第一个参数是开始时间 第二和第三个参数是workerid和datacenterid \tZEND_PARSE_PARAMETERS_START(1, 3) Z_PARAM_LONG(epoch) Z_PARAM_OPTIONAL Z_PARAM_LONG(workerId) Z_PARAM_LONG(dataCenterId) ZEND_PARSE_PARAMETERS_END(); // 参数判断 \tif (epoch  0 || epoch  2199023255551) { zend_throw_exception(NULL, \"epoch out of range [0, 2199023255551]\", 10086); } if (workerId  0 || workerId  31) { zend_throw_exception(NULL, \"workerId out of range [0, 31]\", 10086); } if (dataCenterId  0 || dataCenterId  31) { zend_throw_exception(NULL, \"dataCenterId out of range [0, 31]\", 10086); } // 获取到当前对象 \tzval *obj = getThis(); // 设置对象的值 \tzend_update_property_long(snowflake_ce, obj, \"epoch\", sizeof(\"epoch\") - 1, epoch); zend_update_property_long(snowflake_ce, obj, \"workerId\", sizeof(\"workerId\") - 1, workerId); zend_update_property_long(snowflake_ce, obj, \"dataCenterId\", sizeof(\"dataCenterId\") - 1, dataCenterId); } // 生成snowflake的id PHP_METHOD(Snowflake, generateId) { // 参数定义 \tzval *obj, *epoch, *workerId, *dataCenterId, *seqNum, *lastTime; zend_long snowflakeId, seqNumL, lastTimeL, millisecond = 0; obj = getThis(); epoch = zend_read_property(snowflake_ce, obj, \"epoch\", sizeof(\"epoch\") - 1, 1, NULL); workerId = zend_read_property(snowflake_ce, obj, \"workerId\", sizeof(\"workerId\") - 1, 1, NULL); dataCenterId = zend_read_property(snowflake_ce, obj, \"dataCenterId\", sizeof(\"dataCenterId\") - 1, 1, NULL); seqNum = zend_read_property(snowflake_ce, obj, \"seqNum\", sizeof(\"seqNum\") - 1, 1, NULL); lastTime = zend_read_property(snowflake_ce, obj, \"lastTime\", sizeof(\"lastTime\") - 1, 1, NULL); seqNumL = Z_LVAL_P(seqNum); lastTimeL = Z_LVAL_P(lastTime); START_GENERATE: // 获取当前ms \tmillisecond = getMs(); // 判断时间回拨 \tif (millisecond  lastTimeL) { zend_throw_exception(NULL, \"clock moved backwards\", 10087); } // 时间一致时 判断序列号重复 \tif (millisecond == lastTimeL) { // 如果序列号已经达到最大值 则重新开始获取时间 \tif (seqNumL == 0xfff) /* bits: 1111 1111 1111 */ { goto START_GENERATE; } else { seqNumL++; } } else { seqNumL = 0; } // 生成id \tsnowflakeId = snowflakeId | (millisecond - Z_LVAL_P(epoch))  22 | Z_LVAL_P(workerId)  17 | Z_LVAL_P(dataCenterId)  12 | seqNumL; // 记录序列号 和上次获取的时间 \tzend_update_property_long(snowflake_ce, obj, \"seqNum\", sizeof(\"seqNum\") - 1, seqNumL); zend_update_property_long(snowflake_ce, obj, \"lastTime\", sizeof(\"lastTime\") - 1, millisecond); // 响应数据 \tRETURN_LONG(snowflakeId) } 上次用 C 语言实现的代码中存在的问题，在这里也得到解决。\n  时间回拨\n通过记录上次生成id的时间去进行判断，如果当前时间小于上次时间，则抛出异常。其实这里可以增加一个判断，如果两者时间差在一定可接受的阈值下，可以进行时间等待，直到当前时间大于上次记录的时间。\n  序列号溢出\n在同一毫秒内，如果序列号满了，自动获取下一个时间。\n  测试 开发完成后，我们需要进行编译，依次执行phpize、./configure、make和make install。\n执行完这些命令后，我们的扩展snowflake.so就会出现在 PHP 的扩展目录下。此时需要在php.ini中添加extension=snowflake，这样我们的 PHP 程序就会加载snowflake扩展了。\n在扩展目录下，可以通过 PHP 脚本php test.php或者通过Makefile的make test来进行扩展测试。它会自动根据tests下所有的.phpt文件去跑测试，如果测试结果与预期不符，tests目录下会生成对应的测试报告。\n.phpt文件用于 PHP 的测试，其中文件有3个必填的段落：--TEST--、--FILE--和--EXPECT--。\n --TEST--：用来描述该测试文件的测试目的 --FILE--：需要执行的 PHP 代码 --EXPECT--：期待的输出结果  于是我们简单写一个测试脚本，用来测试Snowflake会不会生成重复值：\n--TEST-- Check if snowflake id is unique --FILE-- generateId(); } echo count(array_unique($result)); ? --EXPECT-- 1000000 接着执行make test TESTS=tests/snowflake_unique.phpt，得到测试结果：\n$ make test TESTS=tests/snowflake_unique.phpt Build complete. Don't forget to run 'make test'. ===================================================================== PHP : /usr/bin/php PHP_SAPI : cli PHP_VERSION : 7.4.9 ZEND_VERSION: 3.4.0 PHP_OS : Linux - Linux rudy-pro 5.7.17-2-MANJARO #1 SMP PREEMPT Sat Aug 22 14:58:17 UTC 2020 x86_64 INI actual : /home/rudy/project/my_github/php_ext_snowflake/tmp-php.ini More .INIs : CWD : /home/rudy/project/my_github/php_ext_snowflake Extra dirs : VALGRIND : Not used ===================================================================== Running selected tests. PASS Check if snowflake id is unique [tests/snowflake_unique.phpt] ===================================================================== Number of tests : 1 1 Tests skipped : 0 ( 0.0%) -------- Tests warned : 0 ( 0.0%) ( 0.0%) Tests failed : 0 ( 0.0%) ( 0.0%) Tests passed : 1 (100.0%) (100.0%) --------------------------------------------------------------------- Time taken : 1 seconds ===================================================================== 如果测试不通过，tests目录下会得到以测试脚本命名的测试报告：\n$ tree tests tests ├── snowflake_unique.diff // 输出值差异 ├── snowflake_unique.exp // 期望输出值 ├── snowflake_unique.log // 详细日志 ├── snowflake_unique.out // 输出值 ├── snowflake_unique.php // 测试脚本 ├── snowflake_unique.phpt └── snowflake_unique.sh 结语 至此，我的第一个 PHP 扩展snowflake也开发完了，收获满满。\n测试代码已上传到github：php-ext-snowflake。\n参考 - PHP 5 构建系统\n- The .phpt file structure\n- PHP 的生命周期\n- 深入理解PHP7内核之FAST_ZPP\n",
+  "wordCount" : "1056",
+  "inLanguage": "en",
+  "datePublished": "2020-08-28T00:29:51+08:00",
+  "dateModified": "2020-08-28T00:29:51+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      PHP扩展：实现snowflake分布式id（2）
+    </h1>
+    <div class="post-meta"><span title='2020-08-28 00:29:51 +0800 HKT'>August 28, 2020</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><h2 id="前期准备">前期准备<a hidden class="anchor" aria-hidden="true" href="#前期准备">#</a></h2>
+<p>首先需要下载PHP源码：<a href="https://www.php.net/downloads">下载地址</a>。（这里我使用的PHP版本是<code>7.4.9</code>，系统环境是<code>x86_64 Linux 5.7.17-2-MANJARO</code>）</p>
+<p>解压后，进入到<code>ext</code>目录，里面有个<code>PHP</code>脚本：<code>ext_skel.php</code>。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ php ext_skel.php --ext snowflake
+Copying config scripts... <span style="color:#66d9ef">done</span>
+Copying sources... <span style="color:#66d9ef">done</span>
+Copying tests... <span style="color:#66d9ef">done</span>
+
+Success. The extension is now ready to be compiled. To <span style="color:#66d9ef">do</span> so, use the
+following steps:
+
+cd /path/to/php-src/snowflake
+phpize
+./configure
+make
+
+Don<span style="color:#960050;background-color:#1e0010">&#39;</span>t forget to run tests once the compilation is <span style="color:#66d9ef">done</span>:
+make test
+
+Thank you <span style="color:#66d9ef">for</span> using PHP!
+
+</code></pre></div><p>我们的扩展脚手架已经搭成，准备进入扩展开发阶段。</p>
+<blockquote>
+<p>网络上的教程大部分都是执行<code>ext_skel</code>的 bash 脚本。
+实际上，在<code>PHP 7.3.0</code>之后，开发组为了更好适配 Windows 下的 PHP 扩展开发，重新设计了<code>ext_skel</code>这个脚本。现在需要使用<code>php ext_skel.php</code>来代替原来的脚本，意味着没有更多其他的依赖。</p>
+<p>当然还有其它许多方式可以用来开发 PHP 的扩展，比如<code>PHP-CPP</code>、<code>PHP-X</code>、<code>Zephir</code>、<code>php-go</code>等等。因为想体验一把原始的PHP扩展开发所以选择了<code>ext_skel</code>。</p>
+</blockquote>
+<h2 id="开发工作">开发工作<a hidden class="anchor" aria-hidden="true" href="#开发工作">#</a></h2>
+<p>目标是实现一个<code>Snowflake</code>类，具体结构大概是这样：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Snowflake</span>
+{
+    <span style="color:#66d9ef">private</span> $epoch;
+    <span style="color:#66d9ef">private</span> $workerId;
+    <span style="color:#66d9ef">private</span> $dataCenterId;
+    <span style="color:#66d9ef">private</span> $seqNum;
+    <span style="color:#66d9ef">private</span> $lastTime;
+
+    <span style="color:#e6db74">/**
+</span><span style="color:#e6db74">     * @param integer $epoch
+</span><span style="color:#e6db74">     * @param integer $workerId
+</span><span style="color:#e6db74">     * @param integer $dataCenterId
+</span><span style="color:#e6db74">     * 
+</span><span style="color:#e6db74">     * @exception params out of range
+</span><span style="color:#e6db74">     */</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">function</span> __construct(<span style="color:#a6e22e">int</span> $epoch, <span style="color:#a6e22e">int</span> $workerId <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">int</span> $dataCenterId <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>)
+    {
+    }
+
+    <span style="color:#e6db74">/**
+</span><span style="color:#e6db74">     * @return integer
+</span><span style="color:#e6db74">     * 
+</span><span style="color:#e6db74">     * @exception clock moved backwards
+</span><span style="color:#e6db74">     */</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">function</span> <span style="color:#a6e22e">generateId</span>()
+    {
+    }
+}
+
+</code></pre></div><h3 id="目录说明">目录说明<a hidden class="anchor" aria-hidden="true" href="#目录说明">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ tree
+.
+├── config.m4
+├── config.w32
+├── php_snowflake.h
+├── snowflake.c
+└── tests
+    ├── 001.phpt
+    ├── 002.phpt
+    └── 003.phpt
+
+<span style="color:#ae81ff">1</span> directory, <span style="color:#ae81ff">7</span> files
+
+</code></pre></div><p>脚手架生成的目录主要由三部分构成：</p>
+<ul>
+<li>
+<p>构建文件：<code>config.m4</code>和<code>config.w32</code></p>
+<p>扩展的<code>config.m4</code>文件告诉<code>UNIX</code>构建系统哪些扩展<code>configure</code>选项是支持的，你需要哪些扩展库，以及哪些源文件要编译成它的一部分。对所有经常使用的<code>autoconf</code>宏，包括<code>PHP</code>特定的及<code>autoconf</code>内建的。
+<code>config.w32</code>文件的用法与<code>config.m4</code>文件类似，但有两点决定性的不同：首先，它是用于 Windows 构建的，其次，它是使用<code>JavaScript</code>编写的。
+在使用<code>php ext_skel.php</code>时也可以通过参数<code>--onlywindows</code>或<code>--onlyunix</code>来指定生成的<code>config</code>文件。</p>
+</li>
+<li>
+<p>开发文件：<code>php_snowflake.h</code>和<code>snowflake.c</code></p>
+<p>这个就是<code>C</code>的头文件和源文件，也是我们主要开发的地方。</p>
+</li>
+<li>
+<p>测试文件：<code>tests</code>以及<code>*.phpt</code></p>
+<p>这里主要是用于扩展测试，后面再展开说明。</p>
+</li>
+</ul>
+<h3 id="开发">开发<a hidden class="anchor" aria-hidden="true" href="#开发">#</a></h3>
+<h4 id="清除不需要的代码">清除不需要的代码<a hidden class="anchor" aria-hidden="true" href="#清除不需要的代码">#</a></h4>
+<p>由于使用<code>ext_skel</code>生成的脚手架中会自动帮我们注册一些 demo 方法，如<code>snowflake_test1</code>和<code>snowflake_test2</code>。我们的目的是开发一个扩展类，所以需要先清理掉一些不需要的代码。</p>
+<p>清理干净后的源文件：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* snowflake extension for PHP */</span>
+
+<span style="color:#75715e">#ifdef HAVE_CONFIG_H
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;config.h&#34;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;php.h&#34;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;ext/standard/info.h&#34;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;php_snowflake.h&#34;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">/* For compatibility with older PHP versions */</span>
+<span style="color:#75715e">#ifndef ZEND_PARSE_PARAMETERS_NONE
+</span><span style="color:#75715e">#define ZEND_PARSE_PARAMETERS_NONE()  \
+</span><span style="color:#75715e">	ZEND_PARSE_PARAMETERS_START(0, 0) \
+</span><span style="color:#75715e">	ZEND_PARSE_PARAMETERS_END()
+</span><span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">/* {{{ PHP_RINIT_FUNCTION
+</span><span style="color:#75715e"> */</span>
+PHP_RINIT_FUNCTION(snowflake)
+{
+<span style="color:#75715e">#if defined(ZTS) &amp;&amp; defined(COMPILE_DL_SNOWFLAKE)
+</span><span style="color:#75715e"></span>	ZEND_TSRMLS_CACHE_UPDATE();
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>
+	<span style="color:#66d9ef">return</span> SUCCESS;
+}
+<span style="color:#75715e">/* }}} */</span>
+
+<span style="color:#75715e">/* {{{ PHP_MINFO_FUNCTION
+</span><span style="color:#75715e"> */</span>
+PHP_MINFO_FUNCTION(snowflake)
+{
+	php_info_print_table_start();
+	php_info_print_table_header(<span style="color:#ae81ff">2</span>, <span style="color:#e6db74">&#34;snowflake support&#34;</span>, <span style="color:#e6db74">&#34;enabled&#34;</span>);
+	php_info_print_table_end();
+}
+<span style="color:#75715e">/* }}} */</span>
+
+<span style="color:#75715e">/* {{{ snowflake_module_entry
+</span><span style="color:#75715e"> */</span>
+zend_module_entry snowflake_module_entry <span style="color:#f92672">=</span> {
+	STANDARD_MODULE_HEADER,
+	<span style="color:#e6db74">&#34;snowflake&#34;</span>,		   <span style="color:#75715e">/* Extension name */</span>
+	NULL,				   <span style="color:#75715e">/* zend_function_entry */</span>
+	NULL,				   <span style="color:#75715e">/* PHP_MINIT - Module initialization */</span>
+	NULL,				   <span style="color:#75715e">/* PHP_MSHUTDOWN - Module shutdown */</span>
+	PHP_RINIT(snowflake),  <span style="color:#75715e">/* PHP_RINIT - Request initialization */</span>
+	NULL,				   <span style="color:#75715e">/* PHP_RSHUTDOWN - Request shutdown */</span>
+	PHP_MINFO(snowflake),  <span style="color:#75715e">/* PHP_MINFO - Module info */</span>
+	PHP_SNOWFLAKE_VERSION, <span style="color:#75715e">/* Version */</span>
+	STANDARD_MODULE_PROPERTIES};
+<span style="color:#75715e">/* }}} */</span>
+
+<span style="color:#75715e">#ifdef COMPILE_DL_SNOWFLAKE
+</span><span style="color:#75715e">#ifdef ZTS
+</span><span style="color:#75715e"></span>ZEND_TSRMLS_CACHE_DEFINE()
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>ZEND_GET_MODULE(snowflake)
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>
+</code></pre></div><p>留下来的代码，主要是用于 PHP 的生命周期。
+在 PHP 程序启动中，会依次调用扩展中的<code>PHP_MINIT_FUNCTION</code>、<code>PHP_RINIT_FUNCTION</code>、<code>PHP_RSHUTDOWN_FUNCTION</code>和<code>PHP_MSHUTDOWN_FUNCTION</code>函数。</p>
+<ul>
+<li>
+<p><code>PHP_MINIT_FUNCTION</code></p>
+<p><code>MINIT</code>的全称是<code>Module Initialization</code>。PHP 启动后把每个扩展定义的<code>PHP_MINIT_FUNCTION</code>函数执行一遍。在这个时间里，扩展可以定义一些自己的常量、类、资源等所有会被用户端的 PHP 脚本用到的东西。</p>
+</li>
+<li>
+<p><code>PHP_RINIT_FUNCTION</code></p>
+<p><code>RINIT</code>的全称是<code>Request Initialization</code>。当一个页面请求到来时候，PHP 会迅速开辟一个新的环境，并重新扫描自己的各个扩展，遍历执行它们各自的<code>RINIT</code>方法。
+这时候一个扩展可能会初始化在本次请求中会使用到的变量等， 还会初始化用户端（即 PHP 脚本）中的变量之类的，内核预置了<code>PHP_RINIT_FUNCTION</code>这个宏函数来帮我们实现这个功能。</p>
+</li>
+<li>
+<p><code>PHP_RSHUTDOWN_FUNCTION</code></p>
+<p><code>RSHUTDOWN</code>的全称是<code>Request Shutdown</code>。PHP 在一个请求结束时，会执行所有已加载扩展的 <code>RSHUTDOWN</code> 方法。</p>
+</li>
+<li>
+<p><code>PHP_MSHUTDOWN_FUNCTION</code></p>
+<p><code>MSHUTDOWN</code>的全称是<code>Module Shutdown</code>。PHP 在程序完成关闭时，会执行所有已加载扩展的 <code>MSHUTDOWN</code> 方法。</p>
+</li>
+</ul>
+<p>代码中还保留了<code>PHP_MINFO_FUNCTION</code>的函数，这个是用来说明对应扩展的信息，可以在<code>phpinfo</code>中查看到我们在这个函数里注册的信息。</p>
+<p><code>zend_module_entry</code>是你在扩展中需要定义的结构体，PHP 运行时会通过<code>ZEND_GET_MODULE</code>的宏函数来获取到该结构体变量。</p>
+<h3 id="注册snowflake类结构">注册Snowflake类结构<a hidden class="anchor" aria-hidden="true" href="#注册snowflake类结构">#</a></h3>
+<p>我们要在模块加载的阶段就注册我们的类，所以需要实现<code>PHP_MINIT_FUNCTION</code>函数，并且传入<code>snowflake_module_entry</code>中。</p>
+<p>接下来还要定义<code>zend_class_entry</code>结构体，并且使用<code>INIT_CLASS_ENTRY</code>去初始化这个变量，最后使用<code>zend_register_internal_class</code>把这个类注册到 PHP 中。同时在模块加载函数中，我们得把函数和成员变量也一并进行定义。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// 第一步 定义一个zend_class_entry的指针，后续在函数中通过该变量获取到类
+</span><span style="color:#75715e"></span>zend_class_entry <span style="color:#f92672">*</span>snowflake_ce;
+
+<span style="color:#75715e">// 第二步 定义好类的函数数组
+</span><span style="color:#75715e">//       在这里我们通过 PHP_ME 来确定我们需要的类的函数
+</span><span style="color:#75715e">//       PHP_ME 是 PHP_METHOD_ENTRY 的缩写，参数依次是 类名、函数名、参数和函数类型，如 ZEND_ACC_PUBLIC 表示 public， ZEND_ACC_CTOR 表示构造函数
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> zend_function_entry snowflake_functions[] <span style="color:#f92672">=</span> {
+	PHP_ME(Snowflake, __construct, NULL, ZEND_ACC_PUBLIC <span style="color:#f92672">|</span> ZEND_ACC_CTOR)
+	PHP_ME(Snowflake, generateId, NULL, ZEND_ACC_PUBLIC)
+PHP_FE_END};
+<span style="color:#75715e">// 类的构造函数以及generateId函数，后续开发在这两个函数体中进行
+</span><span style="color:#75715e"></span>PHP_METHOD(Snowflake, __construct){}
+PHP_METHOD(Snowflake, generateId){}
+
+PHP_MINIT_FUNCTION(snowflake)
+{
+    <span style="color:#75715e">// 第三步 定义 zend_class_entry 并且初始化
+</span><span style="color:#75715e"></span>	zend_class_entry ce;
+    <span style="color:#75715e">// 初始化的第二个参数是类名，第三个参数是函数数组，就是第二步定义好的
+</span><span style="color:#75715e"></span>	INIT_CLASS_ENTRY(ce, <span style="color:#e6db74">&#34;Snowflake&#34;</span>, snowflake_functions);
+
+    <span style="color:#75715e">// 第四步 把类注册到 PHP 中，并且返回一个指针变量，后续我们开发中都是使用 snowflake_ce 来操作类
+</span><span style="color:#75715e"></span>	snowflake_ce <span style="color:#f92672">=</span> zend_register_internal_class(<span style="color:#f92672">&amp;</span>ce);
+
+	<span style="color:#75715e">// 第五步 声明类的成员变量
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// zend_declare_property_long 表示声明一个long类型的成员变量，参数依次是 类的指针，成员变量名，成员变量名的长度，变量的默认值以及变量的类型
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// 还可以通过 zend_declare_property 函数去声明变量，这里不展开说明
+</span><span style="color:#75715e"></span>	zend_declare_property_long(snowflake_ce, <span style="color:#e6db74">&#34;epoch&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;epoch&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, ZEND_ACC_PRIVATE);
+	zend_declare_property_long(snowflake_ce, <span style="color:#e6db74">&#34;workerId&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;workerId&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, ZEND_ACC_PRIVATE);
+	zend_declare_property_long(snowflake_ce, <span style="color:#e6db74">&#34;dataCenterId&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;dataCenterId&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, ZEND_ACC_PRIVATE);
+	zend_declare_property_long(snowflake_ce, <span style="color:#e6db74">&#34;seqNum&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;seqNum&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, ZEND_ACC_PRIVATE);
+	zend_declare_property_long(snowflake_ce, <span style="color:#e6db74">&#34;lastTime&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;lastTime&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, ZEND_ACC_PRIVATE);
+
+	<span style="color:#66d9ef">return</span> SUCCESS;
+}
+
+<span style="color:#75715e">// 第六步 把 MINIT 函数注册进 snowflake_module_entry 里
+</span><span style="color:#75715e"></span>zend_module_entry snowflake_module_entry <span style="color:#f92672">=</span> {
+	STANDARD_MODULE_HEADER,
+	<span style="color:#e6db74">&#34;snowflake&#34;</span>,		   
+	NULL,				   
+	PHP_MINIT(snowflake),  <span style="color:#75715e">// 注册进来
+</span><span style="color:#75715e"></span>	NULL,				   
+	PHP_RINIT(snowflake),  
+	NULL,				   
+	PHP_MINFO(snowflake),  
+	PHP_SNOWFLAKE_VERSION, 
+	STANDARD_MODULE_PROPERTIES};
+</code></pre></div><h3 id="逻辑编写">逻辑编写<a hidden class="anchor" aria-hidden="true" href="#逻辑编写">#</a></h3>
+<p>接下来只需要在<code>PHP_METHOD(Snowflake, __construct){}</code>和<code>PHP_METHOD(Snowflake, generateId){}</code>两个函数中像 C 一样编写相应的代码逻辑即可。但是首先需要认识一些<code>ZEND_API</code>和宏：</p>
+<ul>
+<li>
+<p>解析参数</p>
+<p><code>ZEND_PARSE_PARAMETERS_START</code>和<code>ZEND_PARSE_PARAMETERS_END</code>这两个宏是成对出现，用来解析函数的参数。<code>ZEND_PARSE_PARAMETERS_START</code>需要填写两个参数：最小参数数量和最大参数数量。</p>
+<p>在<code>ZEND_PARSE_PARAMETERS_START</code>和<code>ZEND_PARSE_PARAMETERS_END</code>之间需要用<code>Z_PARAM_*</code>系列的宏函数去解析具体的参数值。其中<code>Z_PARAM_OPTIONAL</code>表示这个宏后面的都是可选参数。</p>
+<p>这些宏函数是 PHP7 开始的功能，称作<code>FAST_ZPP</code>，用来代替以前的<code>zend_parse_parameters</code>的方式去读取参数，性能较之前有提升。</p>
+</li>
+<li>
+<p>成员变量</p>
+<p>前面提到过<code>zend_declare_property_long</code>用来声明类的成员变量。但是在开发过程中，我们需要读和修改成员变量，这时候需要使用<code>zend_update_property_long</code>和<code>zend_read_property</code>这两个函数。</p>
+</li>
+<li>
+<p>参数返回</p>
+<p>在函数中，我们需要用<code>RETURN_*</code>系列的宏函数去返回参数。</p>
+</li>
+</ul>
+<p>了解完这些参数后，编写代码就简单了许多。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* 获取ms */</span>
+zend_long <span style="color:#a6e22e">getMs</span>()
+{
+	<span style="color:#66d9ef">struct</span> timeval now;
+	gettimeofday(<span style="color:#f92672">&amp;</span>now, NULL);
+	<span style="color:#66d9ef">return</span> now.tv_sec <span style="color:#f92672">*</span> <span style="color:#ae81ff">1000</span> <span style="color:#f92672">+</span> now.tv_usec <span style="color:#f92672">/</span> <span style="color:#ae81ff">1000</span>;
+}
+
+<span style="color:#75715e">// 构造方法
+</span><span style="color:#75715e"></span>PHP_METHOD(Snowflake, __construct)
+{
+	<span style="color:#75715e">// 定义参数
+</span><span style="color:#75715e"></span>	zend_long epoch <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, workerId <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>, dataCenterId <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+
+	<span style="color:#75715e">// 7.0后新提供的方式 FAST-ZPP
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 第一个参数是开始时间 第二和第三个参数是workerid和datacenterid
+</span><span style="color:#75715e"></span>	ZEND_PARSE_PARAMETERS_START(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">3</span>)
+        Z_PARAM_LONG(epoch)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(workerId)
+        Z_PARAM_LONG(dataCenterId)
+	ZEND_PARSE_PARAMETERS_END();
+
+	<span style="color:#75715e">// 参数判断
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> (epoch <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">||</span> epoch <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">2199023255551</span>)
+	{
+		zend_throw_exception(NULL, <span style="color:#e6db74">&#34;epoch out of range [0, 2199023255551]&#34;</span>, <span style="color:#ae81ff">10086</span>);
+	}
+	<span style="color:#66d9ef">if</span> (workerId <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">||</span> workerId <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">31</span>)
+	{
+		zend_throw_exception(NULL, <span style="color:#e6db74">&#34;workerId out of range [0, 31]&#34;</span>, <span style="color:#ae81ff">10086</span>);
+	}
+	<span style="color:#66d9ef">if</span> (dataCenterId <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">||</span> dataCenterId <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">31</span>)
+	{
+		zend_throw_exception(NULL, <span style="color:#e6db74">&#34;dataCenterId out of range [0, 31]&#34;</span>, <span style="color:#ae81ff">10086</span>);
+	}
+
+	<span style="color:#75715e">// 获取到当前对象
+</span><span style="color:#75715e"></span>	zval <span style="color:#f92672">*</span>obj <span style="color:#f92672">=</span> getThis();
+
+	<span style="color:#75715e">// 设置对象的值
+</span><span style="color:#75715e"></span>	zend_update_property_long(snowflake_ce, obj, <span style="color:#e6db74">&#34;epoch&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;epoch&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, epoch);
+	zend_update_property_long(snowflake_ce, obj, <span style="color:#e6db74">&#34;workerId&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;workerId&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, workerId);
+	zend_update_property_long(snowflake_ce, obj, <span style="color:#e6db74">&#34;dataCenterId&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;dataCenterId&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, dataCenterId);
+}
+
+<span style="color:#75715e">// 生成snowflake的id
+</span><span style="color:#75715e"></span>PHP_METHOD(Snowflake, generateId)
+{
+    <span style="color:#75715e">// 参数定义
+</span><span style="color:#75715e"></span>	zval <span style="color:#f92672">*</span>obj, <span style="color:#f92672">*</span>epoch, <span style="color:#f92672">*</span>workerId, <span style="color:#f92672">*</span>dataCenterId, <span style="color:#f92672">*</span>seqNum, <span style="color:#f92672">*</span>lastTime;
+	zend_long snowflakeId, seqNumL, lastTimeL, millisecond <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+	obj <span style="color:#f92672">=</span> getThis();
+	epoch <span style="color:#f92672">=</span> zend_read_property(snowflake_ce, obj, <span style="color:#e6db74">&#34;epoch&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;epoch&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, NULL);
+	workerId <span style="color:#f92672">=</span> zend_read_property(snowflake_ce, obj, <span style="color:#e6db74">&#34;workerId&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;workerId&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, NULL);
+	dataCenterId <span style="color:#f92672">=</span> zend_read_property(snowflake_ce, obj, <span style="color:#e6db74">&#34;dataCenterId&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;dataCenterId&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, NULL);
+	seqNum <span style="color:#f92672">=</span> zend_read_property(snowflake_ce, obj, <span style="color:#e6db74">&#34;seqNum&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;seqNum&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, NULL);
+	lastTime <span style="color:#f92672">=</span> zend_read_property(snowflake_ce, obj, <span style="color:#e6db74">&#34;lastTime&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;lastTime&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, NULL);
+	seqNumL <span style="color:#f92672">=</span> Z_LVAL_P(seqNum);
+	lastTimeL <span style="color:#f92672">=</span> Z_LVAL_P(lastTime);
+
+START_GENERATE:
+	<span style="color:#75715e">// 获取当前ms
+</span><span style="color:#75715e"></span>	millisecond <span style="color:#f92672">=</span> getMs();
+
+	<span style="color:#75715e">// 判断时间回拨
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> (millisecond <span style="color:#f92672">&lt;</span> lastTimeL)
+	{
+		zend_throw_exception(NULL, <span style="color:#e6db74">&#34;clock moved backwards&#34;</span>, <span style="color:#ae81ff">10087</span>);
+	}
+	<span style="color:#75715e">// 时间一致时 判断序列号重复
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> (millisecond <span style="color:#f92672">==</span> lastTimeL)
+	{
+		<span style="color:#75715e">// 如果序列号已经达到最大值 则重新开始获取时间
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> (seqNumL <span style="color:#f92672">==</span> <span style="color:#ae81ff">0xfff</span>) <span style="color:#75715e">/* bits: 1111 1111 1111 */</span>
+		{
+			<span style="color:#66d9ef">goto</span> START_GENERATE;
+		}
+		<span style="color:#66d9ef">else</span>
+		{
+			seqNumL<span style="color:#f92672">++</span>;
+		}
+	}
+	<span style="color:#66d9ef">else</span>
+	{
+		seqNumL <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+	}
+
+	<span style="color:#75715e">// 生成id
+</span><span style="color:#75715e"></span>	snowflakeId <span style="color:#f92672">=</span> snowflakeId <span style="color:#f92672">|</span> (millisecond <span style="color:#f92672">-</span> Z_LVAL_P(epoch)) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">22</span> <span style="color:#f92672">|</span> Z_LVAL_P(workerId) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">17</span> <span style="color:#f92672">|</span> Z_LVAL_P(dataCenterId) <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">12</span> <span style="color:#f92672">|</span> seqNumL;
+
+	<span style="color:#75715e">// 记录序列号 和上次获取的时间
+</span><span style="color:#75715e"></span>	zend_update_property_long(snowflake_ce, obj, <span style="color:#e6db74">&#34;seqNum&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;seqNum&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, seqNumL);
+	zend_update_property_long(snowflake_ce, obj, <span style="color:#e6db74">&#34;lastTime&#34;</span>, <span style="color:#66d9ef">sizeof</span>(<span style="color:#e6db74">&#34;lastTime&#34;</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, millisecond);
+
+    <span style="color:#75715e">// 响应数据
+</span><span style="color:#75715e"></span>	RETURN_LONG(snowflakeId)
+}
+</code></pre></div><p>上次用 C 语言实现的代码中存在的问题，在这里也得到解决。</p>
+<ul>
+<li>
+<p>时间回拨</p>
+<p>通过记录上次生成id的时间去进行判断，如果当前时间小于上次时间，则抛出异常。其实这里可以增加一个判断，如果两者时间差在一定可接受的阈值下，可以进行时间等待，直到当前时间大于上次记录的时间。</p>
+</li>
+<li>
+<p>序列号溢出</p>
+<p>在同一毫秒内，如果序列号满了，自动获取下一个时间。</p>
+</li>
+</ul>
+<h3 id="测试">测试<a hidden class="anchor" aria-hidden="true" href="#测试">#</a></h3>
+<p>开发完成后，我们需要进行编译，依次执行<code>phpize</code>、<code>./configure</code>、<code>make</code>和<code>make install</code>。</p>
+<p>执行完这些命令后，我们的扩展<code>snowflake.so</code>就会出现在 PHP 的扩展目录下。此时需要在<code>php.ini</code>中添加<code>extension=snowflake</code>，这样我们的 PHP 程序就会加载<code>snowflake</code>扩展了。</p>
+<p>在扩展目录下，可以通过 PHP 脚本<code>php test.php</code>或者通过<code>Makefile</code>的<code>make test</code>来进行扩展测试。它会自动根据<code>tests</code>下所有的<code>.phpt</code>文件去跑测试，如果测试结果与预期不符，<code>tests</code>目录下会生成对应的测试报告。</p>
+<p><code>.phpt</code>文件用于 PHP 的测试，其中文件有3个必填的段落：<code>--TEST--</code>、<code>--FILE--</code>和<code>--EXPECT--</code>。</p>
+<ul>
+<li><code>--TEST--</code>：用来描述该测试文件的测试目的</li>
+<li><code>--FILE--</code>：需要执行的 PHP 代码</li>
+<li><code>--EXPECT--</code>：期待的输出结果</li>
+</ul>
+<p>于是我们简单写一个测试脚本，用来测试<code>Snowflake</code>会不会生成重复值：</p>
+<pre tabindex="0"><code class="language-phpt" data-lang="phpt">--TEST--
+Check if snowflake id is unique
+--FILE--
+&lt;?php
+&lt;?php
+$snowflake = new Snowflake(0);
+
+$result = [];
+for ($i = 0; $i &lt; 1000000; $i++) {
+    $result[] = $snowflake-&gt;generateId();
+}
+echo count(array_unique($result));
+
+?&gt;
+--EXPECT--
+1000000
+</code></pre><p>接着执行<code>make test TESTS=tests/snowflake_unique.phpt</code>，得到测试结果：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ make test TESTS<span style="color:#f92672">=</span>tests/snowflake_unique.phpt
+
+Build complete.
+Don<span style="color:#e6db74">&#39;t forget to run &#39;</span>make test<span style="color:#960050;background-color:#1e0010">&#39;</span>.
+
+
+<span style="color:#f92672">=====================================================================</span>
+PHP         : /usr/bin/php 
+PHP_SAPI    : cli
+PHP_VERSION : 7.4.9
+ZEND_VERSION: 3.4.0
+PHP_OS      : Linux - Linux rudy-pro 5.7.17-2-MANJARO <span style="color:#75715e">#1 SMP PREEMPT Sat Aug 22 14:58:17 UTC 2020 x86_64</span>
+INI actual  : /home/rudy/project/my_github/php_ext_snowflake/tmp-php.ini
+More .INIs  :   
+CWD         : /home/rudy/project/my_github/php_ext_snowflake
+Extra dirs  : 
+VALGRIND    : Not used
+<span style="color:#f92672">=====================================================================</span>
+Running selected tests.
+PASS Check <span style="color:#66d9ef">if</span> snowflake id is unique <span style="color:#f92672">[</span>tests/snowflake_unique.phpt<span style="color:#f92672">]</span> 
+<span style="color:#f92672">=====================================================================</span>
+Number of tests :    <span style="color:#ae81ff">1</span>                 <span style="color:#ae81ff">1</span>
+Tests skipped   :    <span style="color:#ae81ff">0</span> <span style="color:#f92672">(</span>  0.0%<span style="color:#f92672">)</span> --------
+Tests warned    :    <span style="color:#ae81ff">0</span> <span style="color:#f92672">(</span>  0.0%<span style="color:#f92672">)</span> <span style="color:#f92672">(</span>  0.0%<span style="color:#f92672">)</span>
+Tests failed    :    <span style="color:#ae81ff">0</span> <span style="color:#f92672">(</span>  0.0%<span style="color:#f92672">)</span> <span style="color:#f92672">(</span>  0.0%<span style="color:#f92672">)</span>
+Tests passed    :    <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>100.0%<span style="color:#f92672">)</span> <span style="color:#f92672">(</span>100.0%<span style="color:#f92672">)</span>
+---------------------------------------------------------------------
+Time taken      :    <span style="color:#ae81ff">1</span> seconds
+<span style="color:#f92672">=====================================================================</span>
+</code></pre></div><p>如果测试不通过，<code>tests</code>目录下会得到以测试脚本命名的测试报告：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ tree tests 
+tests
+├── snowflake_unique.diff // 输出值差异
+├── snowflake_unique.exp // 期望输出值
+├── snowflake_unique.log // 详细日志
+├── snowflake_unique.out // 输出值
+├── snowflake_unique.php // 测试脚本
+├── snowflake_unique.phpt
+└── snowflake_unique.sh
+
+</code></pre></div><h2 id="结语">结语<a hidden class="anchor" aria-hidden="true" href="#结语">#</a></h2>
+<p>至此，我的第一个 PHP 扩展<code>snowflake</code>也开发完了，收获满满。</p>
+<p>测试代码已上传到github：<a href="https://github.com/RudyChow/php_ext_snowflake">php-ext-snowflake</a>。</p>
+<h2 id="参考">参考<a hidden class="anchor" aria-hidden="true" href="#参考">#</a></h2>
+<p>- <a href="https://www.php.net/manual/zh/internals2.buildsys.php">PHP 5 构建系统</a></p>
+<p>- <a href="http://www.phpinternalsbook.com/tests/phpt_file_structure.html">The .phpt file structure</a></p>
+<p>- <a href="https://xueyuanjun.com/post/7152.html">PHP 的生命周期</a></p>
+<p>- <a href="https://www.laruence.com/2020/02/27/5213.html">深入理解PHP7内核之FAST_ZPP</a></p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a></li>
+      <li><a href="https://rudychow.github.io/tags/php/">PHP</a></li>
+    </ul>
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/linux/linux%E6%BA%90%E7%A0%81select/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>Linux源码：select浅析</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>PHP扩展：实现snowflake分布式id（1）</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

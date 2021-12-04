@@ -1,289 +1,275 @@
-<!doctype html>
-<html lang="zh-cn">
-<head>
+<!DOCTYPE html>
+<html lang="en" dir="auto">
 
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>搜索 | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="搜索页面">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/search/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style"><link crossorigin="anonymous" rel="preload" as="fetch" href="../index.json">
+<script defer crossorigin="anonymous" src="/assets/js/search.min.6a9a7eb2e837edc2f9236bb0c733bf12998c2a01b7c92054b7fbdda7370a68b9.js" integrity="sha256-app&#43;sug37cL5I2uwxzO/EpmMKgG3ySBUt/vdpzcKaLk="></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
 
-    <title>搜索 | Rudy&#39;s blog</title>
-    <meta property="og:title" content="搜索 - Rudy&#39;s blog">
-    <meta property="og:type" content="article">
-        
-        
-    <meta name="Keywords" content="">
-    <meta name="description" content="搜索页面">
-        
-    <meta name="author" content="Rudy">
-    <meta property="og:url" content="https://rudychow.github.io/search/">
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
 
-    <link rel="stylesheet" href='/css/normalize.css'>
-    <link rel="stylesheet" href='/css/style.css'>
-    <script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+            .list {
+                background: var(--theme);
+            }
 
-    
-    
-    
-        <link href="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" rel="stylesheet">
-    
-    
-    
-    
-</head>
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
 
-
-<body>
-    <header id="header" class="clearfix">
-    <div class="container">
-        <div class="col-group">
-            <div class="site-name ">
-                
-                    <a id="logo" href="https://rudychow.github.io/">
-                        Rudy&#39;s blog
-                    </a>
-                
-                <p class="description">专业拧螺丝</p>
-            </div>
-            <div>
-                <nav id="nav-menu" class="clearfix">
-                    <a class="" href="https://rudychow.github.io/">首页</a>
-                    
-                    <a  href="https://rudychow.github.io/archives/" title="归档">归档</a>
-                    
-                    <a  href="https://github.com/RudyChow" title="github">github</a>
-                    
-                </nav>
-            </div>
-        </div>
-    </div>
-</header>
-
-    <div id="body">
-        <div class="container">
-            <div class="col-group">
-
-                <div class="col-8" id="main">
-                    
-<div class="res-cons">
-    <h3 class="archive-title">
-        搜索
-        <span class="keyword">哈哈</span>
-        的结果
-    </h3>
-
-    <article class="post">
-        <header>
-            <h1 class="post-title">
-                <a href="链接">标题</a>
-            </h1>
-        </header>
-        <date class="post-meta meta-date">
-            2019年12月01日
-        </date>
-        <div class="post-content">
-            概要……
-            <p class="readmore"><a href="链接">阅读全文</a></p>
-        </div>
-    </article>
-
-</div>
-
-<script type="text/javascript">
-
-    var getUrlParameter = function getUrlParameter(sParam) {
-        var sPageURL = window.location.search.substring(1),
-            sURLVariables = sPageURL.split('&'),
-            sParameterName,
-            i;
-
-        for (i = 0; i < sURLVariables.length; i++) {
-            sParameterName = sURLVariables[i].split('=');
-
-            if (sParameterName[0] === sParam) {
-                return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
             }
         }
-    };
 
-    $(document).ready(function () {
-        var q = getUrlParameter("q");
-        $("span.keyword").text(q);
-        $("article.post").remove();
-        $.ajax({
-            url: 'https:\/\/rudychow.github.io\/index.xml',
-            dataType: "xml",
-            success: function (data) {
-                $(data).find("item").each(function () {
-                    var item = $(this);
-                    var title = item.find("title").text();
-                    if (title.toLowerCase().indexOf(q.toLowerCase()) >= 0) {
-                        var url = item.find("link").text();
-                        var searchItem = `<article class="post"><header><h1 class="post-title"><a href="` + url + `">` + title + `</a></h1></header>`;
-                        var pubDate = new Date(item.find("pubDate").text())
-                        searchItem += `<date class="post-meta meta-date">` + pubDate.getFullYear() + `年` + (pubDate.getMonth() + 1) + `月` + pubDate.getDate() + `日</date>`;
-                        searchItem += `<div class="post-content">` + item.find("description").text() + `……<p class="readmore"><a href="` + url + `">阅读全文</a></p></div></article>`;
+    </style>
+</noscript><meta property="og:title" content="搜索" />
+<meta property="og:description" content="搜索页面" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/search/" /><meta property="article:section" content="" />
 
-                        $("div.res-cons").append(searchItem);
-                    }
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="搜索"/>
+<meta name="twitter:description" content="搜索页面"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "搜索",
+      "item": "https://rudychow.github.io/search/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "搜索",
+  "name": "搜索",
+  "description": "搜索页面",
+  "keywords": [
+    
+  ],
+  "articleBody": "",
+  "wordCount" : "0",
+  "inLanguage": "en",
+  "datePublished": "0001-01-01T00:00:00Z",
+  "dateModified": "0001-01-01T00:00:00Z",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/search/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="list" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<header class="page-header">
+    <h1>搜索 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </h1>
+    <div class="post-description">
+        搜索页面
+    </div>
+    <div class="post-meta"></div>
+</header>
+
+<div id="searchbox">
+    <input id="searchInput" autofocus placeholder="placeholder text in search input box"
+        aria-label="search" type="search" autocomplete="off">
+    <ul id="searchResults" aria-label="search results"></ul>
+</div>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
                 });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
             }
         });
     });
+
 </script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
 
-                    <footer id="footer">
-    <div>
-        &copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog By Rudy</a>
-        
-    </div>
-    <br />
-    <div>
-        <div class="github-badge">
-            <a href="https://gohugo.io/" target="_black" rel="nofollow"><span class="badge-subject">Powered by</span><span class="badge-value bg-blue">Hugo</span></a>
-        </div>
-        <div class="github-badge">
-            <a href="https://www.flysnow.org/" target="_black"><span class="badge-subject">Design by</span><span class="badge-value bg-brightgreen">飞雪无情</span></a>
-        </div>
-        <div class="github-badge">
-            <a href="https://github.com/flysnow-org/maupassant-hugo" target="_black"><span class="badge-subject">Theme</span><span class="badge-value bg-yellowgreen">Maupassant</span></a>
-        </div>
-    </div>
-</footer>
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
 
-
-    
-    <script type="text/javascript">
-        window.MathJax = {
-            tex2jax: {
-                inlineMath: [['$', '$']],
-                processEscapes: true
-                }
-            };
-    </script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script><script src="https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
-
-<a id="rocket" href="#top"></a>
-<script type="text/javascript" src='/js/totop.js?v=0.0.0' async=""></script>
-
-
-
-
-
-
-                </div>
-
-                <div id="secondary">
-    <section class="widget">
-        <form id="search" action='https://rudychow.github.io/search/' method="get" accept-charset="utf-8" target="_blank" _lpchecked="1">
-      
-      <input type="text" name="q" maxlength="20" placeholder="Search">
-      <input type="hidden" name="sitesearch" value="https://rudychow.github.io/">
-      <button type="submit" class="submit icon-search"></button>
-</form>
-    </section>
-    
-    <section class="widget">
-        <h3 class="widget-title">最近文章</h3>
-<ul class="widget-list">
-    
-    <li>
-        <a href="https://rudychow.github.io/post/2021%E8%AE%A1%E5%88%92/" title="2021计划">2021计划</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/" title="Ingress Nginx 部署">Ingress Nginx 部署</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/" title="Calico个人理解">Calico个人理解</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/Linux/iproute2/" title="iproute2">iproute2</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/" title="查询语句的访问方式">查询语句的访问方式</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/" title="Join算法">Join算法</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/" title="事务">事务</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/" title="undo日志">undo日志</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E6%9F%A5%E8%AF%A2/" title="B&#43;树查询">B&#43;树查询</a>
-    </li>
-    
-    <li>
-        <a href="https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/" title="Vscode下使用GDB调试Redis">Vscode下使用GDB调试Redis</a>
-    </li>
-    
-</ul>
-    </section>
-
-    
-
-    <section class="widget">
-        <h3 class="widget-title"><a href="/categories">分类</a></h3>
-<ul class="widget-list">
-    
-    <li><a href="https://rudychow.github.io/categories/K8S/">K8S (2)</a></li>
-    
-    <li><a href="https://rudychow.github.io/categories/Linux/">Linux (2)</a></li>
-    
-    <li><a href="https://rudychow.github.io/categories/MySQL/">MySQL (11)</a></li>
-    
-    <li><a href="https://rudychow.github.io/categories/Nginx/">Nginx (1)</a></li>
-    
-    <li><a href="https://rudychow.github.io/categories/PHP/">PHP (2)</a></li>
-    
-    <li><a href="https://rudychow.github.io/categories/Redis/">Redis (23)</a></li>
-    
-    <li><a href="https://rudychow.github.io/categories/%E6%80%BB%E7%BB%93%E4%B8%8E%E8%AE%A1%E5%88%92/">总结与计划 (1)</a></li>
-    
-    <li><a href="https://rudychow.github.io/categories/%E7%BA%BF%E4%B8%8A%E9%97%AE%E9%A2%98/">线上问题 (2)</a></li>
-    
-</ul>
-    </section>
-
-    <section class="widget">
-        <h3 class="widget-title"><a href="/tags">标签</a></h3>
-<div class="tagcloud">
-    
-    <a href="https://rudychow.github.io/tags/MySQL/">MySQL</a>
-    
-    <a href="https://rudychow.github.io/tags/PHP/">PHP</a>
-    
-    <a href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/">算法</a>
-    
-    <a href="https://rudychow.github.io/tags/%E7%B4%A2%E5%BC%95/">索引</a>
-    
-    <a href="https://rudychow.github.io/tags/%E9%94%81/">锁</a>
-    
-</div>
-    </section>
-
-    
-
-    <section class="widget">
-        <h3 class="widget-title">其它</h3>
-        <ul class="widget-list">
-            <li><a href="https://rudychow.github.io/index.xml">文章 RSS</a></li>
-        </ul>
-    </section>
-</div>
-            </div>
-        </div>
-    </div>
+</script>
 </body>
 
 </html>

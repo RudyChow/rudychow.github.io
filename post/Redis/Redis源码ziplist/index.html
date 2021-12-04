@@ -242,7 +242,7 @@
         </a>
     </p>
 <p>下面是源码中有关 prevlen 的一些相关宏定义：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 首字节最大值
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 首字节最大值
 </span><span style="color:#586e75"></span><span style="color:#719e07">#define ZIP_BIG_PREVLEN 254 
 </span><span style="color:#719e07"></span><span style="color:#586e75">// 获取prevlen占用的字节大小
 </span><span style="color:#586e75"></span><span style="color:#719e07">#define ZIP_DECODE_PREVLENSIZE(ptr, prevlensize) do {                          \
@@ -263,7 +263,7 @@
 </span><span style="color:#719e07">        memrev32ifbe(&amp;prevlen);                                                \
 </span><span style="color:#719e07">    }                                                                          \
 </span><span style="color:#719e07">} while(0);
-</span><span style="color:#719e07"></span>  
+</span><span style="color:#719e07"></span>
 </code></pre></div></li>
 <li>
 <p>encoding</p>

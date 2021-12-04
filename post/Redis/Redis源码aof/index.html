@@ -193,7 +193,7 @@
 <h2 id="初始化">初始化</h2>
 <p>Redis 通过<code>loadServerConfig</code>加载配置<code>appendonly [yes|no]</code>，对应会修改<code>server.aof_state = AOF_ON|AOF_OFF</code>。当<code>AOF</code>被开启，Redis 初始化服务<code>initServer</code>时会打开一个<code>AOF</code>文件并记录下对应的 fd。</p>
 <p>此时的几个相关字段：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> redisServer {    
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> redisServer {    
     <span style="color:#dc322f">int</span> aof_state;                  <span style="color:#586e75">/* aof状态 */</span>
     <span style="color:#dc322f">int</span> aof_fd;       <span style="color:#586e75">/* aof文件fd */</span>
     <span style="color:#dc322f">char</span> <span style="color:#719e07">*</span>aof_filename;             <span style="color:#586e75">/* aof文件名 */</span>

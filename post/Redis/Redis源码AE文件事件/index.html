@@ -193,7 +193,7 @@
 <p>这里会先对 Redis 的文件事件的源码进行简单地阅读并且分析（以 <a href="https://github.com/redis/redis/tree/5.0.9">Redis5.0.9</a> 为例）。</p>
 <h2 id="aeeventloop">aeEventLoop</h2>
 <p><code>aeEventLoop</code>是<code>Redis</code>全局的结构体对象，所有跟事件有关的数据和状态都存储在这上面：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 只展示文件事件相关属性
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 只展示文件事件相关属性
 </span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeEventLoop {
     <span style="color:#dc322f">int</span> maxfd;   <span style="color:#586e75">/* 当前注册的最大的文件描述符 */</span>
     <span style="color:#dc322f">int</span> setsize; <span style="color:#586e75">/* 可追踪的文件描述符数量 */</span>
@@ -212,7 +212,7 @@
 </li>
 <li>
 <p><code>aeFileEvent *events</code></p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeFileEvent {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeFileEvent {
     <span style="color:#dc322f">int</span> mask; <span style="color:#586e75">/* one of AE_(READABLE|WRITABLE|BARRIER) 掩码  标识这个文件注册了哪种IO回调函数 */</span>
     aeFileProc <span style="color:#719e07">*</span>rfileProc;<span style="color:#586e75">/* 文件可读时的回调函数 */</span>
     aeFileProc <span style="color:#719e07">*</span>wfileProc;<span style="color:#586e75">/* 文件可写时的回调函数 */</span>
@@ -226,7 +226,7 @@
 </li>
 <li>
 <p><code>aeFiredEvent *fired</code></p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeFiredEvent {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeFiredEvent {
     <span style="color:#dc322f">int</span> fd;<span style="color:#586e75">/* 文件描述符 */</span>
     <span style="color:#dc322f">int</span> mask;<span style="color:#586e75">/* 掩码 用于位运算 标识这个文件处于可读/可写状态 */</span>
 } aeFiredEvent;
@@ -235,7 +235,7 @@
 </li>
 <li>
 <p><code>void *apidata</code></p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeApiState {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> aeApiState {
     <span style="color:#dc322f">int</span> epfd;<span style="color:#586e75">/* epoll的fd */</span>
   <span style="color:#719e07">struct</span> epoll_event <span style="color:#719e07">*</span>events;<span style="color:#586e75">/* 用来接收监听的事件 */</span>
 } aeApiState;
@@ -288,7 +288,7 @@
 <li>
 <p><code>aeMain</code></p>
 <p>事件循环的入口是<code>aeMain</code>，这个函数就是一个简单的循环，主要执行逻辑在<code>aeProcessEvents</code>里面：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">aeMain</span>(aeEventLoop <span style="color:#719e07">*</span>eventLoop) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">aeMain</span>(aeEventLoop <span style="color:#719e07">*</span>eventLoop) {
     <span style="color:#586e75">// 设置不停止
 </span><span style="color:#586e75"></span>    eventLoop<span style="color:#719e07">-&gt;</span>stop <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
     <span style="color:#586e75">// 一直运行 除非停止

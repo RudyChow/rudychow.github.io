@@ -215,7 +215,7 @@
 <h4 id="purge-thread">Purge Thread</h4>
 <p>事务被提交后，所使用的 undolog 可能不再需要，因此需要 Purge Thread 来回收已经使用并分配的 undo 页。在 InnoDB 1.1 版本之前，purge 操作仅在 Master Thread 中完成。而在 InnoDB 1.1 版本开始，purge 操作可以独立到单独的线程中进行，以此来减轻 Master Thread 的工作，从而提高 CPU 的利用率以及提升存储引擎的性能。</p>
 <p>用可可以在 MySQL 数据库的配置文件中添加如下命令来启用独立的 Pruge Thread：</p>
-<pre><code class="language-cnf" data-lang="cnf">[mysqld]
+<pre tabindex="0"><code class="language-cnf" data-lang="cnf">[mysqld]
 innodb_purge_threads=1
 </code></pre><h4 id="page-cleaner-thread">Page Cleaner Thread</h4>
 <p>Page Cleaner Thread 实在 InnoDB 1.2.x 版本中引入的，其作用是将之前版本中脏页的刷新操作都放入到单独的线程中完成。目的是为了减轻原 Master Thread 的工作以及对于用户查询线程的阻塞，进一步提高 InnoDB 存储引擎的性能。</p>

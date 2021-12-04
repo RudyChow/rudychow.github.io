@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Redis源码：aof | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。
+初始化 Redis 通过loadServerConfig加载配置appendonly [yes|no]，对应会修改server.aof_state = AOF_ON|AOF_OFF。当AOF被开启，Redis 初始化服务initServer时会打开一个AOF文件并记录下对应的 fd。
+此时的几个相关字段：
+struct redisServer { int aof_state; /* aof状态 */ int aof_fd; /* aof文件fd */ char *aof_filename; /* aof文件名 */ } 记录写入 Redis 在调用call函数里会去追加记录AOF，它在c-&gt;cmd-&gt;proc(c)后，会执行propagate，然后再执行feedAppendOnlyFile。
+feedAppendOnlyFile主要逻辑：
+ 判断当前命令的 db 是否和AOF的 db 相同，如果不相同，AOF记录一条select db进行数据库切换。 所有过期expire命令都转换成PEXPIREAT命令。 所有set类的命令，都转换成set命令 如果当前AOF处于AOF_ON的状态，则写入缓冲区。 如果当前AOF有子进程，则调用aofRewriteBufferAppend。  此时所有操作都只是写入缓冲区，而数据并未落盘。
+写入时机 AOF会以RESP协议（Redis 的通讯协议）来记录我们每一条命令，它会依赖三种策略：
+  AOF_FSYNC_NO
+不手动刷盘，而是由系统自己决定。
+  AOF_FSYNC_ALWAYS
+每条命令刷盘一次，这种方式丢数据的机率最小，最多会丢一条记录。
+  AOF_FSYNC_EVERYSEC
+每秒记录刷盘一次。
+  Redis 会调用flushAppendOnlyFile进行AOF的数据落盘，最常见的调用时机就是每次事件循环的前置函数beforeSleep。">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81aof/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Redis源码：aof" />
+<meta property="og:description" content="Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。
+初始化 Redis 通过loadServerConfig加载配置appendonly [yes|no]，对应会修改server.aof_state = AOF_ON|AOF_OFF。当AOF被开启，Redis 初始化服务initServer时会打开一个AOF文件并记录下对应的 fd。
+此时的几个相关字段：
+struct redisServer { int aof_state; /* aof状态 */ int aof_fd; /* aof文件fd */ char *aof_filename; /* aof文件名 */ } 记录写入 Redis 在调用call函数里会去追加记录AOF，它在c-&gt;cmd-&gt;proc(c)后，会执行propagate，然后再执行feedAppendOnlyFile。
+feedAppendOnlyFile主要逻辑：
+ 判断当前命令的 db 是否和AOF的 db 相同，如果不相同，AOF记录一条select db进行数据库切换。 所有过期expire命令都转换成PEXPIREAT命令。 所有set类的命令，都转换成set命令 如果当前AOF处于AOF_ON的状态，则写入缓冲区。 如果当前AOF有子进程，则调用aofRewriteBufferAppend。  此时所有操作都只是写入缓冲区，而数据并未落盘。
+写入时机 AOF会以RESP协议（Redis 的通讯协议）来记录我们每一条命令，它会依赖三种策略：
+  AOF_FSYNC_NO
+不手动刷盘，而是由系统自己决定。
+  AOF_FSYNC_ALWAYS
+每条命令刷盘一次，这种方式丢数据的机率最小，最多会丢一条记录。
+  AOF_FSYNC_EVERYSEC
+每秒记录刷盘一次。
+  Redis 会调用flushAppendOnlyFile进行AOF的数据落盘，最常见的调用时机就是每次事件循环的前置函数beforeSleep。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81aof/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-11-01T23:54:03&#43;08:00" />
+<meta property="article:modified_time" content="2020-11-01T23:54:03&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Redis源码：aof"/>
+<meta name="twitter:description" content="Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。
+初始化 Redis 通过loadServerConfig加载配置appendonly [yes|no]，对应会修改server.aof_state = AOF_ON|AOF_OFF。当AOF被开启，Redis 初始化服务initServer时会打开一个AOF文件并记录下对应的 fd。
+此时的几个相关字段：
+struct redisServer { int aof_state; /* aof状态 */ int aof_fd; /* aof文件fd */ char *aof_filename; /* aof文件名 */ } 记录写入 Redis 在调用call函数里会去追加记录AOF，它在c-&gt;cmd-&gt;proc(c)后，会执行propagate，然后再执行feedAppendOnlyFile。
+feedAppendOnlyFile主要逻辑：
+ 判断当前命令的 db 是否和AOF的 db 相同，如果不相同，AOF记录一条select db进行数据库切换。 所有过期expire命令都转换成PEXPIREAT命令。 所有set类的命令，都转换成set命令 如果当前AOF处于AOF_ON的状态，则写入缓冲区。 如果当前AOF有子进程，则调用aofRewriteBufferAppend。  此时所有操作都只是写入缓冲区，而数据并未落盘。
+写入时机 AOF会以RESP协议（Redis 的通讯协议）来记录我们每一条命令，它会依赖三种策略：
+  AOF_FSYNC_NO
+不手动刷盘，而是由系统自己决定。
+  AOF_FSYNC_ALWAYS
+每条命令刷盘一次，这种方式丢数据的机率最小，最多会丢一条记录。
+  AOF_FSYNC_EVERYSEC
+每秒记录刷盘一次。
+  Redis 会调用flushAppendOnlyFile进行AOF的数据落盘，最常见的调用时机就是每次事件循环的前置函数beforeSleep。"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Redis源码：aof",
+      "item": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81aof/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Redis源码：aof",
+  "name": "Redis源码：aof",
+  "description": "Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。\n初始化 Redis 通过loadServerConfig加载配置appendonly [yes|no]，对应会修改server.aof_state = AOF_ON|AOF_OFF。当AOF被开启，Redis 初始化服务initServer时会打开一个AOF文件并记录下对应的 fd。\n此时的几个相关字段：\nstruct redisServer { int aof_state; /* aof状态 */ int aof_fd; /* aof文件fd */ char *aof_filename; /* aof文件名 */ } 记录写入 Redis 在调用call函数里会去追加记录AOF，它在c-\u0026gt;cmd-\u0026gt;proc(c)后，会执行propagate，然后再执行feedAppendOnlyFile。\nfeedAppendOnlyFile主要逻辑：\n 判断当前命令的 db 是否和AOF的 db 相同，如果不相同，AOF记录一条select db进行数据库切换。 所有过期expire命令都转换成PEXPIREAT命令。 所有set类的命令，都转换成set命令 如果当前AOF处于AOF_ON的状态，则写入缓冲区。 如果当前AOF有子进程，则调用aofRewriteBufferAppend。  此时所有操作都只是写入缓冲区，而数据并未落盘。\n写入时机 AOF会以RESP协议（Redis 的通讯协议）来记录我们每一条命令，它会依赖三种策略：\n  AOF_FSYNC_NO\n不手动刷盘，而是由系统自己决定。\n  AOF_FSYNC_ALWAYS\n每条命令刷盘一次，这种方式丢数据的机率最小，最多会丢一条记录。\n  AOF_FSYNC_EVERYSEC\n每秒记录刷盘一次。\n  Redis 会调用flushAppendOnlyFile进行AOF的数据落盘，最常见的调用时机就是每次事件循环的前置函数beforeSleep。",
+  "keywords": [
+    
+  ],
+  "articleBody": "Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。\n初始化 Redis 通过loadServerConfig加载配置appendonly [yes|no]，对应会修改server.aof_state = AOF_ON|AOF_OFF。当AOF被开启，Redis 初始化服务initServer时会打开一个AOF文件并记录下对应的 fd。\n此时的几个相关字段：\nstruct redisServer { int aof_state; /* aof状态 */ int aof_fd; /* aof文件fd */ char *aof_filename; /* aof文件名 */ } 记录写入 Redis 在调用call函数里会去追加记录AOF，它在c-cmd-proc(c)后，会执行propagate，然后再执行feedAppendOnlyFile。\nfeedAppendOnlyFile主要逻辑：\n 判断当前命令的 db 是否和AOF的 db 相同，如果不相同，AOF记录一条select db进行数据库切换。 所有过期expire命令都转换成PEXPIREAT命令。 所有set类的命令，都转换成set命令 如果当前AOF处于AOF_ON的状态，则写入缓冲区。 如果当前AOF有子进程，则调用aofRewriteBufferAppend。  此时所有操作都只是写入缓冲区，而数据并未落盘。\n写入时机 AOF会以RESP协议（Redis 的通讯协议）来记录我们每一条命令，它会依赖三种策略：\n  AOF_FSYNC_NO\n不手动刷盘，而是由系统自己决定。\n  AOF_FSYNC_ALWAYS\n每条命令刷盘一次，这种方式丢数据的机率最小，最多会丢一条记录。\n  AOF_FSYNC_EVERYSEC\n每秒记录刷盘一次。\n  Redis 会调用flushAppendOnlyFile进行AOF的数据落盘，最常见的调用时机就是每次事件循环的前置函数beforeSleep。\nflushAppendOnlyFile可以简单分成两部分：\n aofWrite把缓冲区的数据进行write操作 根据不同策略进行redis_fsync操作。如AOF_FSYNC_ALWAYS会在当前主进程直接刷盘、AOF_FSYNC_EVERYSEC会把刷盘的任务分配给bio进行，而AOF_FSYNC_NO则什么都不操作等待缓冲区写完。   一般来说文件写入我们会用到write函数，但该函数会写入到内核的 page cache 中，真正落盘时机是由操作系统内核线程来调度。这就是 AOF_FSYNC_NO 策略的方式，刷盘工作交给内核。\n可以使用 fsync/fdatasync 函数去手动刷盘，此时程序会等到写磁盘操作结束。AOF_FSYNC_ALWAYS 和 AOF_FSYNC_EVERYSEC 则是使用这种刷盘方式的策略。\n像 MySQL 的 redo log 也有类似的策略。\n AOF重写 一个 key 有可能在经过一万次修改后，还是回到一开始的值。但此时 AOF 文件会记录下这一万条命令，导致文件体积变大。为了解决这个问题，可以使用 AOF 重写。Redis 会根据当前所有 key 的值去重写 AOF，形式和 RDB 差不多。\nAOF 重写有两个触发时机：\n 主动触发：手动执行BGREWRITEAOF 命令。 定时触发：每次时间事件循环时，进行 AOF 容量增长率判断后，再进行触发。  两者都会调用rewriteAppendOnlyFileBackground进行 AOF 重写。\n这里的重写方式和RDB的bgsave相似，所以不再记录。\n",
+  "wordCount" : "107",
+  "inLanguage": "en",
+  "datePublished": "2020-11-01T23:54:03+08:00",
+  "dateModified": "2020-11-01T23:54:03+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81aof/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      Redis源码：aof
+    </h1>
+    <div class="post-meta"><span title='2020-11-01 23:54:03 +0800 HKT'>November 1, 2020</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><p>Redis 的另一个持久化的功能叫<code>AOF</code>（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。</p>
+<h2 id="初始化">初始化<a hidden class="anchor" aria-hidden="true" href="#初始化">#</a></h2>
+<p>Redis 通过<code>loadServerConfig</code>加载配置<code>appendonly [yes|no]</code>，对应会修改<code>server.aof_state = AOF_ON|AOF_OFF</code>。当<code>AOF</code>被开启，Redis 初始化服务<code>initServer</code>时会打开一个<code>AOF</code>文件并记录下对应的 fd。</p>
+<p>此时的几个相关字段：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">struct</span> redisServer {    
+    <span style="color:#66d9ef">int</span> aof_state;                  <span style="color:#75715e">/* aof状态 */</span>
+    <span style="color:#66d9ef">int</span> aof_fd;       <span style="color:#75715e">/* aof文件fd */</span>
+    <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>aof_filename;             <span style="color:#75715e">/* aof文件名 */</span>
+}
+</code></pre></div><h2 id="记录写入">记录写入<a hidden class="anchor" aria-hidden="true" href="#记录写入">#</a></h2>
+<p>Redis 在调用<code>call</code>函数里会去追加记录<code>AOF</code>，它在<code>c-&gt;cmd-&gt;proc(c)</code>后，会执行<code>propagate</code>，然后再执行<code>feedAppendOnlyFile</code>。</p>
+<p><code>feedAppendOnlyFile</code>主要逻辑：</p>
+<ol>
+<li>判断当前命令的 db 是否和<code>AOF</code>的 db 相同，如果不相同，<code>AOF</code>记录一条<code>select db</code>进行数据库切换。</li>
+<li>所有过期<code>expire</code>命令都转换成<code>PEXPIREAT</code>命令。</li>
+<li>所有<code>set</code>类的命令，都转换成<code>set</code>命令</li>
+<li>如果当前<code>AOF</code>处于<code>AOF_ON</code>的状态，则写入缓冲区。</li>
+<li>如果当前<code>AOF</code>有子进程，则调用<code>aofRewriteBufferAppend</code>。</li>
+</ol>
+<p>此时所有操作都只是<strong>写入缓冲区</strong>，而数据并未落盘。</p>
+<h2 id="写入时机">写入时机<a hidden class="anchor" aria-hidden="true" href="#写入时机">#</a></h2>
+<p><code>AOF</code>会以<code>RESP</code>协议（Redis 的通讯协议）来记录我们每一条命令，它会依赖三种策略：</p>
+<ul>
+<li>
+<p>AOF_FSYNC_NO</p>
+<p>不手动刷盘，而是由系统自己决定。</p>
+</li>
+<li>
+<p>AOF_FSYNC_ALWAYS</p>
+<p>每条命令刷盘一次，这种方式丢数据的机率最小，最多会丢一条记录。</p>
+</li>
+<li>
+<p>AOF_FSYNC_EVERYSEC</p>
+<p>每秒记录刷盘一次。</p>
+</li>
+</ul>
+<p>Redis 会调用<code>flushAppendOnlyFile</code>进行<code>AOF</code>的数据落盘，最常见的调用时机就是每次事件循环的前置函数<code>beforeSleep</code>。</p>
+<p><code>flushAppendOnlyFile</code>可以简单分成两部分：</p>
+<ol>
+<li><code>aofWrite</code>把缓冲区的数据进行<code>write</code>操作</li>
+<li>根据不同策略进行<code>redis_fsync</code>操作。如<code>AOF_FSYNC_ALWAYS</code>会在当前主进程直接刷盘、<code>AOF_FSYNC_EVERYSEC</code>会把刷盘的任务分配给<code>bio</code>进行，而<code>AOF_FSYNC_NO</code>则什么都不操作等待缓冲区写完。</li>
+</ol>
+<blockquote>
+<p>一般来说文件写入我们会用到write函数，但该函数会写入到内核的 page cache 中，真正落盘时机是由操作系统内核线程来调度。这就是 AOF_FSYNC_NO 策略的方式，刷盘工作交给内核。</p>
+<p>可以使用 fsync/fdatasync 函数去手动刷盘，此时程序会等到写磁盘操作结束。AOF_FSYNC_ALWAYS 和 AOF_FSYNC_EVERYSEC 则是使用这种刷盘方式的策略。</p>
+<p>像 MySQL 的 redo log 也有类似的策略。</p>
+</blockquote>
+<h2 id="aof重写">AOF重写<a hidden class="anchor" aria-hidden="true" href="#aof重写">#</a></h2>
+<p>一个 key 有可能在经过一万次修改后，还是回到一开始的值。但此时 AOF 文件会记录下这一万条命令，导致文件体积变大。为了解决这个问题，可以使用 AOF 重写。Redis 会根据当前所有 key 的值去重写 AOF，形式和 RDB 差不多。</p>
+<p>AOF 重写有两个触发时机：</p>
+<ul>
+<li>主动触发：手动执行<code>BGREWRITEAOF </code>命令。</li>
+<li>定时触发：每次时间事件循环时，进行 AOF 容量增长率判断后，再进行触发。</li>
+</ul>
+<p>两者都会调用<code>rewriteAppendOnlyFileBackground</code>进行 AOF 重写。</p>
+<p>这里的重写方式和<code>RDB</code>的<code>bgsave</code>相似，所以不再记录。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>Redis源码：内存淘汰策略</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81rdb/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>Redis源码：rdb</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

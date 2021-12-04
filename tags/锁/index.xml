@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>锁 on Rudy&#39;s blog</title>
     <link>https://rudychow.github.io/tags/%E9%94%81/</link>
     <description>Recent content in 锁 on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>zh-cn</language>
     <lastBuildDate>Fri, 31 Jul 2020 23:28:01 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/tags/%E9%94%81/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>线上问题：锁超时</title>
@@ -13,7 +12,15 @@
       <pubDate>Fri, 31 Jul 2020 23:28:01 +0800</pubDate>
       
       <guid>https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/</guid>
-      <description>问题记录 门店反馈POS机在用户成功付款时等待很久，并且弹出错误提示。于是查看日志，发现相关接口出现数据库锁超时的报错：Lock wait timeout exceeded; try restarting transaction。</description>
+      <description>问题记录 门店反馈POS机在用户成功付款时等待很久，并且弹出错误提示。于是查看日志，发现相关接口出现数据库锁超时的报错：Lock wait timeout exceeded; try restarting transaction。
+问题定位 客户端的付款流程是先调用付款接口，如果付款接口返回“用户支付中”或者没有正确得到相应结果，客户端会接着调用查询支付结果的接口，且线上日志正是查询支付接结果的接口报了锁超时的错误。
+需要注意的是锁超时和死锁是不一样的。
+ 锁超时（Lock wait timeout exceeded）：一般体现在前一个事务对记录进行了锁操作，但未进行提交或者回滚，后一个事务在等待前面的事务释放锁，但是等待的时间超出了innodb_lock_wait_timeout的值，而引起的现象。 死锁（Dead Lock）：两个或两个以上的事务在执行过程中，互相等待对方释放相同资源的锁的现象。  在知道锁超时产生原因的前提下，需要检查付款接口以及查询付款结果接口的代码逻辑即可。
+// 付款 function pay($orderId) { begin; try{ insert into child_order (order_id) values ($orderId); // 第三方支付 	thirdPay(); commit; }catch($exception){ rollback; } } // 查询支付结果 function query($orderId) { // 第三方查询支付结果 	$isPaid = queryPayResult(); // 锁超时异常点  $isPaid and insert into child_order (order_id) values ($orderId); } 两个接口都对相同订单号进行了insert操作。如果是普通的insert操作，即使第一个事务没有完成，第二个事务的insert也不会产生锁超时的情况。之所以产生锁超时，是因为order_id字段是唯一索引。第一个事务的insert会获取到锁，如果没有完成事务，第二个insert由于是相同的order_id，也就进入了等待锁的情况。
+从上面的代码看来没什么问题，该commit的地方commit了，该rollback的地方rollback了。于是我们怀疑程序在调用第三方支付请求太久，导致支付时的事务一直无法完成。但是进一步看代码，我们在请求第三方接口时做了超时限制，如果超过30s没有得到相应结果，则会自动抛出异常，猜测不成立。
+而且在请求第三方接口后，即便超时，我们也会记录日志。这次问题还有个可疑的点：我们没有找到任何这次请求第三方支付的日志，也没有找到关于这次付款接口的请求日志。
+于是我联系服务商，询问这次接口的情况情况，他们也提供给我们对应的接口日志，日志上显示付款成功。
+像这种HTTP请求会产生网络IO导致协程切换，这次的问题仿佛就像协程切换出去，但是没有切回来，导致后续的代码没有继续执行下去，也就因此没有了日志。</description>
     </item>
     
   </channel>

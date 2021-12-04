@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Redis on Rudy&#39;s blog</title>
+    <link>https://rudychow.github.io/categories/redis/</link>
+    <description>Recent content in Redis on Rudy&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Sun, 13 Dec 2020 13:45:54 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/redis/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Vscode下使用GDB调试Redis</title>
+      <link>https://rudychow.github.io/post/redis/vscode%E4%B8%8B%E4%BD%BF%E7%94%A8gdb%E8%B0%83%E8%AF%95redis/</link>
+      <pubDate>Sun, 13 Dec 2020 13:45:54 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/vscode%E4%B8%8B%E4%BD%BF%E7%94%A8gdb%E8%B0%83%E8%AF%95redis/</guid>
+      <description> 配置.vscode/launch.json：  { &amp;#34;version&amp;#34;: &amp;#34;0.2.0&amp;#34;, &amp;#34;configurations&amp;#34;: [ { &amp;#34;name&amp;#34;: &amp;#34;redis启动&amp;#34;, &amp;#34;type&amp;#34;: &amp;#34;cppdbg&amp;#34;, &amp;#34;request&amp;#34;: &amp;#34;launch&amp;#34;, &amp;#34;program&amp;#34;: &amp;#34;${workspaceFolder}/src/redis-server&amp;#34;, &amp;#34;args&amp;#34;: [&amp;#34;${workspaceFolder}/redis.conf&amp;#34;], &amp;#34;stopAtEntry&amp;#34;: false, &amp;#34;cwd&amp;#34;: &amp;#34;${workspaceFolder}&amp;#34;, &amp;#34;environment&amp;#34;: [], &amp;#34;externalConsole&amp;#34;: false, &amp;#34;MIMode&amp;#34;: &amp;#34;gdb&amp;#34;, &amp;#34;preLaunchTask&amp;#34;: &amp;#34;make redis&amp;#34;, &amp;#34;setupCommands&amp;#34;: [ { &amp;#34;description&amp;#34;: &amp;#34;为 gdb 启用整齐打印&amp;#34;, &amp;#34;text&amp;#34;: &amp;#34;-enable-pretty-printing&amp;#34;, &amp;#34;ignoreFailures&amp;#34;: true } ] } ] } 配置.vscode/tasks.json：  { &amp;#34;version&amp;#34;: &amp;#34;2.0.0&amp;#34;, &amp;#34;tasks&amp;#34;: [ { &amp;#34;label&amp;#34;: &amp;#34;make redis&amp;#34;, &amp;#34;type&amp;#34;: &amp;#34;shell&amp;#34;, &amp;#34;command&amp;#34;: &amp;#34;make&amp;#34;, &amp;#34;args&amp;#34;: [ &amp;#34;CFLAGS=\&amp;#34;-g -O0\&amp;#34;&amp;#34; ], &amp;#34;options&amp;#34;: { &amp;#34;cwd&amp;#34;: &amp;#34;${workspaceFolder}/src&amp;#34; } } ] } Start Debugging  </description>
+    </item>
+    
+    <item>
+      <title>Redis源码阅读阶段总结</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/</link>
+      <pubDate>Mon, 16 Nov 2020 06:21:00 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/</guid>
+      <description>把 Redis 分成几个部分来阅读，目前的阅读情况：
+多机：
+ 集群 复制 哨兵  单机：
+ ae db  持久化：
+ AOF RDB  数据结构：
+ SDS ZIPLIST INISET ADLIST SKIPLIST DICT QUICKLIST GEO OBJECT BITMAP HYPERLOGLOG  其它功能：
+ BLOCK PUBSUB BIO EVICT SLOWLOG 事务 LUA  Redis6：
+ 多线程 ACL TLS  作为非 C 程序员，第一次看关于 C 的项目源码，没有想象中吃力。
+Redis 的项目结构非常清晰简单，比如 ae 功能，对应就是一个ae.h头文件和ae.c源文件，加上ae_*.c其它相关的文件。只要看一下这些文件的 API，并且搜索一下这些 API 在整个运行流程中的调用位置，就大概可以了解这个功能。
+项目的注释也非常齐全，在一些比较复杂或者逻辑比较多的函数，都会有大段的注释，阅读起来非常方便。
+虽然是用 C 写的项目，但是大部分都觉得非常得面向对象。比如服务器，即是一个全局的redisServer结构体变量，每个客户端就是一个client结构体变量，并且用了很多函数指针，使用起来和对象没什么区别。
+后面有时间会把其余的功能也阅读一遍。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：多线程</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/</link>
+      <pubDate>Sun, 15 Nov 2020 16:31:01 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/</guid>
+      <description>Redis6 有了不少更新：ACL 权限、RESP3 协议、SSL等等，其中包括了多线程。
+以往的 Redis 在处理网络 IO 时是单线程，在新版本中引入了多线程。默认是关闭的，需要修改配置进行开启。
+相关配置与变量 有两个配置参数会影响到多线程：
+// 线程数量，默认是1，即只有主线程，最大是128 io-threads [1~128] // 是否通过辅助线程来读取并解析客户端，默认是0 io-threads-do-reads [0|1] 还有几个相关的结构体字段以及全局变量：
+struct redisServer { int io_threads_num; /* Number of IO threads to use. */ int io_threads_do_reads; /* Read and parse from IO threads? */ int io_threads_active; /* Is IO threads currently active? */ }; // 多线程目前需要进行的操作开关，有IO_THREADS_OP_WRITE和IO_THREADS_OP_READ int io_threads_op; // 下标是线程id，值是客户端链表 list *io_threads_list[IO_THREADS_MAX_NUM]; // 下标是线程id，值是需要处理的客户端数量，该变量具有原子性 _Atomic unsigned long io_threads_pending[IO_THREADS_MAX_NUM]; 开启多线程 多线程的开启在src/server.c中的InitServerLast中。以往该函数负责开启bio，新版本中还会调用initThreadedIO来开启多线程。
+initThreadedIO的逻辑很简单，这里会循环server.io_threads_num去初始化io_threads_list变量，并且创建server.io_threads_num-1个数量的线程。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：内存淘汰策略</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/</link>
+      <pubDate>Fri, 06 Nov 2020 06:36:51 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/</guid>
+      <description>当 Redis 的内存达到一定值时，会触发自身的内存淘汰策略，目的是为了避免内存的增长。Redis 内存相关的淘汰策略代码主要在src/evict.c里。
+相关配置 配置文件中的maxmemory和maxmemory-policy就可以对 Redis 进行淘汰策略的配置。
+  maxmemory
+Redis 可用的最大内存，也就是触发策略的阈值。32 位系统下默认是 3G 内存（受限于 4G 内存空间），64 位系统下不受限制。
+  maxmemory-policy
+相关的策略，一共有：
+ volatile-lru：过期键 LRU 策略。 volatile-lfu：过期键 LFU 策略。 volatile-random：过期键 RANDOM 策略。 volatile-ttl：过期键 TTL 策略。 allkeys-lru：所有键 LRU 策略。 allkeys-lfu：所有键 LFU 策略。 allkeys-random：所有键 RANDOM 策略。 noeviction：无策略。  从键的维度来看，分成了两种，一种是设置了过期时间的 key，另一种是所有key。
+从策略维度看，分成四种：LRU最近访问时间、LFU访问频率、RANDOM随机，TTL过期时间。
+  调用链 缓存策略的入口在processCommand里，这里会调用freeMemoryIfNeededAndSafe，然后调用freeMemoryIfNeeded。
+int processCommand(client *c) { /* Handle the maxmemory directive. * * Note that we do not want to reclaim memory if we are here re-entering * the event loop since there is a busy Lua script running in timeout * condition, to avoid mixing the propagation of scripts with the * propagation of DELs due to eviction.</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：aof</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81aof/</link>
+      <pubDate>Sun, 01 Nov 2020 23:54:03 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81aof/</guid>
+      <description>Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。
+初始化 Redis 通过loadServerConfig加载配置appendonly [yes|no]，对应会修改server.aof_state = AOF_ON|AOF_OFF。当AOF被开启，Redis 初始化服务initServer时会打开一个AOF文件并记录下对应的 fd。
+此时的几个相关字段：
+struct redisServer { int aof_state; /* aof状态 */ int aof_fd; /* aof文件fd */ char *aof_filename; /* aof文件名 */ } 记录写入 Redis 在调用call函数里会去追加记录AOF，它在c-&amp;gt;cmd-&amp;gt;proc(c)后，会执行propagate，然后再执行feedAppendOnlyFile。
+feedAppendOnlyFile主要逻辑：
+ 判断当前命令的 db 是否和AOF的 db 相同，如果不相同，AOF记录一条select db进行数据库切换。 所有过期expire命令都转换成PEXPIREAT命令。 所有set类的命令，都转换成set命令 如果当前AOF处于AOF_ON的状态，则写入缓冲区。 如果当前AOF有子进程，则调用aofRewriteBufferAppend。  此时所有操作都只是写入缓冲区，而数据并未落盘。
+写入时机 AOF会以RESP协议（Redis 的通讯协议）来记录我们每一条命令，它会依赖三种策略：
+  AOF_FSYNC_NO
+不手动刷盘，而是由系统自己决定。
+  AOF_FSYNC_ALWAYS
+每条命令刷盘一次，这种方式丢数据的机率最小，最多会丢一条记录。
+  AOF_FSYNC_EVERYSEC
+每秒记录刷盘一次。
+  Redis 会调用flushAppendOnlyFile进行AOF的数据落盘，最常见的调用时机就是每次事件循环的前置函数beforeSleep。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：rdb</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81rdb/</link>
+      <pubDate>Sat, 31 Oct 2020 20:40:57 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81rdb/</guid>
+      <description>Redis 有两种数据持久化策略，其中一种是RDB（Redis database），属于快照持久化的方式。它分为主动备份和定时备份两种方式去运行。
+主动备份 当执行save或者bgsave时，Redis 就会进行一次RDB的持久化。如果数据量比较大的情况下，执行save是一个比较耗时的动作，所以会阻塞客户端。bgsave可以又称作background save，用来解决save阻塞的情况，此时会fork出一个子进程来执行save命令。
+save 先看save对应的saveCommand源码：
+void saveCommand(client *c) { if (server.rdb_child_pid != -1) { addReplyError(c,&amp;#34;Background save already in progress&amp;#34;); return; } rdbSaveInfo rsi, *rsiptr; rsiptr = rdbPopulateSaveInfo(&amp;amp;rsi); if (rdbSave(server.rdb_filename,rsiptr) == C_OK) { addReply(c,shared.ok); } else { addReply(c,shared.err); } } rdbPopulateSaveInfo主要是 Redis 复制的一些预处理，由于尚未看复制相关的代码，所以这次暂时不展开。
+rdbSave则是 Redis 实现RDB持久化的主要函数，这里 Redis 会调用自己封装的 io 操作库 rio 来写入数据。
+bgsave bgsave对应的bgsaveCommand源码：
+void bgsaveCommand(client *c) { int schedule = 0; /* The SCHEDULE option changes the behavior of BGSAVE when an AOF rewrite * is in progress.</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：事务</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/</link>
+      <pubDate>Fri, 30 Oct 2020 18:39:35 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/</guid>
+      <description>Redis 与事务相关的命令有：multi、discard、exec和watch。
+multi、discard和exec这是一组命令，与MySQL的begin、rollback和commit有相似之处。watch则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。
+数据结构 // 事务状态 typedef struct multiState { multiCmd *commands; /* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */ int count; /* 一共有多少个待处理的命令 */ int cmd_flags; /* The accumulated command flags OR-ed together. So if at least a command has a given flag, it will be set in this field. */ int minreplicas; /* MINREPLICAS for synchronous replication */ time_t minreplicas_timeout; /* MINREPLICAS timeout as unixtime. */ } multiState; // watch的信息 typedef struct watchedKey { robj *key; redisDb *db; } watchedKey; // 客户端相关的事务字段 typedef struct client { multiState mstate; /* 事务状态 */ list *watched_keys; /* watch的key，里面每个元素都是watchedKey结构体变量 */ } client; // db typedef struct redisDb { dict *watched_keys; /* watch的key，键是key，值是客户端链表 */ } redisDb; 状态 与事务相关的几个客户端状态有：</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：pub和sub</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/</link>
+      <pubDate>Wed, 28 Oct 2020 23:52:02 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/</guid>
+      <description>Redis 中使用订阅与发布同样可以达到 block 的效果。
+数据结构 客户端：
+typedef struct client { dict *pubsub_channels; /* 普通订阅，key是channel，value为null */ list *pubsub_patterns; /* 匹配模式的订阅*/ } client; 服务端：
+struct redisServer { dict *pubsub_channels; /* 普通订阅，key是channel，value为客户端链表 */ list *pubsub_patterns; /* 匹配模式的订阅 */ }; 订阅 通过subscribeCommand中可以定位到订阅的源码，这里会对订阅的每个channel都调用pubsubSubscribeChannel，并且把客户端状态叠加订阅发布状态。
+server.pubsub_channels是字典，键是频道，值是客户端链表。pubsubSubscribeChannel最主要工作就是往server.pubsub_channels的频道客户端链表里添加当前客户端。
+发布 publishCommand是发布对应的函数，里面会调用pubsubPublishMessage进行消息推送。
+函数里最主要做的就是，在server.pubsub_channels中寻找对应的频道，并且循环客户端链表，给每个客户端发送消息。然后会在server.pubsub_patterns中寻找匹配规则的客户端发送消息。
+与block的不同 发布订阅的功能虽然可以实现block的功能，但是两者之间还是有区别：
+ 发布是群发消息，而 block 是先进先出，即 pop 操作。 发布订阅不区分 db，channel 是作用于整个 server。而 block 是作用于 db。 发布订阅没有超时时间限制，block 有超时限制。 发布订阅支持匹配模式  </description>
+    </item>
+    
+    <item>
+      <title>Redis源码：从bpop看block</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/</link>
+      <pubDate>Mon, 26 Oct 2020 23:48:25 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/</guid>
+      <description>Redis 中可以通过brpop、blpop和brpoplpush来实现对列表的阻塞 pop 操作。
+Redis 在处理主逻辑是单线程的，如果使用上述的命令进行阻塞操作的话，后面的请求也会一并阻塞。但是实际场景下，这几个命令并不会造成其它客户端阻塞，所以这里会从源码角度看看 Redis 怎么实现这些功能的。
+阻塞状态 首先从redisCommandTable中找到brpop的命令入口以及整个调用链：brpopCommand-&amp;gt;blockingPopGenericCommand-&amp;gt;blockForKeys。
+brpopCommand里只会调用blockingPopGenericCommand，blockingPopGenericCommand则会判断目标列表是否有元素，如果有，则直接返回，如果列表为空或者不存在该键，则调用blockForKeys。
+在看blockForKeys函数前需要先看几个关于 block 的结构体和属性（省略部分属性）：
+// 阻塞的几种类型 #define BLOCKED_NONE 0 /* Not blocked, no CLIENT_BLOCKED flag set. */#define BLOCKED_LIST 1 /* BLPOP &amp;amp; co. */#define BLOCKED_WAIT 2 /* WAIT for synchronous replication. */#define BLOCKED_MODULE 3 /* Blocked by a loadable module. */#define BLOCKED_STREAM 4 /* XREAD. */#define BLOCKED_ZSET 5 /* BZPOP et al. */ // block info typedef struct bkinfo { listNode *listnode; /* List node for db-&amp;gt;blocking_keys[key] list.</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：一个命令的执行流程</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/</link>
+      <pubDate>Thu, 15 Oct 2020 11:23:53 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/</guid>
+      <description>一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析：
+  建立连接
+建立连接要从acceptTcpHandler这个函数说起。
+前面说过，Redis 初始化服务时，会创建一个事件循环eventLoop。在 Redis 监听端口时，会给对应的 socket 绑定一个文件事件，且该事件的回调函数就是acceptTcpHandler。也就是说，任何连接到这个端口的客户端，Redis 都会调用acceptTcpHandler这个函数。
+刚初始化后，等待客户端连接时的eventLoop（此处 fd 假设为 0）：
+回调函数的整个调用链：acceptTcpHandler-&amp;gt;acceptCommonHandler-&amp;gt;createClient。
+简单说明一下acceptTcpHandler的代码逻辑：Redis 最多会循环 1000 次accept客户端来得到对应的客户端 fd，并且每一次循环中会调用acceptCommonHandler函数。所以我们的目标转移到acceptCommonHandler函数上。
+acceptCommonHandler的代码也很简单，最重要的是就是调用createClient函数，其余都是一些边界条件判断以及数据状态更新。
+createClient做了什么？注册对应客户端 fd 的可读事件函数readQueryFromClient以及初始化client对象并且 push 到server的客户端链表里。
+连接创建后的事件循环：
+  发送命令
+与客户端建立连接后，事件循环中就多了一个对应的文件描述符的读事件。只要客户端发送数据，在 Redis 进入到事件循环中就会调用对应事件的回调函数readQueryFromClient。
+首先简述一下发送命令的调用链：readQueryFromClient-&amp;gt;processInputBufferAndReplicate-&amp;gt;processInputBuffer-&amp;gt;processCommand-&amp;gt;call。
+  readQueryFromClient
+这是 Redis 接受客户端请求后的回调函数，主要的逻辑就是读取 client 的 fd 的数据，并且存入 client 的 querybuf 变量中，然后调用processInputBufferAndReplicate。
+  processInputBufferAndReplicate
+因为客户端有可能用于主从节点，这一步其实就是对第三步的封装。主要是进行 client 类型的判断，如果是普通 client 就直接调用processInputBuffer。
+  processInputBuffer
+这一步是解析客户端的输入流中的 RESP 协议，转换成 Redis 中对应的参数，即 client 的 argv 变量。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：redisDB</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81redisdb/</link>
+      <pubDate>Wed, 14 Oct 2020 22:22:47 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81redisdb/</guid>
+      <description>redisDB 即是 database，是 Redis 的数据库。它是变量server里的一个成员变量数组，数组大小默认是 16。
+客户端默认使用第一个数据库，其间可以使用select进行 db 的切换。
+初始化 db 的初始化是在initServer中进行。
+// 分配空间 server.db = zmalloc(sizeof(redisDb)*server.dbnum); // 遍历数组，并且初始化每个变量 for (j = 0; j &amp;lt; server.dbnum; j++) { server.db[j].dict = dictCreate(&amp;amp;dbDictType,NULL); server.db[j].expires = dictCreate(&amp;amp;keyptrDictType,NULL); server.db[j].blocking_keys = dictCreate(&amp;amp;keylistDictType,NULL); server.db[j].ready_keys = dictCreate(&amp;amp;objectKeyPointerValueDictType,NULL); server.db[j].watched_keys = dictCreate(&amp;amp;keylistDictType,NULL); server.db[j].id = j; server.db[j].avg_ttl = 0; server.db[j].defrag_later = listCreate(); } 数据结构 对应的结构体如下：
+typedef struct redisDb { dict *dict; /* The keyspace for this DB */ dict *expires; /* Timeout of keys with a timeout set */ dict *blocking_keys; /* Keys with clients waiting for data (BLPOP)*/ dict *ready_keys; /* Blocked keys that received a PUSH */ dict *watched_keys; /* WATCHED keys for MULTI/EXEC CAS */ int id; /* Database ID */ long long avg_ttl; /* Average TTL, just for stats */ list *defrag_later; /* List of key names to attempt to defrag one by one, gradually.</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：入口函数main</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0main/</link>
+      <pubDate>Wed, 14 Oct 2020 15:03:38 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0main/</guid>
+      <description>main 函数是程序执行的起点，也是大家就阅读源码的入口。要了解 Redis 的初始化和运行过程，还是要通过 main 函数入手。
+已一个单机的 Redis 为例，main 函数主要可以分成以下几个步骤：
+  初始化配置
+Redis 中有个非常重要的全局变量server，初始化配置就是针对这个变量进行的。
+Redis 会先根据initServerConfig来进行默认配置的初始化。如果启动 server 时指定了配置文件，则会调用loadServerConfig来加载配置文件中的配置。
+  初始化服务
+initServer会进行一些服务的初始化，包括：信号捕获、创建共享对象、调整文件描述符限制、创建事件循环对象、初始化 db等等。
+  初始化后台线程
+通过InitServerLast函数进行，具体逻辑可以参考之前 bio 的文章。
+  加载持久化数据
+通过loadDataFromDisk函数进行数据加载，优先加载 AOF，如果没有开启 AOF 则加载 RDB。
+  事件循环
+通过aeMain来进行事件循环。
+这个在之前的文件事件循环和时间事件循环中有提到过，没有提及两个前后置的函数：beforeSleep和afterSleep，这里进行一下补充
+  beforeSleep
+beforeSleep是在每次事件循环开始就会执行。
+主要逻辑：
+ 集群的clusterBeforeSleep 进行一次过期 key 的快速清除 AOF 操作 注册可写的客户端的写事件  等等&amp;hellip;
+  afterSleep
+需要注意的是，afterSleep的处理时机是在执行完aeApiPoll后，而不是处理完所有待处理的文件事件和时间事件后。
+afterSleep主要涉及到 module，这部分代码尚未阅读。
+    </description>
+    </item>
+    
+    <item>
+      <title>Redis源码：bio</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81bio/</link>
+      <pubDate>Mon, 12 Oct 2020 16:39:29 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81bio/</guid>
+      <description>Redis 的主线程处理事件循环，所以我们常说 Redis 是单线程的（Redis6 之后加入了多线程模型）。但是在 Redis 中，也存在着 3 条线程，专门处理一些其它操作。
+初始化 bio 的初始化在src/server.c中的InitServerLast函数，函数接着会调用src/bio.c的bioInit函数。
+实现逻辑 与 bio 相关的几个宏定义、变量以及结构体：
+// 后台线程的类型 #define BIO_CLOSE_FILE 0 /* Deferred close(2) syscall. */#define BIO_AOF_FSYNC 1 /* Deferred AOF fsync. */#define BIO_LAZY_FREE 2 /* Deferred objects freeing. */// 线程数量 #define BIO_NUM_OPS 3  // 线程数组 static pthread_t bio_threads[BIO_NUM_OPS]; // 线程锁数组 static pthread_mutex_t bio_mutex[BIO_NUM_OPS]; // 线程条件变量数组 static pthread_cond_t bio_newjob_cond[BIO_NUM_OPS]; static pthread_cond_t bio_step_cond[BIO_NUM_OPS]; // 任务数组 static list *bio_jobs[BIO_NUM_OPS]; // 待处理任务数组 static unsigned long long bio_pending[BIO_NUM_OPS]; // bio的每一个执行任务结构体 struct bio_job { time_t time; /* Time at which the job was created.</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：object</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81object/</link>
+      <pubDate>Sun, 11 Oct 2020 12:25:01 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81object/</guid>
+      <description>我们经常使用 Redis 的基础命令有string、set、list、hashtable和zset。在 Redis 的底层中，我们不是直接使用它们对应的数据结构，而是通过 object 对这些基础命令进行封装后再对外使用。
+数据结构 typedef struct redisObject { unsigned type:4; unsigned encoding:4; unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or * LFU data (least significant 8 bits frequency * and most significant 16 bits access time). */ int refcount; void *ptr; } robj;   type和encoding
+type 是指对象记录的类型，分别对应着string、set、list、hashtable和zset。encoding 则表示编码，代表对应 type 的底层实现方式。
+  ptr
+这个是指向底层实现的数据结构的指针。
+  refcount
+引用计数，一个 object 可以被多个地方所使用。当被引用时，refcount 会 +1，变成 0 时会被销毁。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：skiplist</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81skiplist/</link>
+      <pubDate>Thu, 08 Oct 2020 12:13:32 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81skiplist/</guid>
+      <description>skiplist 是 Redis 对于跳跃表的一个实现，它也是 zset 的主要实现。网上关于 skiplist 数据结构的介绍有很多，这里主要记录 Redis 中的实现方式。
+数据结构 // 跳表节点 typedef struct zskiplistNode { sds ele; double score; struct zskiplistNode *backward; struct zskiplistLevel { struct zskiplistNode *forward; unsigned long span; } level[]; } zskiplistNode; // 跳表 typedef struct zskiplist { struct zskiplistNode *header, *tail; unsigned long length;// 有多少个节点  int level;// 目前有几层高 } zskiplist; skiplist 简单点说就是个有序的双向链表，同时为了提高查询复杂度，增加了层的概念，其实是一种空间换时间的方法。
+与 adlist 这种传统的双向链表来比较，skiplist 的前节点指针跟 adlist 的*prev的用法一样，但是后节点的指针*next却不同。
+skiplist 中指向后节点的指针是使用层来存储。层在代码中就是一个数组，在最底层level[0]中永远会指向下一个节点。如果只想把 skiplist 当作一个普通的双向链表来使用，那么通过 zskiplistNode 中的*backward以及level[0].</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：intset</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81intset/</link>
+      <pubDate>Thu, 08 Oct 2020 10:46:35 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81intset/</guid>
+      <description>intset 就是整数集合。这个集合只包含了整数，并且不回有重复数据。Redis 常用的 set 命令，当符合 intset 的情况时，底层就会使用 intset 去实现，其余情况则使用 dict。
+数据结构 #define INTSET_ENC_INT16 (sizeof(int16_t)) #define INTSET_ENC_INT32 (sizeof(int32_t)) #define INTSET_ENC_INT64 (sizeof(int64_t))  typedef struct intset { uint32_t encoding; uint32_t length; int8_t contents[]; } intset; intset 的结构体只有 3 个属性，比较简单：
+  encoding
+encoding 表示 intset 中存储的整数类型，这里只有三种选择：int16，int32 和 int64。
+  length
+length 表示集合个数。
+  contents[]
+实际存放的元素数组。这里虽然声明是 int8_t 类型，但实际存储的类型按照 encoding 来决定。即 encoding 是 int16，则 contents 存放的就是 int16 元素的数组。
+  特点 intset 主要特点是存放元素是有序的，并且会对元素类型自动升级。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：dict</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81dict/</link>
+      <pubDate>Wed, 07 Oct 2020 22:26:33 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81dict/</guid>
+      <description>dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。
+数据结构 // 字典 typedef struct dict { dictType *type; void *privdata; dictht ht[2]; long rehashidx; /* rehashing not in progress if rehashidx == -1 */ unsigned long iterators; /* number of iterators currently running */ } dict; // 字典的函数 typedef struct dictType { uint64_t (*hashFunction)(const void *key); void *(*keyDup)(void *privdata, const void *key); void *(*valDup)(void *privdata, const void *obj); int (*keyCompare)(void *privdata, const void *key1, const void *key2); void (*keyDestructor)(void *privdata, void *key); void (*valDestructor)(void *privdata, void *obj); } dictType; // hashtable结构体 typedef struct dictht { dictEntry **table; unsigned long size; unsigned long sizemask; unsigned long used; } dictht; // hashtable节点，存放key value typedef struct dictEntry { void *key; union { void *val; uint64_t u64; int64_t s64; double d; } v; struct dictEntry *next; } dictEntry; hashtable Redis 主要使用dictht和dictEntry这两个结构体来实现基本的 hashtable，实现原理和常见的 hashtable 差不多。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：quicklist</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81quicklist/</link>
+      <pubDate>Wed, 07 Oct 2020 15:34:26 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81quicklist/</guid>
+      <description>quicklist 全称是a generic doubly linked quicklist，从全称可以看得出这是一个节点存放 ziplist 的双向链表。我们常用的 list 功能，底层就是使用 quicklist 实现的。
+数据结构 // 双向链表结构体 typedef struct quicklist { quicklistNode *head; quicklistNode *tail; unsigned long count; /* total count of all entries in all ziplists */ unsigned long len; /* number of quicklistNodes */ int fill : 16; /* fill factor for individual nodes */ unsigned int compress : 16; /* depth of end nodes not to compress;0=off */ } quicklist; // 节点 typedef struct quicklistNode { struct quicklistNode *prev; struct quicklistNode *next; unsigned char *zl; unsigned int sz; /* ziplist size in bytes */ unsigned int count : 16; /* count of items in ziplist */ unsigned int encoding : 2; /* RAW==1 or LZF==2 */ unsigned int container : 2; /* NONE==1 or ZIPLIST==2 */ unsigned int recompress : 1; /* was this node previous compressed?</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：ziplist</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ziplist/</link>
+      <pubDate>Tue, 06 Oct 2020 18:40:41 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ziplist/</guid>
+      <description>ziplist，又称作压缩列表，它是 Redis 内部定义的连续的内存组成的数据结构，目的是减少内存碎片，节省内存空间。
+数据结构 ziplist主要由三部分组成：header、entry和end。
+header和end header 主要由三部分组成：
+  bytes
+bytes 记录整个 ziplist 占用的内存字节数，长度是 4 个字节。
+  tail
+tail 就是最后一个节点到 ziplist 起始位置的偏移量，该偏移量是从 ziplist 指针开始计算。
+  len
+ziplist 的节点数。当 len &amp;lt; 65535 时，len 即是节点数，此时取 ziplist 的节点数的复杂度是 O(1)。当 len = 65535 时，需要遍历整个节点获取实际的 len，此时取 ziplist 的节点数的复杂度是 O(n)。
+  end 是一个恒定值 0xff，用来标识 ziplist 的末尾。
+entry entry 是 ziplist 中的每一个节点，也是由三个部分组成：prevlen、encoding和content。下面是 entry 的大概结构：
+  prevlen
+这是 entry 的第一部分，这个部分定义了前一个元素的长度。并且它的内存占用大小是不定的，有可能是 1 字节，有可能是 5 字节。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：adlist</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81adlist/</link>
+      <pubDate>Mon, 05 Oct 2020 15:45:16 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81adlist/</guid>
+      <description>adlist 全称是a generic doubly linked list，是 Redis 内部实现的一个双向链表。旧版本中，list 是使用 adlist 实现的，后面的版本改成用 quicklist 实现。
+数据结构 // 链表节点 typedef struct listNode { struct listNode *prev; struct listNode *next; void *value; } listNode; // 链表 typedef struct list { listNode *head; listNode *tail; void *(*dup)(void *ptr); void (*free)(void *ptr); int (*match)(void *ptr, void *key); unsigned long len; } list; adlist 是一个常见的双向链表。它比一般的双向链表多记录了链表的长度，所以 adlist 获取元素个数的复杂度是 O(1)，以及几个触发函数：赋值、释放空间和匹配，它会在调用listDup、listEmpty以及listSearchKey时调用对应函数。
+此外，adlist 还实现了自己的迭代器：
+#define AL_START_HEAD 0 #define AL_START_TAIL 1 // 迭代器 typedef struct listIter { listNode *next; int direction; } listIter; 该迭代器根据 direction 的值可以从头到尾或者从尾到头进行遍历。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：sds</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81sds/</link>
+      <pubDate>Fri, 25 Sep 2020 23:09:58 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81sds/</guid>
+      <description>sds 全称是simple dynamic string，是 Redis 用来实现字符串的一个数据结构。
+数据结构 在 C 中，简单的动态字符串结构通常会记录长度和内容：
+struct string { char *buf;// 字符指针  uint32_t len; // 字符串长度 }; 同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：
+ sds 是一个字符指针。 sds 是一段连续的内存空间，前缀记录着字符串元数据，如长度、分配空间、类型。  我们先看一下 sds 的数据结构在内存中的分布，可以看出 sds 是由三部分组成，header、string和结束符\0：
+我们再看一下源码里的sds以及header：
+typedef char *sds; /* Note: sdshdr5 is never used, we just access the flags byte directly. * However is here to document the layout of type 5 SDS strings. */ struct __attribute__ ((__packed__)) sdshdr5 { unsigned char flags; /* 3 lsb of type, and 5 msb of string length */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr8 { uint8_t len; /* used */ uint8_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr16 { uint16_t len; /* used */ uint16_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr32 { uint32_t len; /* used */ uint32_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr64 { uint64_t len; /* used */ uint64_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; sds 就是一个字符指针，而 sds 的前缀 header 则是对应的 sdshdr#T 的结构体。</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：AE时间事件</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ae%E6%97%B6%E9%97%B4%E4%BA%8B%E4%BB%B6/</link>
+      <pubDate>Wed, 23 Sep 2020 23:40:53 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ae%E6%97%B6%E9%97%B4%E4%BA%8B%E4%BB%B6/</guid>
+      <description>Redis 的时间事件相比起文件事件简单不少（以 Redis5.0.9 为例）。
+aeEventLoop aeEventLoop是Redis全局的结构体对象，所有跟事件有关的数据和状态都存储在这上面：
+// 只展示时间事件相关属性 typedef struct aeEventLoop { long long timeEventNextId; /* 自增id */ time_t lastTime; /* 每次执行时间事件循环的时间 */ aeTimeEvent *timeEventHead; /* 一个时间事件链表 */ } aeEventLoop;   timeEventNextId
+每一个时间事件都有自己唯一的 id，这个 id 是全局自增的，记录在aeEventLoop里。
+  lastTime
+最后一次执行时间事件循环的时间点。这个属性会用于事件循环中的时钟检验，如果产生了时钟回拨，则所有时间事件将会被马上执行。
+  timeEventHead
+所有的时间事件形成一个双向链表，aeEventLoop存放这链表头部，具体结构体：
+typedef struct aeTimeEvent { long long id; /* time event identifier. */ long when_sec; /* seconds */ long when_ms; /* milliseconds */ aeTimeProc *timeProc; aeEventFinalizerProc *finalizerProc; void *clientData; struct aeTimeEvent *prev; struct aeTimeEvent *next; } aeTimeEvent;   id</description>
+    </item>
+    
+    <item>
+      <title>Redis源码：AE文件事件</title>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ae%E6%96%87%E4%BB%B6%E4%BA%8B%E4%BB%B6/</link>
+      <pubDate>Sat, 19 Sep 2020 11:46:17 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ae%E6%96%87%E4%BB%B6%E4%BA%8B%E4%BB%B6/</guid>
+      <description>Redis 的事件模块分为文件事件和时间事件。文件事件主要是处理网络 IO 事件，而时间事件主要处理 Redis 自身的一些定时任务。
+这里会先对 Redis 的文件事件的源码进行简单地阅读并且分析（以 Redis5.0.9 为例）。
+aeEventLoop aeEventLoop是Redis全局的结构体对象，所有跟事件有关的数据和状态都存储在这上面：
+// 只展示文件事件相关属性 typedef struct aeEventLoop { int maxfd; /* 当前注册的最大的文件描述符 */ int setsize; /* 可追踪的文件描述符数量 */ aeFileEvent *events; /* 已注册的事件数组，数组下标是 fd 值，每个events默认的mask是AE_NONE */ aeFiredEvent *fired; /* 触发的事件数组 */ void *apidata; /* api结构，select epoll 等等 */ } aeEventLoop;   int maxfd
+当前最大的文件描述符。初始值是 -1。这个值会根据aeCreateFileEvent和aeDeleteFileEvent执行时动态变化。
+  int setsize
+Redis 所能够处理的文件描述符的数量，默认值是 10000 + 32 + 96。
+  aeFileEvent *events</description>
+    </item>
+    
+  </channel>
+</rss>

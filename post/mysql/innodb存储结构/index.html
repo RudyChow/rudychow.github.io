@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>InnoDB存储结构 | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="从 InnoDB 存储引擎的逻辑存储结构看，所有数据都被逻辑地存在一个空间中，称为表空间（tablespace）。表空间又由段（segment）、区（extent）、页（page）组成。
+这一部分内容基本都是讲存储结构的，所以用自己语言简单总结一下，避免以后看不懂。
+  表空间是什么？
+InnoDB 相关的数据总得有个地方存。表空间说白了就是存储 InnoDB 相关的文件，包括且不限于数据、索引、undo信息。
+默认有一个共享表空间，即ibdata1。如果开启了参数innodb_file_per_table，则每个表会有自己独立的存储文件，文件是表名.ibd。
+  页是什么？
+说到 MySQL 一定会谈到 B&#43; 树，谈到 B&#43; 树又一定会谈到页。页说白了就是一个连续的空间，默认是 16KB。
+我们知道数据是存储在页里面，所以这个页叫数据页。页是 InnoDB 操作数据的最小单位，它不单指只有数据页这种类型，还有许多其它类型：
+ B&#43; 树叶节点 undo log 页 索引节点 新分配未使用 系统页 Insert Buffer Bitmap &hellip;  而在表空间里，其实就是由许许多多的页构成，从代码上看大概是这样：
+type page struct{} func main() { // 表空间里面有许许多多页组成 	// 每个表空间一定会有三个页 	// 系统表空间也会预先分配一定的空间 	tablespace := make([]page, 3, 64) // 第一个页是系统页 	fmt.Println(tablespace[0]) // 第二个页是insert buffer bitmap页 	fmt.">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="InnoDB存储结构" />
+<meta property="og:description" content="从 InnoDB 存储引擎的逻辑存储结构看，所有数据都被逻辑地存在一个空间中，称为表空间（tablespace）。表空间又由段（segment）、区（extent）、页（page）组成。
+这一部分内容基本都是讲存储结构的，所以用自己语言简单总结一下，避免以后看不懂。
+  表空间是什么？
+InnoDB 相关的数据总得有个地方存。表空间说白了就是存储 InnoDB 相关的文件，包括且不限于数据、索引、undo信息。
+默认有一个共享表空间，即ibdata1。如果开启了参数innodb_file_per_table，则每个表会有自己独立的存储文件，文件是表名.ibd。
+  页是什么？
+说到 MySQL 一定会谈到 B&#43; 树，谈到 B&#43; 树又一定会谈到页。页说白了就是一个连续的空间，默认是 16KB。
+我们知道数据是存储在页里面，所以这个页叫数据页。页是 InnoDB 操作数据的最小单位，它不单指只有数据页这种类型，还有许多其它类型：
+ B&#43; 树叶节点 undo log 页 索引节点 新分配未使用 系统页 Insert Buffer Bitmap &hellip;  而在表空间里，其实就是由许许多多的页构成，从代码上看大概是这样：
+type page struct{} func main() { // 表空间里面有许许多多页组成 	// 每个表空间一定会有三个页 	// 系统表空间也会预先分配一定的空间 	tablespace := make([]page, 3, 64) // 第一个页是系统页 	fmt.Println(tablespace[0]) // 第二个页是insert buffer bitmap页 	fmt." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-12-08T23:09:35&#43;08:00" />
+<meta property="article:modified_time" content="2020-12-08T23:09:35&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="InnoDB存储结构"/>
+<meta name="twitter:description" content="从 InnoDB 存储引擎的逻辑存储结构看，所有数据都被逻辑地存在一个空间中，称为表空间（tablespace）。表空间又由段（segment）、区（extent）、页（page）组成。
+这一部分内容基本都是讲存储结构的，所以用自己语言简单总结一下，避免以后看不懂。
+  表空间是什么？
+InnoDB 相关的数据总得有个地方存。表空间说白了就是存储 InnoDB 相关的文件，包括且不限于数据、索引、undo信息。
+默认有一个共享表空间，即ibdata1。如果开启了参数innodb_file_per_table，则每个表会有自己独立的存储文件，文件是表名.ibd。
+  页是什么？
+说到 MySQL 一定会谈到 B&#43; 树，谈到 B&#43; 树又一定会谈到页。页说白了就是一个连续的空间，默认是 16KB。
+我们知道数据是存储在页里面，所以这个页叫数据页。页是 InnoDB 操作数据的最小单位，它不单指只有数据页这种类型，还有许多其它类型：
+ B&#43; 树叶节点 undo log 页 索引节点 新分配未使用 系统页 Insert Buffer Bitmap &hellip;  而在表空间里，其实就是由许许多多的页构成，从代码上看大概是这样：
+type page struct{} func main() { // 表空间里面有许许多多页组成 	// 每个表空间一定会有三个页 	// 系统表空间也会预先分配一定的空间 	tablespace := make([]page, 3, 64) // 第一个页是系统页 	fmt.Println(tablespace[0]) // 第二个页是insert buffer bitmap页 	fmt."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "InnoDB存储结构",
+      "item": "https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "InnoDB存储结构",
+  "name": "InnoDB存储结构",
+  "description": "从 InnoDB 存储引擎的逻辑存储结构看，所有数据都被逻辑地存在一个空间中，称为表空间（tablespace）。表空间又由段（segment）、区（extent）、页（page）组成。\n这一部分内容基本都是讲存储结构的，所以用自己语言简单总结一下，避免以后看不懂。\n  表空间是什么？\nInnoDB 相关的数据总得有个地方存。表空间说白了就是存储 InnoDB 相关的文件，包括且不限于数据、索引、undo信息。\n默认有一个共享表空间，即ibdata1。如果开启了参数innodb_file_per_table，则每个表会有自己独立的存储文件，文件是表名.ibd。\n  页是什么？\n说到 MySQL 一定会谈到 B+ 树，谈到 B+ 树又一定会谈到页。页说白了就是一个连续的空间，默认是 16KB。\n我们知道数据是存储在页里面，所以这个页叫数据页。页是 InnoDB 操作数据的最小单位，它不单指只有数据页这种类型，还有许多其它类型：\n B+ 树叶节点 undo log 页 索引节点 新分配未使用 系统页 Insert Buffer Bitmap \u0026hellip;  而在表空间里，其实就是由许许多多的页构成，从代码上看大概是这样：\ntype page struct{} func main() { // 表空间里面有许许多多页组成 \t// 每个表空间一定会有三个页 \t// 系统表空间也会预先分配一定的空间 \ttablespace := make([]page, 3, 64) // 第一个页是系统页 \tfmt.Println(tablespace[0]) // 第二个页是insert buffer bitmap页 \tfmt.",
+  "keywords": [
+    
+  ],
+  "articleBody": "从 InnoDB 存储引擎的逻辑存储结构看，所有数据都被逻辑地存在一个空间中，称为表空间（tablespace）。表空间又由段（segment）、区（extent）、页（page）组成。\n这一部分内容基本都是讲存储结构的，所以用自己语言简单总结一下，避免以后看不懂。\n  表空间是什么？\nInnoDB 相关的数据总得有个地方存。表空间说白了就是存储 InnoDB 相关的文件，包括且不限于数据、索引、undo信息。\n默认有一个共享表空间，即ibdata1。如果开启了参数innodb_file_per_table，则每个表会有自己独立的存储文件，文件是表名.ibd。\n  页是什么？\n说到 MySQL 一定会谈到 B+ 树，谈到 B+ 树又一定会谈到页。页说白了就是一个连续的空间，默认是 16KB。\n我们知道数据是存储在页里面，所以这个页叫数据页。页是 InnoDB 操作数据的最小单位，它不单指只有数据页这种类型，还有许多其它类型：\n B+ 树叶节点 undo log 页 索引节点 新分配未使用 系统页 Insert Buffer Bitmap …  而在表空间里，其实就是由许许多多的页构成，从代码上看大概是这样：\ntype page struct{} func main() { // 表空间里面有许许多多页组成 \t// 每个表空间一定会有三个页 \t// 系统表空间也会预先分配一定的空间 \ttablespace := make([]page, 3, 64) // 第一个页是系统页 \tfmt.Println(tablespace[0]) // 第二个页是insert buffer bitmap页 \tfmt.Println(tablespace[1]) // 第三个页是段索引页 \tfmt.Println(tablespace[2]) }   区是什么？\n其实光有表空间和页，InnoDB 完成也可以运作，但是在页的管理上会比较麻烦，而且在数据读取上容易产生随机 IO，所以就引申出区的概念。\n默认的页是 16KB，而连续的 64 个页就可以组成一个区，所以区具有空间连续性。当然页的大小可以调整，但是无论页怎么调整，区的大小永远固定是 1MB。\n区的类型有四种：空闲区、剩余空间的碎片区、没有剩余空间的区以及附属于某个段的区。\n在表空间中，每 256 个区会被划分成一组，每组的第一个页都是 XEDS 类型，用来记录该组下每个区的简单状况（第一组的第一个页是 FSP 类型，但也有 XEDS 的功能）。\n  段是什么？\n段是一些完整的区以及某几个单独的页组成的，常见的段有数据段、索引段、回滚段等，比较逻辑的概念。在 InnoDB 里，每个索引对应两个段：叶子节点段和非叶子节点段。\n  写了一个简单命令来分析表空间文件：ibdata_parser。\n",
+  "wordCount" : "88",
+  "inLanguage": "en",
+  "datePublished": "2020-12-08T23:09:35+08:00",
+  "dateModified": "2020-12-08T23:09:35+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      InnoDB存储结构
+    </h1>
+    <div class="post-meta"><span title='2020-12-08 23:09:35 +0800 HKT'>December 8, 2020</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><p>从 InnoDB 存储引擎的逻辑存储结构看，所有数据都被逻辑地存在一个空间中，称为表空间（tablespace）。表空间又由段（segment）、区（extent）、页（page）组成。</p>
+<p>这一部分内容基本都是讲存储结构的，所以用自己语言简单总结一下，避免以后看不懂。</p>
+<ul>
+<li>
+<p>表空间是什么？</p>
+<p>InnoDB 相关的数据总得有个地方存。表空间说白了就是存储 InnoDB 相关的文件，包括且不限于数据、索引、undo信息。</p>
+<p>默认有一个共享表空间，即<code>ibdata1</code>。如果开启了参数<code>innodb_file_per_table</code>，则每个表会有自己独立的存储文件，文件是<code>表名.ibd</code>。</p>
+</li>
+<li>
+<p>页是什么？</p>
+<p>说到 MySQL 一定会谈到 B+ 树，谈到 B+ 树又一定会谈到页。页说白了就是一个连续的空间，默认是 16KB。</p>
+<p>我们知道数据是存储在页里面，所以这个页叫数据页。页是 InnoDB 操作数据的最小单位，它不单指只有数据页这种类型，还有许多其它类型：</p>
+<ul>
+<li>B+ 树叶节点</li>
+<li>undo log 页</li>
+<li>索引节点</li>
+<li>新分配未使用</li>
+<li>系统页</li>
+<li>Insert Buffer Bitmap</li>
+<li>&hellip;</li>
+</ul>
+<p>而在表空间里，其实就是由许许多多的页构成，从代码上看大概是这样：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">page</span> <span style="color:#66d9ef">struct</span>{}
+
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>()  {
+	<span style="color:#75715e">// 表空间里面有许许多多页组成
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 每个表空间一定会有三个页
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 系统表空间也会预先分配一定的空间
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">tablespace</span> <span style="color:#f92672">:=</span> make([]<span style="color:#a6e22e">page</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">64</span>)
+
+	<span style="color:#75715e">// 第一个页是系统页
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">tablespace</span>[<span style="color:#ae81ff">0</span>])
+	<span style="color:#75715e">// 第二个页是insert buffer bitmap页
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">tablespace</span>[<span style="color:#ae81ff">1</span>])
+	<span style="color:#75715e">// 第三个页是段索引页
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">tablespace</span>[<span style="color:#ae81ff">2</span>])
+
+}
+</code></pre></div></li>
+<li>
+<p>区是什么？</p>
+<p>其实光有表空间和页，InnoDB 完成也可以运作，但是在页的管理上会比较麻烦，而且在数据读取上容易产生随机 IO，所以就引申出区的概念。</p>
+<p>默认的页是 16KB，而连续的 64 个页就可以组成一个区，所以区具有<strong>空间连续性</strong>。当然页的大小可以调整，但是无论页怎么调整，区的大小永远固定是 1MB。</p>
+<p>区的类型有四种：空闲区、剩余空间的碎片区、没有剩余空间的区以及附属于某个段的区。</p>
+<p>在表空间中，每 256 个区会被划分成一组，每组的第一个页都是 XEDS 类型，用来记录该组下每个区的简单状况（第一组的第一个页是 FSP 类型，但也有 XEDS 的功能）。</p>
+</li>
+<li>
+<p>段是什么？</p>
+<p>段是一些完整的区以及某几个单独的页组成的，常见的段有数据段、索引段、回滚段等，比较逻辑的概念。在 InnoDB 里，每个索引对应两个段：叶子节点段和非叶子节点段。</p>
+</li>
+</ul>
+<p>写了一个简单命令来分析表空间文件：<a href="https://github.com/RudyChow/ibdata_parser">ibdata_parser</a>。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/redis/vscode%E4%B8%8B%E4%BD%BF%E7%94%A8gdb%E8%B0%83%E8%AF%95redis/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>Vscode下使用GDB调试Redis</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/mysql/redo%E6%97%A5%E5%BF%97/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>redo日志</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

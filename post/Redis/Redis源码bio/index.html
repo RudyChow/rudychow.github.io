@@ -193,7 +193,7 @@
 <p>bio 的初始化在<code>src/server.c</code>中的<code>InitServerLast</code>函数，函数接着会调用<code>src/bio.c</code>的<code>bioInit</code>函数。</p>
 <h2 id="实现逻辑">实现逻辑</h2>
 <p>与 bio 相关的几个宏定义、变量以及结构体：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 后台线程的类型
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 后台线程的类型
 </span><span style="color:#586e75"></span><span style="color:#719e07">#define BIO_CLOSE_FILE    0 </span><span style="color:#586e75">/* Deferred close(2) syscall. */</span><span style="color:#719e07">
 </span><span style="color:#719e07">#define BIO_AOF_FSYNC     1 </span><span style="color:#586e75">/* Deferred AOF fsync. */</span><span style="color:#719e07">
 </span><span style="color:#719e07">#define BIO_LAZY_FREE     2 </span><span style="color:#586e75">/* Deferred objects freeing. */</span><span style="color:#719e07">
@@ -220,7 +220,7 @@
     <span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>arg1, <span style="color:#719e07">*</span>arg2, <span style="color:#719e07">*</span>arg3;
 };
 </code></pre></div><p>线程的初始化函数：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">bioInit</span>(<span style="color:#dc322f">void</span>) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#268bd2">bioInit</span>(<span style="color:#dc322f">void</span>) {
     pthread_attr_t attr;
     pthread_t <span style="color:#268bd2">thread</span>;
     size_t stacksize;
@@ -254,7 +254,7 @@
 }
 </code></pre></div><p>简要说明，就是预先初始好几个相关数组，然后创建 3 个线程，让线程去执行<code>bioProcessBackgroundJobs</code>，这个函数就是我们后台线程的主要执行逻辑。</p>
 <p><code>bioProcessBackgroundJobs</code>的具体逻辑如下：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#719e07">*</span><span style="color:#268bd2">bioProcessBackgroundJobs</span>(<span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>arg) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">void</span> <span style="color:#719e07">*</span><span style="color:#268bd2">bioProcessBackgroundJobs</span>(<span style="color:#dc322f">void</span> <span style="color:#719e07">*</span>arg) {
     <span style="color:#719e07">struct</span> bio_job <span style="color:#719e07">*</span>job;
     <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span> type <span style="color:#719e07">=</span> (<span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">long</span>) arg;
     sigset_t sigset;

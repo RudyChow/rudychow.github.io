@@ -200,7 +200,7 @@
             <h2 id="前期准备">前期准备</h2>
 <p>首先需要下载PHP源码：<a href="https://www.php.net/downloads">下载地址</a>。（这里我使用的PHP版本是<code>7.4.9</code>，系统环境是<code>x86_64 Linux 5.7.17-2-MANJARO</code>）</p>
 <p>解压后，进入到<code>ext</code>目录，里面有个<code>PHP</code>脚本：<code>ext_skel.php</code>。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ php ext_skel.php --ext snowflake
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ php ext_skel.php --ext snowflake
 Copying config scripts... <span style="color:#719e07">done</span>
 Copying sources... <span style="color:#719e07">done</span>
 Copying tests... <span style="color:#719e07">done</span>
@@ -226,7 +226,7 @@ Thank you <span style="color:#719e07">for</span> using PHP!
 </blockquote>
 <h2 id="开发工作">开发工作</h2>
 <p>目标是实现一个<code>Snowflake</code>类，具体结构大概是这样：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#719e07">class</span> <span style="color:#268bd2">Snowflake</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-php" data-lang="php"><span style="color:#719e07">class</span> <span style="color:#268bd2">Snowflake</span>
 {
     <span style="color:#719e07">private</span> <span style="color:#268bd2">$epoch</span>;
     <span style="color:#719e07">private</span> <span style="color:#268bd2">$workerId</span>;
@@ -256,7 +256,7 @@ Thank you <span style="color:#719e07">for</span> using PHP!
 }
 
 </code></pre></div><h3 id="目录说明">目录说明</h3>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ tree
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ tree
 .
 ├── config.m4
 ├── config.w32
@@ -290,7 +290,7 @@ Thank you <span style="color:#719e07">for</span> using PHP!
 <h4 id="清除不需要的代码">清除不需要的代码</h4>
 <p>由于使用<code>ext_skel</code>生成的脚手架中会自动帮我们注册一些 demo 方法，如<code>snowflake_test1</code>和<code>snowflake_test2</code>。我们的目的是开发一个扩展类，所以需要先清理掉一些不需要的代码。</p>
 <p>清理干净后的源文件：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">/* snowflake extension for PHP */</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">/* snowflake extension for PHP */</span>
 
 <span style="color:#719e07">#ifdef HAVE_CONFIG_H
 </span><span style="color:#719e07">#include</span> <span style="color:#719e07">&#34;config.h&#34;</span><span style="color:#719e07">
@@ -377,7 +377,7 @@ zend_module_entry snowflake_module_entry <span style="color:#719e07">=</span> {
 <h3 id="注册snowflake类结构">注册Snowflake类结构</h3>
 <p>我们要在模块加载的阶段就注册我们的类，所以需要实现<code>PHP_MINIT_FUNCTION</code>函数，并且传入<code>snowflake_module_entry</code>中。</p>
 <p>接下来还要定义<code>zend_class_entry</code>结构体，并且使用<code>INIT_CLASS_ENTRY</code>去初始化这个变量，最后使用<code>zend_register_internal_class</code>把这个类注册到 PHP 中。同时在模块加载函数中，我们得把函数和成员变量也一并进行定义。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 第一步 定义一个zend_class_entry的指针，后续在函数中通过该变量获取到类
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 第一步 定义一个zend_class_entry的指针，后续在函数中通过该变量获取到类
 </span><span style="color:#586e75"></span>zend_class_entry <span style="color:#719e07">*</span>snowflake_ce;
 
 <span style="color:#586e75">// 第二步 定义好类的函数数组
@@ -444,7 +444,7 @@ PHP_MINIT_FUNCTION(snowflake)
 </li>
 </ul>
 <p>了解完这些参数后，编写代码就简单了许多。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">/* 获取ms */</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">/* 获取ms */</span>
 zend_long <span style="color:#268bd2">getMs</span>()
 {
 	<span style="color:#719e07">struct</span> timeval now;
@@ -564,7 +564,7 @@ START_GENERATE:
 <li><code>--EXPECT--</code>：期待的输出结果</li>
 </ul>
 <p>于是我们简单写一个测试脚本，用来测试<code>Snowflake</code>会不会生成重复值：</p>
-<pre><code class="language-phpt" data-lang="phpt">--TEST--
+<pre tabindex="0"><code class="language-phpt" data-lang="phpt">--TEST--
 Check if snowflake id is unique
 --FILE--
 &lt;?php
@@ -581,7 +581,7 @@ echo count(array_unique($result));
 --EXPECT--
 1000000
 </code></pre><p>接着执行<code>make test TESTS=tests/snowflake_unique.phpt</code>，得到测试结果：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ make <span style="color:#b58900">test</span> <span style="color:#268bd2">TESTS</span><span style="color:#719e07">=</span>tests/snowflake_unique.phpt
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ make <span style="color:#b58900">test</span> <span style="color:#268bd2">TESTS</span><span style="color:#719e07">=</span>tests/snowflake_unique.phpt
 
 Build complete.
 Don<span style="color:#2aa198">&#39;t forget to run &#39;</span>make test&#39;.
@@ -611,7 +611,7 @@ Tests passed    :    <span style="color:#2aa198">1</span> <span style="color:#71
 Time taken      :    <span style="color:#2aa198">1</span> <span style="color:#268bd2">seconds</span>
 <span style="color:#719e07">=====================================================================</span>
 </code></pre></div><p>如果测试不通过，<code>tests</code>目录下会得到以测试脚本命名的测试报告：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ tree tests 
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ tree tests 
 tests
 ├── snowflake_unique.diff // 输出值差异
 ├── snowflake_unique.exp // 期望输出值

@@ -194,12 +194,12 @@
 <p>执行 yaml</p>
 <p>因为自己是裸机环境，所以按照官网教程的<code>Bare-metal</code>去进行部署，需要执行<code>kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.43.0/deploy/static/provider/baremetal/deploy.yaml</code>。</p>
 <p>这里会自动拉取<code>k8s.gcr.io/ingress-nginx/controller:v0.43.0@sha256:9bba603b99bf25f6d117cf1235b6598c16033ad027b143c90fa5b3cc583c5713</code>镜像。由于某些原因，可以通过先提前拉取别人做好的 image。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ docker pull pollyduan/ingress-nginx-controller:v0.43.0
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ docker pull pollyduan/ingress-nginx-controller:v0.43.0
 $ docker tag pollyduan/ingress-nginx-controller:v0.43.0  k8s.gcr.io/ingress-nginx/controller:v0.43.0
 </code></pre></div><p>由于 yaml 拉取镜像时会进行镜像校验，所以需要下载 yaml 下来并且去掉校验和。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ sed -i <span style="color:#2aa198">&#39;s/@sha256:9bba603b99bf25f6d117cf1235b6598c16033ad027b143c90fa5b3cc583c5713//&#39;</span> ingress-nginx.yaml
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ sed -i <span style="color:#2aa198">&#39;s/@sha256:9bba603b99bf25f6d117cf1235b6598c16033ad027b143c90fa5b3cc583c5713//&#39;</span> ingress-nginx.yaml
 </code></pre></div><p>安装完后测试是否成功。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># kubectl get svc -n ingress-nginx</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># kubectl get svc -n ingress-nginx</span>
 NAME                                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span style="color:#719e07">(</span>S<span style="color:#719e07">)</span>                      AGE
 ingress-nginx-controller             NodePort    10.96.168.229   &lt;none&gt;        80:31445/TCP,443:31344/TCP   44m
 ingress-nginx-controller-admission   ClusterIP   10.96.4.89      &lt;none&gt;        443/TCP                      44m
@@ -222,10 +222,10 @@ ingress-nginx-controller-admission   ClusterIP   10.96.4.89      &lt;none&gt;   
 </code></pre></div></li>
 <li>
 <p>安装 web 服务</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ kubectl create deployment web --image<span style="color:#719e07">=</span>nginx:alpine --port<span style="color:#719e07">=</span><span style="color:#2aa198">80</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ kubectl create deployment web --image<span style="color:#719e07">=</span>nginx:alpine --port<span style="color:#719e07">=</span><span style="color:#2aa198">80</span>
 $ kubectl expose deployment web --port<span style="color:#719e07">=</span><span style="color:#2aa198">80</span>
 </code></pre></div><p>测试是否成功。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># kubectl get svc</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># kubectl get svc</span>
 NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span style="color:#719e07">(</span>S<span style="color:#719e07">)</span>   AGE
 kubernetes   ClusterIP   10.96.0.1       &lt;none&gt;        443/TCP   2d4h
 web          ClusterIP   10.96.197.137   &lt;none&gt;        80/TCP    116s
@@ -246,21 +246,21 @@ web          ClusterIP   10.96.197.137   &lt;none&gt;        80/TCP    116s
 &lt;h1&gt;Welcome to nginx!&lt;/h1&gt;
 &lt;p&gt;If you see this page, the nginx web server is successfully installed and
 working. Further configuration is required.&lt;/p&gt;
-   
+
 &lt;p&gt;For online documentation and support please refer to
 &lt;a <span style="color:#268bd2">href</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;http://nginx.org/&#34;</span>&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;
 Commercial support is available at
 &lt;a <span style="color:#268bd2">href</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;http://nginx.com/&#34;</span>&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;
-   
+
 &lt;p&gt;&lt;em&gt;Thank you <span style="color:#719e07">for</span> using nginx.&lt;/em&gt;&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </code></pre></div></li>
 <li>
 <p>创建 ingress 规则</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ kubectl create ingress web --rule<span style="color:#719e07">=</span><span style="color:#2aa198">&#34;web.test.info/=web:80&#34;</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ kubectl create ingress web --rule<span style="color:#719e07">=</span><span style="color:#2aa198">&#34;web.test.info/=web:80&#34;</span>
 </code></pre></div><p>测试是否成功。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># curl 192.168.9.107:31445 -H &#34;Host: web.test.info&#34;</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-master nginx<span style="color:#719e07">]</span><span style="color:#586e75"># curl 192.168.9.107:31445 -H &#34;Host: web.test.info&#34;</span>
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
@@ -277,17 +277,17 @@ Commercial support is available at
 &lt;h1&gt;Welcome to nginx!&lt;/h1&gt;
 &lt;p&gt;If you see this page, the nginx web server is successfully installed and
 working. Further configuration is required.&lt;/p&gt;
-   
+
 &lt;p&gt;For online documentation and support please refer to
 &lt;a <span style="color:#268bd2">href</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;http://nginx.org/&#34;</span>&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;
 Commercial support is available at
 &lt;a <span style="color:#268bd2">href</span><span style="color:#719e07">=</span><span style="color:#2aa198">&#34;http://nginx.com/&#34;</span>&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;
-   
+
 &lt;p&gt;&lt;em&gt;Thank you <span style="color:#719e07">for</span> using nginx.&lt;/em&gt;&lt;/p&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </code></pre></div><p>因为是默认的 NodePort 模式，所以需要域名加端口访问。如果不想带有端口，可以把 ingress-nginx-controller 的 Deployment 改成 DaemonSet，然后配置 hostNetwork 即可。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#268bd2">template</span>:
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#268bd2">template</span>:
   <span style="color:#268bd2">spec</span>:
     <span style="color:#268bd2">hostNetwork</span>: <span style="color:#cb4b16">true</span>
 </code></pre></div></li>

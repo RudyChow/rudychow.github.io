@@ -195,7 +195,7 @@
 <p>首先从<code>redisCommandTable</code>中找到<code>brpop</code>的命令入口以及整个调用链：<code>brpopCommand</code>-&gt;<code>blockingPopGenericCommand</code>-&gt;<code>blockForKeys</code>。</p>
 <p><code>brpopCommand</code>里只会调用<code>blockingPopGenericCommand</code>，<code>blockingPopGenericCommand</code>则会判断目标列表是否有元素，如果有，则直接返回，如果列表为空或者不存在该键，则调用<code>blockForKeys</code>。</p>
 <p>在看<code>blockForKeys</code>函数前需要先看几个关于 block 的结构体和属性（省略部分属性）：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 阻塞的几种类型
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 阻塞的几种类型
 </span><span style="color:#586e75"></span><span style="color:#719e07">#define BLOCKED_NONE 0    </span><span style="color:#586e75">/* Not blocked, no CLIENT_BLOCKED flag set. */</span><span style="color:#719e07">
 </span><span style="color:#719e07">#define BLOCKED_LIST 1    </span><span style="color:#586e75">/* BLPOP &amp; co. */</span><span style="color:#719e07">
 </span><span style="color:#719e07">#define BLOCKED_WAIT 2    </span><span style="color:#586e75">/* WAIT for synchronous replication. */</span><span style="color:#719e07">

@@ -190,7 +190,7 @@
         <div class="post-content">
             <p>adlist 全称是<code>a generic doubly linked list</code>，是 Redis 内部实现的一个双向链表。旧版本中，list 是使用 adlist 实现的，后面的版本改成用 quicklist 实现。</p>
 <h2 id="数据结构">数据结构</h2>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 链表节点
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 链表节点
 </span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> listNode {
     <span style="color:#719e07">struct</span> listNode <span style="color:#719e07">*</span>prev;
     <span style="color:#719e07">struct</span> listNode <span style="color:#719e07">*</span>next;
@@ -208,7 +208,7 @@
 } list;
 </code></pre></div><p>adlist 是一个常见的双向链表。它比一般的双向链表多记录了链表的长度，所以 adlist 获取元素个数的复杂度是 O(1)，以及几个触发函数：赋值、释放空间和匹配，它会在调用<code>listDup</code>、<code>listEmpty</code>以及<code>listSearchKey</code>时调用对应函数。</p>
 <p>此外，adlist 还实现了自己的迭代器：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">#define AL_START_HEAD 0
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">#define AL_START_HEAD 0
 </span><span style="color:#719e07">#define AL_START_TAIL 1
 </span><span style="color:#719e07"></span><span style="color:#586e75">// 迭代器
 </span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> listIter {

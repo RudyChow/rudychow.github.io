@@ -218,7 +218,7 @@
 <p>但是在 8.0.20 后的版本，已经没有了这两个限制。（但在这个版本下，<code>non-equi-join</code>下如何进行 build 和 probe，我还没弄清楚）</p>
 <h2 id="nested-loop-joinnlj">Nested-Loop Join（NLJ）</h2>
 <p>由单词就可以看出，这个算法的核心就是嵌套循环，伪代码表示：</p>
-<pre><code>foreach foo in table1{
+<pre tabindex="0"><code>foreach foo in table1{
 	foreach bar  in table2{
 		if con1 == con2 {
 			mergeRowAndSendClient(foo, bar)	

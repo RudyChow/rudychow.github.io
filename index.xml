@@ -1,28 +1,62 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Rudy&#39;s blog</title>
     <link>https://rudychow.github.io/</link>
     <description>Recent content on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>zh-cn</language>
-    <lastBuildDate>Sat, 06 Feb 2021 14:00:56 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 04 Dec 2021 15:51:10 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>蛋白粉测评</title>
+      <link>https://rudychow.github.io/post/%E6%9D%82/%E8%9B%8B%E7%99%BD%E7%B2%89%E6%B5%8B%E8%AF%84/</link>
+      <pubDate>Sat, 04 Dec 2021 15:51:10 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/%E6%9D%82/%E8%9B%8B%E7%99%BD%E7%B2%89%E6%B5%8B%E8%AF%84/</guid>
+      <description>总结一份蛋白粉的口味测评（纯个人主观）。
+  Optimum Nutrition
+   口味 渠道/价格 推荐度 评价     草莓 iherb(380) 京东(266) 4/5 人生中买的第一桶粉，草莓味总是不错的选择。   曲奇 京东(266) 2/5 有黑色颗粒（大概是曲奇碎），不好喝，甚至有点苦，每次都当凉茶一口闷。      ALLMAX
+   口味 渠道/价格 推荐度 评价     巧克力花生酱 iherb(307) 5/5 第一次也是唯一一次喝是在 2016 年，是我在 iherb 买的第二桶蛋白粉，味道口感已经忘了，总而言之就是好好喝。      BPI
+   口味 渠道/价格 推荐度 评价     香草饼 iherb(285) 3/5 买的第三桶蛋白粉。曾经的 iherb 真是 yyds，285 就能拿下一桶分离乳清。味道也记不清了，没那么好喝，但也没想象中那么差，中规中矩吧。      MusclePlarm</description>
+    </item>
+    
     <item>
       <title>2021计划</title>
       <link>https://rudychow.github.io/post/2021%E8%AE%A1%E5%88%92/</link>
       <pubDate>Sat, 06 Feb 2021 14:00:56 +0800</pubDate>
       
       <guid>https://rudychow.github.io/post/2021%E8%AE%A1%E5%88%92/</guid>
-      <description>学习： 至少读一本书 去年完成目标《MySQL技术内幕：InnoDB存储引擎》，今年目标未定，但会围绕自己兴趣或者工作需要进行。 至少看一个开源项目源码 去年完成目标 R</description>
+      <description>学习：
+  至少读一本书
+去年完成目标《MySQL技术内幕：InnoDB存储引擎》，今年目标未定，但会围绕自己兴趣或者工作需要进行。
+  至少看一个开源项目源码
+去年完成目标 Redis，今年暂定是 Nginx 或 Docker。
+  生活：
+  坚持运动，体重保持在 140 斤内
+去年增肌到 150 斤，无奈身边人都觉得太胖了，于是又减脂到 140 斤，后面长时间也会维持在这个体重内。
+去年还完成了人生最重要的一件事——取掉右手肱骨的钢板。即使医生一直劝说手术的风险，还签了责任告知，最后我还是选择做了手术，现在还是心有余悸。手术后手臂恢复还算不错，健身时的各种不适感明显减少了，甚至可以做俯卧撑了。希望今年能在保证身体正常的前提下，进行更多的运动。
+  十分钟内能解决的事情不要拖
+比如吃完饭后马上洗碗，洗完澡如果不再进食就顺便刷牙等等。这些事情分开做的时间也是一样的，但是顺手完成了心里愉悦度会高很多。再也不想准备上床睡觉时，突然想到碗还没洗，又或者还没刷牙时又要爬起来做事情。
+  进行一次出行
+去年在疫情爆发前去了泰国，但是在 2020 年由于疫情，取消了出行的计划，希望今年可以在预期内出行。
+  早睡早起
+尽力而为。
+  </description>
     </item>
     
     <item>
       <title>Ingress Nginx 部署</title>
-      <link>https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/</link>
+      <link>https://rudychow.github.io/post/k8s/ingress-nginx%E9%83%A8%E7%BD%B2/</link>
       <pubDate>Wed, 27 Jan 2021 20:01:41 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/k8s/Ingress-Nginx%E9%83%A8%E7%BD%B2/</guid>
-      <description>前提： ingress 中 Nginx 的组件有两个，一个是 kubernetes 提供的，叫Ingress Nginx，一个是 Nginx 提供的，叫Nginx ingress，这里以Ingress Nginx为例。 因为网上大</description>
+      <guid>https://rudychow.github.io/post/k8s/ingress-nginx%E9%83%A8%E7%BD%B2/</guid>
+      <description>前提：
+ ingress 中 Nginx 的组件有两个，一个是 kubernetes 提供的，叫Ingress Nginx，一个是 Nginx 提供的，叫Nginx ingress，这里以Ingress Nginx为例。 因为网上大部分的安装教程因为版本和时间的差别，导致很多问题，所以此处以官网文档为准。 我所使用的 k8s 版本是 1.20.2。  安装步骤：
+  执行 yaml
+因为自己是裸机环境，所以按照官网教程的Bare-metal去进行部署，需要执行kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.43.0/deploy/static/provider/baremetal/deploy.yaml。
+这里会自动拉取k8s.gcr.io/ingress-nginx/controller:v0.43.0@sha256:9bba603b99bf25f6d117cf1235b6598c16033ad027b143c90fa5b3cc583c5713镜像。由于某些原因，可以通过先提前拉取别人做好的 image。
+$ docker pull pollyduan/ingress-nginx-controller:v0.43.0 $ docker tag pollyduan/ingress-nginx-controller:v0.43.0 k8s.gcr.io/ingress-nginx/controller:v0.43.0 由于 yaml 拉取镜像时会进行镜像校验，所以需要下载 yaml 下来并且去掉校验和。
+$ sed -i &amp;#39;s/@sha256:9bba603b99bf25f6d117cf1235b6598c16033ad027b143c90fa5b3cc583c5713//&amp;#39; ingress-nginx.yaml 安装完后测试是否成功。
+[root@k8s-master nginx]# kubectl get svc -n ingress-nginx NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE ingress-nginx-controller NodePort 10.96.168.229 &amp;lt;none&amp;gt; 80:31445/TCP,443:31344/TCP 44m ingress-nginx-controller-admission ClusterIP 10.</description>
     </item>
     
     <item>
@@ -31,349 +65,613 @@
       <pubDate>Sun, 24 Jan 2021 12:41:09 +0800</pubDate>
       
       <guid>https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/</guid>
-      <description>docker 的桥接网络 开启 docker 进程后，docker 会开启虚拟网桥（可以理解为 Linux 内的虚拟交换机）。 通过ip addr可以看到系统多出一个网卡docker0，通常 IP 是172.17</description>
+      <description>docker 的桥接网络   开启 docker 进程后，docker 会开启虚拟网桥（可以理解为 Linux 内的虚拟交换机）。
+通过ip addr可以看到系统多出一个网卡docker0，通常 IP 是172.17.0.1/16：
+$ ip addr show docker0 3: docker0: &amp;lt;BROADCAST,MULTICAST,UP,LOWER_UP&amp;gt; mtu 1500 qdisc noqueue state UP group default link/ether 02:42:e4:63:84:b5 brd ff:ff:ff:ff:ff:ff inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0 valid_lft forever preferred_lft forever inet6 fe80::42:e4ff:fe63:84b5/64 scope link valid_lft forever preferred_lft forever 通过ip route可以看到默认会写入一条路由，可以看到请求172.17.0.0/16地址的请求都会通过docker0发出：
+$ ip route default via 192.168.9.1 dev wlp1s0 proto dhcp metric 600 default via 192.168.9.1 dev wlp1s0 proto dhcp src 192.</description>
     </item>
     
     <item>
       <title>iproute2</title>
-      <link>https://rudychow.github.io/post/Linux/iproute2/</link>
+      <link>https://rudychow.github.io/post/linux/iproute2/</link>
       <pubDate>Sat, 23 Jan 2021 13:59:11 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Linux/iproute2/</guid>
-      <description>大部分 Linux 中已经不再使用net-tools来进行网络配置了（包括我目前在用的 Manjaro 也是），所以有必要熟悉iproute2相关的命令。net-tools中主要使用ifc</description>
+      <guid>https://rudychow.github.io/post/linux/iproute2/</guid>
+      <description>大部分 Linux 中已经不再使用net-tools来进行网络配置了（包括我目前在用的 Manjaro 也是），所以有必要熟悉iproute2相关的命令。net-tools中主要使用ifconfig、route、arp和netstat，而iproute2中也有对应的ip和ss命令来替代。
+   net-tools iproute2     ifconfig ip link/ip addr   route ip route   arp ip neigh   netstat ss    ip 这个是iproute2中主要的命令，可以替代net-tools的ifconfig、route和arp。
+ip link # 查看网络设备，但是不会查看到ip ip link # 启动/关闭某个网卡 ip link set interface up/down ip addr # 查看每个网络设备上的ip ip addr # 查看指定的网卡 ip addr show dev device # 为指定网卡添加/删除ip地址 ip addr add/del IPv4/IPv6 dev device # 清除指定网卡的所有ip ip addr flush dev device ip route # 查看路由表 ip route # 启动/关闭某个网卡 ip link set interface up/down ip route和route显示的格式不太一样：</description>
     </item>
     
     <item>
       <title>查询语句的访问方式</title>
-      <link>https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/</link>
+      <link>https://rudychow.github.io/post/mysql/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/</link>
       <pubDate>Tue, 05 Jan 2021 23:38:36 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/</guid>
-      <description>简单总结一下 MySQL 表的访问方式： 等值 const： 最多只能有一个匹配记录，这个方式应用在聚簇索引或唯一索引上。 eq_ref： 和 const 差不多的性能，不过用在连表上。当连接的</description>
+      <guid>https://rudychow.github.io/post/mysql/%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5%E7%9A%84%E8%AE%BF%E9%97%AE%E6%96%B9%E5%BC%8F/</guid>
+      <description>简单总结一下 MySQL 表的访问方式：
+  等值
+  const：
+最多只能有一个匹配记录，这个方式应用在聚簇索引或唯一索引上。
+  eq_ref：
+和 const 差不多的性能，不过用在连表上。当连接的表的条件是聚簇索引或者唯一索引（不为 null）时，会使用 eq_ref。
+  ref：
+通过等值条件，可能匹配到多行数据，普通索引常用。当唯一索引可以为 null 时，cond is null由于可以匹配到多行数据，所以也是使用 ref。
+  ref_or_null：
+匹配到多行数据，包括 null 时。cond = xx or cond is null这种条件，就会使用 ref_or_null。
+    范围
+  range：
+=, &amp;lt;&amp;gt;, &amp;gt;, &amp;gt;=, &amp;lt;, &amp;lt;=, IS NULL, &amp;lt;=&amp;gt;, BETWEEN, LIKE, or IN() 时会使用的方式
+    子查询
+  unique_subquery：</description>
     </item>
     
     <item>
       <title>Join算法</title>
-      <link>https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/</link>
+      <link>https://rudychow.github.io/post/mysql/join%E7%AE%97%E6%B3%95/</link>
       <pubDate>Sun, 03 Jan 2021 23:42:34 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/join%E7%AE%97%E6%B3%95/</guid>
-      <description>MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。 Hash Join Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段： build 构建阶段下，MySQL 会将小的表作为构建，构建的</description>
+      <guid>https://rudychow.github.io/post/mysql/join%E7%AE%97%E6%B3%95/</guid>
+      <description>MySQL 目前主要的 join 算法有两类：Hash Join 和 Nested-Loop Join。
+Hash Join Hash Join 是 MySQL 在 8.0.18 后支持的连表算法，这个时候的 Hash Join 有两个阶段：
+  build
+构建阶段下，MySQL 会将小的表作为构建，构建的 HashTable 以连接条件为 key，行数据为 value。一旦所有的数据都存储在 HashTable 中，就完成了构建阶段。
+当构建阶段中，如果内存中的 HashTable 被用完，则其余数据会溢出到缓存块中，并以另一个 hash 算法去决定写入哪个缓存块。内存中的 HashTable 由变量join_buffer_size控制。
+  probe
+探测阶段下，MySQL 从另一个表中读取每一行。对于每一行，都会使用连接条件的值作为查找键去查看 HashTable 是否有匹配的数据。对于每一个匹配项，就向客户端发送一个合并行。
+如果 build 阶段溢出了，那么 probe 阶段下也会把循环的每一行写入缓存块。由于写入缓冲块和 build 阶段时用的是同一个 hash 算法，所以他们的缓存块号是一致的。当内存的 HashTable 已经匹配完，依次加载每一个对应的 build 和 probe 的缓存块进内存，再重新执行 probe 逻辑即可。
+  在这个版本中，Hash Join 有几个限制条件：
+ 只能用在没有索引的等值的连接条件 只能用在内连，即不支持left join、right join、semijoin和antijoin。  但是在 8.</description>
     </item>
     
     <item>
       <title>事务</title>
-      <link>https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/</link>
+      <link>https://rudychow.github.io/post/mysql/%E4%BA%8B%E5%8A%A1/</link>
       <pubDate>Mon, 28 Dec 2020 22:58:32 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/%E4%BA%8B%E5%8A%A1/</guid>
-      <description>事务是数据库区别于文件系统的重要特性之一。数据库系统引入事务的主要目的：事务会把数据库从一种一致状态转移为另一种一致状态。在数据库提交工作时，可以确保要么所有修</description>
+      <guid>https://rudychow.github.io/post/mysql/%E4%BA%8B%E5%8A%A1/</guid>
+      <description>事务是数据库区别于文件系统的重要特性之一。数据库系统引入事务的主要目的：事务会把数据库从一种一致状态转移为另一种一致状态。在数据库提交工作时，可以确保要么所有修改都已经保存了，要么所有修改都不保存。
+特性 InnoDB 存储引擎中的事务完全符合 ACID 的特性，ACID 是以下 4 个词的缩写
+  原子性（atomicity）
+原子性指整个数据库事务是不可分割的工作单位，只有使事务中所有的数据库操作都执行成功，才算整个事务成功。事务中任何一个 SQL 语句执行失败，已经执行成功的 SQL 语句也必须撤销，数据库状态应该退回到执行事务前的状态。
+  一致性（consistency）
+一致性指事务将数据库从一种状态转变为下一种一致的状态。在事务开始之前和事务结束以后，数据库的完整性约束没有被破坏。
+  隔离性（isolation）
+隔离性还有其它称呼，如并发控制、可串行化、锁等等。事务的隔离性要求每个读写事务的对象对其它事务的操作对象能互相分离，即该事务提交前对其它事务都不可见，通常这使用锁来实现。
+  持久性（durability）
+事务一旦提交，其结果就是永久性的，即使发生宕机等故障，数据库也能将数据恢复。事务只能从本身角度来保证结果的永久性，但如果不是数据库本身发生故障，而是一些外部原因，如 RAID 卡损坏、自然灾害等原因导致数据库发生问题，那么所有提交数据可能都会丢失。因此持久性保证事务系统的高可靠性，而不是高可用性。
+  事务的隔离性由锁来实现。原子性、一致性、持久性通过数据库的 redo log 和 undo log 来完成。redo log 称为重做日志，用来保证事务的原子性和持久性。undo log 用来保证事务的一致性。
+隔离级别 ISO 和 ANIS SQL 标准制定了四种事务隔离级别的标准，分别是：
+ READ UNCOMMITTED READ COMMITTED REPEATABLE READ SERIALIZABLE  事务并发执行时可能遇到的问题：
+ 脏读：一个事务读到了另一个未提交事务修改过的数据。 不可重复读：一个事务只能读到另一个已经提交的事务修改过的数据，并且其他事务每对该数据进行一次修改并提交后，该事务都能查询得到最新值。 幻读：一个事务先根据某些条件查询出一些记录，之后另一个事务又向表中插入了符合这些条件的记录，原先的事务再次按照该条件查询时，能把另一个事务插入的记录也读出来。     隔离级别 脏读 不可重复读 幻读     READ UNCOMMITTED Possible Possible Possible   READ COMMITTED Not Possible Possible Possible   REPEATABLE READ Not Possible Not Possible Possible   SERIALIZABLE Not Possible Not Possible Not Possible    InnoDB 存储引擎默认支持的隔离级别是REPEATABLE READ，但是与标准 SQL 不同的是，InnoDB 存储引擎在REPEATABLE READ事务隔离级别下，使用Next-Key Lock锁的算法，避免了幻读的产生。所以说，InnoDB 存储引擎在默认的REPEATABLE READ的事务隔离级别下已经能完全保证事务的隔离性要求，即达到SERIALIZABLE隔离级别。</description>
     </item>
     
     <item>
       <title>undo日志</title>
-      <link>https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/</link>
+      <link>https://rudychow.github.io/post/mysql/undo%E6%97%A5%E5%BF%97/</link>
       <pubDate>Sun, 13 Dec 2020 21:33:54 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/undo%E6%97%A5%E5%BF%97/</guid>
-      <description>undo log 主要有两个作用：事务回滚和 MVCC。 到底是什么是 undo log ？前面说到 InnoDB 表空间存放着许多不同类型的页，undo log 就是其中的一种类型。它和 redo log 不同，是一种逻辑日志，记</description>
+      <guid>https://rudychow.github.io/post/mysql/undo%E6%97%A5%E5%BF%97/</guid>
+      <description>undo log 主要有两个作用：事务回滚和 MVCC。
+到底是什么是 undo log ？前面说到 InnoDB 表空间存放着许多不同类型的页，undo log 就是其中的一种类型。它和 redo log 不同，是一种逻辑日志，记录着数据之前的样子。又因为 undo log 是表空间的一种页，所以在产生 undo log 之前，也会产生对应的 redo log。
+类型 undo log 分为 insert undo log 和 update undo log。
+insert undo log 是指在 insert 操作中产生的 undo log。因为 insert 操作的记录，指对事务本身可见，对其它事务不可见（事务隔离性），所以这种 undo log 可以在事务提交后直接删除，不需要进行 purge 操作。
+update undo log 记录的是 delete 和 update 操作产生的 undo log。该 undo log 可能需要提供 MVCC 机制，因此不能在事务提交时进行删除。提交时放入 undo log 链表，等待 purge 线程进行最后的删除。
+回滚指针 从数据页中的数据行的格式了解 undo log：</description>
     </item>
     
     <item>
       <title>B&#43;树查询</title>
-      <link>https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E6%9F%A5%E8%AF%A2/</link>
+      <link>https://rudychow.github.io/post/mysql/b&#43;%E6%A0%91%E6%9F%A5%E8%AF%A2/</link>
       <pubDate>Sun, 13 Dec 2020 17:53:23 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/B&#43;%E6%A0%91%E6%9F%A5%E8%AF%A2/</guid>
-      <description>B+ 树是一种多路平衡树，通过 B 树演化而来。 我们知道从一组有序数字数组中查找目标记录，使用二分查找法（Binary Search）是一种有效的方式，复杂度达到 O(lo</description>
+      <guid>https://rudychow.github.io/post/mysql/b&#43;%E6%A0%91%E6%9F%A5%E8%AF%A2/</guid>
+      <description>B+ 树是一种多路平衡树，通过 B 树演化而来。
+我们知道从一组有序数字数组中查找目标记录，使用二分查找法（Binary Search）是一种有效的方式，复杂度达到 O(log2n)。但是如果要在几个分开的有序数组中找到目标记录，要怎样才比较有效率？
+假设有 4 个数组，每个数组最多只能存放 4 个元素，现在需要在这四个数组中找到目标 10：
+page1 := []int{1, 2, 3, 4} page2 := []int{5, 6, 7, 8} page3 := []int{9, 10, 11, 12} page4 := []int{13, 14, 15, 16} 第一个想法是把所有数组合并起来，再进行二分查找，这样复杂度还是 O(log2n)。上面代码中每一个数组，在 MySQL 中其实是一个页，也是 InnoDB 存放在磁盘上的最小单位。如果在 MySQL 中要把所有页的数据合并在一起，再进行二分查找，那么当数据页非常多的时候，内存会非常吃紧，所以这不算是一个好的方案。
+换一个想法，现在从每个数组中取出一个最小数，作为当前数组的代表，此时可以抽取出 1、5、9、13。因为每个数组是有序的，所以这几个代表，可以表示一个区间：1 表示 [1,5) 的区间，5 表示 [5,9) 的区间，9 表示 [9,13) 的区间，13 表示 [13,+∞) 的区间。所以在这 4 个数字中，你仍可以使用二分查找的方式，虽然这里面没有 10 这个数，但是可以得知 10 是属于 9 这个代表的，因为 10 属于 [9,13) 这个区间。最后，通过 9 这个代表，找到page3这个数组，并且在里面通过二分查找的方式找到 10 即可。</description>
     </item>
     
     <item>
       <title>Vscode下使用GDB调试Redis</title>
-      <link>https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/</link>
+      <link>https://rudychow.github.io/post/redis/vscode%E4%B8%8B%E4%BD%BF%E7%94%A8gdb%E8%B0%83%E8%AF%95redis/</link>
       <pubDate>Sun, 13 Dec 2020 13:45:54 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Vscode%E4%B8%8B%E4%BD%BF%E7%94%A8GDB%E8%B0%83%E8%AF%95Redis/</guid>
-      <description>配置.vscode/launch.json： { &amp;#34;version&amp;#34;: &amp;#34;0.2.0&amp;#34;, &amp;#34;configurations&amp;#34;: [ { &amp;#34;name&amp;#34;: &amp;#34;redis启动&amp;#34;, &amp;#34;type&amp;#34;: &amp;#34;cppdbg&amp;#34;, &amp;#34;request&amp;#34;: &amp;#34;launch&amp;#34;, &amp;#34;program&amp;#34;: &amp;#34;${workspaceFolder}/src/redis-server&amp;#34;, &amp;#34;args&amp;#34;: [&amp;#34;${workspaceFolder}/redis.conf&amp;#34;], &amp;#34;stopAtEntry&amp;#34;: false, &amp;#34;cwd&amp;#34;: &amp;#34;${workspaceFolder}&amp;#34;, &amp;#34;environment&amp;#34;: [], &amp;#34;externalConsole&amp;#34;: false, &amp;#34;MIMode&amp;#34;: &amp;#34;gdb&amp;#34;, &amp;#34;preLaunchTask&amp;#34;: &amp;#34;make redis&amp;#34;, &amp;#34;setupCommands&amp;#34;: [ { &amp;#34;description&amp;#34;: &amp;#34;为 gdb 启</description>
+      <guid>https://rudychow.github.io/post/redis/vscode%E4%B8%8B%E4%BD%BF%E7%94%A8gdb%E8%B0%83%E8%AF%95redis/</guid>
+      <description> 配置.vscode/launch.json：  { &amp;#34;version&amp;#34;: &amp;#34;0.2.0&amp;#34;, &amp;#34;configurations&amp;#34;: [ { &amp;#34;name&amp;#34;: &amp;#34;redis启动&amp;#34;, &amp;#34;type&amp;#34;: &amp;#34;cppdbg&amp;#34;, &amp;#34;request&amp;#34;: &amp;#34;launch&amp;#34;, &amp;#34;program&amp;#34;: &amp;#34;${workspaceFolder}/src/redis-server&amp;#34;, &amp;#34;args&amp;#34;: [&amp;#34;${workspaceFolder}/redis.conf&amp;#34;], &amp;#34;stopAtEntry&amp;#34;: false, &amp;#34;cwd&amp;#34;: &amp;#34;${workspaceFolder}&amp;#34;, &amp;#34;environment&amp;#34;: [], &amp;#34;externalConsole&amp;#34;: false, &amp;#34;MIMode&amp;#34;: &amp;#34;gdb&amp;#34;, &amp;#34;preLaunchTask&amp;#34;: &amp;#34;make redis&amp;#34;, &amp;#34;setupCommands&amp;#34;: [ { &amp;#34;description&amp;#34;: &amp;#34;为 gdb 启用整齐打印&amp;#34;, &amp;#34;text&amp;#34;: &amp;#34;-enable-pretty-printing&amp;#34;, &amp;#34;ignoreFailures&amp;#34;: true } ] } ] } 配置.vscode/tasks.json：  { &amp;#34;version&amp;#34;: &amp;#34;2.0.0&amp;#34;, &amp;#34;tasks&amp;#34;: [ { &amp;#34;label&amp;#34;: &amp;#34;make redis&amp;#34;, &amp;#34;type&amp;#34;: &amp;#34;shell&amp;#34;, &amp;#34;command&amp;#34;: &amp;#34;make&amp;#34;, &amp;#34;args&amp;#34;: [ &amp;#34;CFLAGS=\&amp;#34;-g -O0\&amp;#34;&amp;#34; ], &amp;#34;options&amp;#34;: { &amp;#34;cwd&amp;#34;: &amp;#34;${workspaceFolder}/src&amp;#34; } } ] } Start Debugging  </description>
     </item>
     
     <item>
       <title>InnoDB存储结构</title>
-      <link>https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/</link>
+      <link>https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/</link>
       <pubDate>Tue, 08 Dec 2020 23:09:35 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/</guid>
-      <description>从 InnoDB 存储引擎的逻辑存储结构看，所有数据都被逻辑地存在一个空间中，称为表空间（tablespace）。表空间又由段（segment）、区（extent）、页（pa</description>
+      <guid>https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84/</guid>
+      <description>从 InnoDB 存储引擎的逻辑存储结构看，所有数据都被逻辑地存在一个空间中，称为表空间（tablespace）。表空间又由段（segment）、区（extent）、页（page）组成。
+这一部分内容基本都是讲存储结构的，所以用自己语言简单总结一下，避免以后看不懂。
+  表空间是什么？
+InnoDB 相关的数据总得有个地方存。表空间说白了就是存储 InnoDB 相关的文件，包括且不限于数据、索引、undo信息。
+默认有一个共享表空间，即ibdata1。如果开启了参数innodb_file_per_table，则每个表会有自己独立的存储文件，文件是表名.ibd。
+  页是什么？
+说到 MySQL 一定会谈到 B+ 树，谈到 B+ 树又一定会谈到页。页说白了就是一个连续的空间，默认是 16KB。
+我们知道数据是存储在页里面，所以这个页叫数据页。页是 InnoDB 操作数据的最小单位，它不单指只有数据页这种类型，还有许多其它类型：
+ B+ 树叶节点 undo log 页 索引节点 新分配未使用 系统页 Insert Buffer Bitmap &amp;hellip;  而在表空间里，其实就是由许许多多的页构成，从代码上看大概是这样：
+type page struct{} func main() { // 表空间里面有许许多多页组成 	// 每个表空间一定会有三个页 	// 系统表空间也会预先分配一定的空间 	tablespace := make([]page, 3, 64) // 第一个页是系统页 	fmt.Println(tablespace[0]) // 第二个页是insert buffer bitmap页 	fmt.</description>
     </item>
     
     <item>
       <title>redo日志</title>
-      <link>https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/</link>
+      <link>https://rudychow.github.io/post/mysql/redo%E6%97%A5%E5%BF%97/</link>
       <pubDate>Sun, 06 Dec 2020 11:57:57 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/redo%E6%97%A5%E5%BF%97/</guid>
-      <description>结合最近的学习总结一下 redo log 相关的知识，以及回答之前的困惑。 redo log 与 bin log 这两个日志是我之前经常迷惑的地方，因为两者在不同层面上都能实现恢复数据的效果。 要了解两者的区</description>
+      <guid>https://rudychow.github.io/post/mysql/redo%E6%97%A5%E5%BF%97/</guid>
+      <description>结合最近的学习总结一下 redo log 相关的知识，以及回答之前的困惑。
+redo log 与 bin log 这两个日志是我之前经常迷惑的地方，因为两者在不同层面上都能实现恢复数据的效果。
+要了解两者的区别，首先要知道这两个日志分别是什么。
+redo log 是基于 InnoDB 存储引擎的一个日志，它是用来保证数据持久性的一个日志，并且记录的是物理日志，例如一个 DML 的 SQL 语句导致表空间的某几个页的某个位置。除此之外，redo log 的日志并不会长期保存，而是会进行循环覆盖，这个跟 Checkpoint 机制有关。
+bin log 是 MySQL Server 层面的一个日志，意思是不管什么存储引擎，MySQL 都可以进行 bin log 的日志。bin log 默认不开启，并且记录的是逻辑日志，即具体的 SQL 语句（ROW和MIXED格式的则不一定）。bin log 的日志会不停增长，它常常用于复制数据。
+那么 redo log 和 bin log 是怎么保持两边数据的一致性呢？两边是通过两阶段提交（2PC）来解决两个日志之间数据不一致的问题。通过配置参数innodb_support_xa来开启 XA 事务。MySQL 8 之后废弃了该参数，默认开启 XA。
+流程是：
+ 当事务提交时 InnoDB 存储引擎进行 prepare 操作。 MySQL 数据库上层写入 bin log。 InnoDB 存储引擎将日志写入 redo log。  修改内存中事务对应的信息，并且将日志写入 redo buffer cache。 调用 fsync 将确保日志都从 redo buffer cache 写入磁盘。    在做 Carash Recovery 时：</description>
     </item>
     
     <item>
       <title>《InnoDB存储引擎》笔记：文件</title>
-      <link>https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/</link>
+      <link>https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/</link>
       <pubDate>Sat, 05 Dec 2020 19:04:43 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/</guid>
-      <description>这一章节重点在 bin log 以及 InnoDB 存储引擎文件。 参数文件 MySQL 实例启动时，会先读一个配置参数文件，用来寻找数据库的各种文件所在位置以及指定某些初始化参数，用户可以通过怕命令m</description>
+      <guid>https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0%E6%96%87%E4%BB%B6/</guid>
+      <description>这一章节重点在 bin log 以及 InnoDB 存储引擎文件。
+参数文件 MySQL 实例启动时，会先读一个配置参数文件，用来寻找数据库的各种文件所在位置以及指定某些初始化参数，用户可以通过怕命令mysql --help| grep my.cnf来寻找即可。
+MySQL 实例可以不需要参数文件，这时所有的参数值取决于编译 MySQL 时指定的默认值和源代码中指定参数的默认值。推荐使用命令SHOW VARIABLES来查看数据库中的所有参数，也可以通过 LIKE 来过滤参数名。
+参数可以分成两类：动态参数和静态参数。
+动态参数意味着可以在 MySQL 实例运行中进行更改，静态参数说明在整个实例生命周期内都不得进行更改。
+可以通过 SET 命令对动态参数值修改，语法：SET [global | session] system_var_name = expr。
+global 和 session 表明参数修改是基于当前会话还是整个实例。有些动态参数只能在会话中进行修改，如autocommit；而有些参数修改完后，在整个实例生命周期都会生效，如binlog_cache_size；而有些参数既可以在会话中也可以在实例中生效，如read_buffer_size。
+日志文件 错误日志 错误日志文件对 MySQL 的启动、运行、关闭过程进行了记录。该文件不仅记录了所有的错误信息，也记录一些警告信息或正确的信息。用户可以通过命令SHOW VARIABLES LIKE &#39;log_error&#39;来定位该文件。
+慢查询日志 慢日志可以帮助 DBA 定位可能存在问题的 SQL 语句，从而进行 SQL 语句层面的优化。可以通过参数log_query_time（单位微秒）来设置慢查询日志的阈值。
+另一个和慢查询日志有关的参数是log_queries_not_using_indexes，如果运行的 SQL 语句没有使用索引，MySQL 数据库同样会将这条 SQL 语句记录到慢查询日志文件。
+MySQL 5.6.5 版本开始新增了一个参数log_throttle_queries_not_using_indexes，用来表示每分钟允许记录到 slow log 的且未使用索引的 SQL 语句次数。该值默认为 0，表示没有限制。
+MySQL 数据库提供了mysqldumpslow命令，可以帮助 DBA 更直观分析 slow log。</description>
     </item>
     
     <item>
       <title>《InnoDB存储引擎》笔记：InnoDB存储引擎</title>
-      <link>https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/</link>
+      <link>https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/</link>
       <pubDate>Fri, 04 Dec 2020 22:23:00 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/</guid>
-      <description>这一章节随便拿出一小节都可以单独写一篇文章，这里仅做笔记和总结。 体系架构 后台线程 InnoDB 存储引擎是多线程的模型，因此后台有多个不同的后台线程，负责处理不同的任务。 Master Thread</description>
+      <guid>https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/</guid>
+      <description>这一章节随便拿出一小节都可以单独写一篇文章，这里仅做笔记和总结。
+体系架构 后台线程 InnoDB 存储引擎是多线程的模型，因此后台有多个不同的后台线程，负责处理不同的任务。
+Master Thread Master Thread 是一个非常核心的后台线程，主要负责将缓冲池中的数据异步刷新到磁盘，保证数据的一致性，包括脏页的刷新、合并插入缓冲（INSERT BUFFER）、UNDO 页的回收等。
+IO Thread 在 InnoDB 存储引擎中大量使用了 AIO 来处理写 IO 请求，这样可以极大提高数据库的性能，IO Thread 的工作主要是负责这些 IO 请求的回调处理。
+InnoDB 1.0 版本之前共有 4 个 IO Thread，分别是 write、read、insert buffer 和 log IO thread。
+Purge Thread 事务被提交后，所使用的 undolog 可能不再需要，因此需要 Purge Thread 来回收已经使用并分配的 undo 页。在 InnoDB 1.1 版本之前，purge 操作仅在 Master Thread 中完成。而在 InnoDB 1.1 版本开始，purge 操作可以独立到单独的线程中进行，以此来减轻 Master Thread 的工作，从而提高 CPU 的利用率以及提升存储引擎的性能。
+用可可以在 MySQL 数据库的配置文件中添加如下命令来启用独立的 Pruge Thread：
+[mysqld] innodb_purge_threads=1 Page Cleaner Thread Page Cleaner Thread 实在 InnoDB 1.</description>
     </item>
     
     <item>
       <title>《InnoDB存储引擎》笔记：MySQL体系结构和存储引擎</title>
-      <link>https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/</link>
+      <link>https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0mysql%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/</link>
       <pubDate>Fri, 04 Dec 2020 18:02:36 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0MySQL%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/</guid>
-      <description>这一节主要是一些基础概念和介绍，所以此处只进行了基本的笔记总结。 数据库与实例 数据库：物理操作系统文件或其他形式文件类型的集合。 实例：MySQL 数据库由后台线程以</description>
+      <guid>https://rudychow.github.io/post/mysql/innodb%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%AC%94%E8%AE%B0mysql%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%92%8C%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/</guid>
+      <description>这一节主要是一些基础概念和介绍，所以此处只进行了基本的笔记总结。
+数据库与实例 数据库：物理操作系统文件或其他形式文件类型的集合。
+实例：MySQL 数据库由后台线程以及一个共享内存区组成。MySQL 数据库实例在系统上的表现就是一个进程。
+配置 当启动实例时，MySQL 数据库会按/etc/my.cnf-&amp;gt;/etc/mysql/my.cnf-&amp;gt;/usr/local/mysql/etc/my.cnf-&amp;gt;~/.my.cnf去读取配置文件，并且以读取到的最后一个配置文件中的参数为准。
+配置文件中有一个参数datadir，该参数指定了数据库所在的路径。在 Linux 操作系统下默认datadir为/usr/local/mysql/data。
+连接方式  TCP/IP 命名管道 UNIX 域套接字  存储引擎 MySQL 数据库区别于其他数据库的最重要的一个特点就是其插件式的表存储引擎。需要注意，存储引擎基于表，而不是数据库。
+MyISAM MyISAM 存储引擎不支持事务、表锁设计，支持全文索引，主要面向一些 OLAP 数据库应用。MyISAM 存储引擎有两个与众不同的地方：
+ 不支持事务，因为并非所有的应用中都需要事务。 它的缓冲池只缓存索引文件，而不缓冲数据文件。  MyISAM 存储引擎表由 MYD 和 MYI 组成，MYD 用来存放数据文件，MYI 用来存放索引文件。
+Memory Memory 存储引擎将表中的数据存放在内存中，如果数据库重启或者发生崩溃，表中的数据都将消失。Memory 存储引擎默认使用哈希索引，而不是我们熟悉的 B+树索引。
+Memory 存储引擎在使用上有一定限制，比如，只支持表锁，并发性能较差，并且不支持 TEXT 和 BLOB 列类型。MySQL 数据库使用 Memory 存储引擎作为临时表来存放查询的中间结果集。如果中间结果集大于 Memory 存储引擎的容量设置，又或者中间结果含有 TEXT 或 BLOB 列类型字段，则 MySQL 数据库会把其转换到 MyISAM 存储引擎表而存放到磁盘中。之前提到 MyISAM 不缓存数据文件，因为这时产生的临时表的性能对于查询会有损失。
+InnoDB InnoDB 存储引擎支持事务，其设计目标主要面向在线事务处理（OLTP）的应用。其特点是行锁设计、支持外键，并支持类似于 Oracle 的非锁定读，即默认读取操作不会产生锁。从 MySQL 数据库 5.</description>
     </item>
     
     <item>
       <title>Redis源码阅读阶段总结</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/</link>
       <pubDate>Mon, 16 Nov 2020 06:21:00 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/</guid>
-      <description>把 Redis 分成几个部分来阅读，目前的阅读情况： 多机： 集群 复制 哨兵 单机： ae db 持久化： AOF RDB 数据结构： SDS ZIPLIST INISET ADLIST SKIPLIST DICT QUICKLIST GEO OBJECT BITMAP HYPERLOGLOG 其它功能： BLOCK PUBSUB BIO EVICT SLOWLOG 事务 LUA Redis6： 多线程 ACL</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93/</guid>
+      <description>把 Redis 分成几个部分来阅读，目前的阅读情况：
+多机：
+ 集群 复制 哨兵  单机：
+ ae db  持久化：
+ AOF RDB  数据结构：
+ SDS ZIPLIST INISET ADLIST SKIPLIST DICT QUICKLIST GEO OBJECT BITMAP HYPERLOGLOG  其它功能：
+ BLOCK PUBSUB BIO EVICT SLOWLOG 事务 LUA  Redis6：
+ 多线程 ACL TLS  作为非 C 程序员，第一次看关于 C 的项目源码，没有想象中吃力。
+Redis 的项目结构非常清晰简单，比如 ae 功能，对应就是一个ae.h头文件和ae.c源文件，加上ae_*.c其它相关的文件。只要看一下这些文件的 API，并且搜索一下这些 API 在整个运行流程中的调用位置，就大概可以了解这个功能。
+项目的注释也非常齐全，在一些比较复杂或者逻辑比较多的函数，都会有大段的注释，阅读起来非常方便。
+虽然是用 C 写的项目，但是大部分都觉得非常得面向对象。比如服务器，即是一个全局的redisServer结构体变量，每个客户端就是一个client结构体变量，并且用了很多函数指针，使用起来和对象没什么区别。
+后面有时间会把其余的功能也阅读一遍。</description>
     </item>
     
     <item>
       <title>Redis源码：多线程</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/</link>
       <pubDate>Sun, 15 Nov 2020 16:31:01 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/</guid>
-      <description>Redis6 有了不少更新：ACL 权限、RESP3 协议、SSL等等，其中包括了多线程。 以往的 Redis 在处理网络 IO 时是单线程，在新版本中引入了多线程。默认是关闭的，需要修改配置进行</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%A4%9A%E7%BA%BF%E7%A8%8B/</guid>
+      <description>Redis6 有了不少更新：ACL 权限、RESP3 协议、SSL等等，其中包括了多线程。
+以往的 Redis 在处理网络 IO 时是单线程，在新版本中引入了多线程。默认是关闭的，需要修改配置进行开启。
+相关配置与变量 有两个配置参数会影响到多线程：
+// 线程数量，默认是1，即只有主线程，最大是128 io-threads [1~128] // 是否通过辅助线程来读取并解析客户端，默认是0 io-threads-do-reads [0|1] 还有几个相关的结构体字段以及全局变量：
+struct redisServer { int io_threads_num; /* Number of IO threads to use. */ int io_threads_do_reads; /* Read and parse from IO threads? */ int io_threads_active; /* Is IO threads currently active? */ }; // 多线程目前需要进行的操作开关，有IO_THREADS_OP_WRITE和IO_THREADS_OP_READ int io_threads_op; // 下标是线程id，值是客户端链表 list *io_threads_list[IO_THREADS_MAX_NUM]; // 下标是线程id，值是需要处理的客户端数量，该变量具有原子性 _Atomic unsigned long io_threads_pending[IO_THREADS_MAX_NUM]; 开启多线程 多线程的开启在src/server.c中的InitServerLast中。以往该函数负责开启bio，新版本中还会调用initThreadedIO来开启多线程。
+initThreadedIO的逻辑很简单，这里会循环server.io_threads_num去初始化io_threads_list变量，并且创建server.io_threads_num-1个数量的线程。</description>
     </item>
     
     <item>
       <title>Redis源码：内存淘汰策略</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/</link>
       <pubDate>Fri, 06 Nov 2020 06:36:51 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/</guid>
-      <description>当 Redis 的内存达到一定值时，会触发自身的内存淘汰策略，目的是为了避免内存的增长。Redis 内存相关的淘汰策略代码主要在src/evict.c里。 相关配置 配置文件中的</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0%E7%AD%96%E7%95%A5/</guid>
+      <description>当 Redis 的内存达到一定值时，会触发自身的内存淘汰策略，目的是为了避免内存的增长。Redis 内存相关的淘汰策略代码主要在src/evict.c里。
+相关配置 配置文件中的maxmemory和maxmemory-policy就可以对 Redis 进行淘汰策略的配置。
+  maxmemory
+Redis 可用的最大内存，也就是触发策略的阈值。32 位系统下默认是 3G 内存（受限于 4G 内存空间），64 位系统下不受限制。
+  maxmemory-policy
+相关的策略，一共有：
+ volatile-lru：过期键 LRU 策略。 volatile-lfu：过期键 LFU 策略。 volatile-random：过期键 RANDOM 策略。 volatile-ttl：过期键 TTL 策略。 allkeys-lru：所有键 LRU 策略。 allkeys-lfu：所有键 LFU 策略。 allkeys-random：所有键 RANDOM 策略。 noeviction：无策略。  从键的维度来看，分成了两种，一种是设置了过期时间的 key，另一种是所有key。
+从策略维度看，分成四种：LRU最近访问时间、LFU访问频率、RANDOM随机，TTL过期时间。
+  调用链 缓存策略的入口在processCommand里，这里会调用freeMemoryIfNeededAndSafe，然后调用freeMemoryIfNeeded。
+int processCommand(client *c) { /* Handle the maxmemory directive. * * Note that we do not want to reclaim memory if we are here re-entering * the event loop since there is a busy Lua script running in timeout * condition, to avoid mixing the propagation of scripts with the * propagation of DELs due to eviction.</description>
     </item>
     
     <item>
       <title>Redis源码：aof</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81aof/</link>
       <pubDate>Sun, 01 Nov 2020 23:54:03 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81aof/</guid>
-      <description>Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。 初始化 Redis 通过loadServer</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81aof/</guid>
+      <description>Redis 的另一个持久化的功能叫AOF（Append Only File），原理是用户执行一条命令，就追加记录一条下来，可以联想 MySQL 的 binlog。
+初始化 Redis 通过loadServerConfig加载配置appendonly [yes|no]，对应会修改server.aof_state = AOF_ON|AOF_OFF。当AOF被开启，Redis 初始化服务initServer时会打开一个AOF文件并记录下对应的 fd。
+此时的几个相关字段：
+struct redisServer { int aof_state; /* aof状态 */ int aof_fd; /* aof文件fd */ char *aof_filename; /* aof文件名 */ } 记录写入 Redis 在调用call函数里会去追加记录AOF，它在c-&amp;gt;cmd-&amp;gt;proc(c)后，会执行propagate，然后再执行feedAppendOnlyFile。
+feedAppendOnlyFile主要逻辑：
+ 判断当前命令的 db 是否和AOF的 db 相同，如果不相同，AOF记录一条select db进行数据库切换。 所有过期expire命令都转换成PEXPIREAT命令。 所有set类的命令，都转换成set命令 如果当前AOF处于AOF_ON的状态，则写入缓冲区。 如果当前AOF有子进程，则调用aofRewriteBufferAppend。  此时所有操作都只是写入缓冲区，而数据并未落盘。
+写入时机 AOF会以RESP协议（Redis 的通讯协议）来记录我们每一条命令，它会依赖三种策略：
+  AOF_FSYNC_NO
+不手动刷盘，而是由系统自己决定。
+  AOF_FSYNC_ALWAYS
+每条命令刷盘一次，这种方式丢数据的机率最小，最多会丢一条记录。
+  AOF_FSYNC_EVERYSEC
+每秒记录刷盘一次。
+  Redis 会调用flushAppendOnlyFile进行AOF的数据落盘，最常见的调用时机就是每次事件循环的前置函数beforeSleep。</description>
     </item>
     
     <item>
       <title>Redis源码：rdb</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81rdb/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81rdb/</link>
       <pubDate>Sat, 31 Oct 2020 20:40:57 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81rdb/</guid>
-      <description>Redis 有两种数据持久化策略，其中一种是RDB（Redis database），属于快照持久化的方式。它分为主动备份和定时备份两种方式去运行。 主动备份 当执行save或者</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81rdb/</guid>
+      <description>Redis 有两种数据持久化策略，其中一种是RDB（Redis database），属于快照持久化的方式。它分为主动备份和定时备份两种方式去运行。
+主动备份 当执行save或者bgsave时，Redis 就会进行一次RDB的持久化。如果数据量比较大的情况下，执行save是一个比较耗时的动作，所以会阻塞客户端。bgsave可以又称作background save，用来解决save阻塞的情况，此时会fork出一个子进程来执行save命令。
+save 先看save对应的saveCommand源码：
+void saveCommand(client *c) { if (server.rdb_child_pid != -1) { addReplyError(c,&amp;#34;Background save already in progress&amp;#34;); return; } rdbSaveInfo rsi, *rsiptr; rsiptr = rdbPopulateSaveInfo(&amp;amp;rsi); if (rdbSave(server.rdb_filename,rsiptr) == C_OK) { addReply(c,shared.ok); } else { addReply(c,shared.err); } } rdbPopulateSaveInfo主要是 Redis 复制的一些预处理，由于尚未看复制相关的代码，所以这次暂时不展开。
+rdbSave则是 Redis 实现RDB持久化的主要函数，这里 Redis 会调用自己封装的 io 操作库 rio 来写入数据。
+bgsave bgsave对应的bgsaveCommand源码：
+void bgsaveCommand(client *c) { int schedule = 0; /* The SCHEDULE option changes the behavior of BGSAVE when an AOF rewrite * is in progress.</description>
     </item>
     
     <item>
       <title>Redis源码：事务</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/</link>
       <pubDate>Fri, 30 Oct 2020 18:39:35 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/</guid>
-      <description>Redis 与事务相关的命令有：multi、discard、exec和watch。 multi、discard和exec这是一组命令，与MySQL的begin、rollba</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/</guid>
+      <description>Redis 与事务相关的命令有：multi、discard、exec和watch。
+multi、discard和exec这是一组命令，与MySQL的begin、rollback和commit有相似之处。watch则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。
+数据结构 // 事务状态 typedef struct multiState { multiCmd *commands; /* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */ int count; /* 一共有多少个待处理的命令 */ int cmd_flags; /* The accumulated command flags OR-ed together. So if at least a command has a given flag, it will be set in this field. */ int minreplicas; /* MINREPLICAS for synchronous replication */ time_t minreplicas_timeout; /* MINREPLICAS timeout as unixtime. */ } multiState; // watch的信息 typedef struct watchedKey { robj *key; redisDb *db; } watchedKey; // 客户端相关的事务字段 typedef struct client { multiState mstate; /* 事务状态 */ list *watched_keys; /* watch的key，里面每个元素都是watchedKey结构体变量 */ } client; // db typedef struct redisDb { dict *watched_keys; /* watch的key，键是key，值是客户端链表 */ } redisDb; 状态 与事务相关的几个客户端状态有：</description>
     </item>
     
     <item>
       <title>Redis源码：pub和sub</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/</link>
       <pubDate>Wed, 28 Oct 2020 23:52:02 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/</guid>
-      <description>Redis 中使用订阅与发布同样可以达到 block 的效果。 数据结构 客户端： typedef struct client { dict *pubsub_channels; /* 普通订阅，key是channel，value为null */ list *pubsub_patterns; /* 匹配模式的订阅*/ } client; 服务端</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/</guid>
+      <description>Redis 中使用订阅与发布同样可以达到 block 的效果。
+数据结构 客户端：
+typedef struct client { dict *pubsub_channels; /* 普通订阅，key是channel，value为null */ list *pubsub_patterns; /* 匹配模式的订阅*/ } client; 服务端：
+struct redisServer { dict *pubsub_channels; /* 普通订阅，key是channel，value为客户端链表 */ list *pubsub_patterns; /* 匹配模式的订阅 */ }; 订阅 通过subscribeCommand中可以定位到订阅的源码，这里会对订阅的每个channel都调用pubsubSubscribeChannel，并且把客户端状态叠加订阅发布状态。
+server.pubsub_channels是字典，键是频道，值是客户端链表。pubsubSubscribeChannel最主要工作就是往server.pubsub_channels的频道客户端链表里添加当前客户端。
+发布 publishCommand是发布对应的函数，里面会调用pubsubPublishMessage进行消息推送。
+函数里最主要做的就是，在server.pubsub_channels中寻找对应的频道，并且循环客户端链表，给每个客户端发送消息。然后会在server.pubsub_patterns中寻找匹配规则的客户端发送消息。
+与block的不同 发布订阅的功能虽然可以实现block的功能，但是两者之间还是有区别：
+ 发布是群发消息，而 block 是先进先出，即 pop 操作。 发布订阅不区分 db，channel 是作用于整个 server。而 block 是作用于 db。 发布订阅没有超时时间限制，block 有超时限制。 发布订阅支持匹配模式  </description>
     </item>
     
     <item>
       <title>Redis源码：从bpop看block</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/</link>
       <pubDate>Mon, 26 Oct 2020 23:48:25 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/</guid>
-      <description>Redis 中可以通过brpop、blpop和brpoplpush来实现对列表的阻塞 pop 操作。 Redis 在处理主逻辑是单线程的，如果使用上述的命令进行阻塞操作的话，后面的请求也会一</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BB%8Ebpop%E7%9C%8Bblock/</guid>
+      <description>Redis 中可以通过brpop、blpop和brpoplpush来实现对列表的阻塞 pop 操作。
+Redis 在处理主逻辑是单线程的，如果使用上述的命令进行阻塞操作的话，后面的请求也会一并阻塞。但是实际场景下，这几个命令并不会造成其它客户端阻塞，所以这里会从源码角度看看 Redis 怎么实现这些功能的。
+阻塞状态 首先从redisCommandTable中找到brpop的命令入口以及整个调用链：brpopCommand-&amp;gt;blockingPopGenericCommand-&amp;gt;blockForKeys。
+brpopCommand里只会调用blockingPopGenericCommand，blockingPopGenericCommand则会判断目标列表是否有元素，如果有，则直接返回，如果列表为空或者不存在该键，则调用blockForKeys。
+在看blockForKeys函数前需要先看几个关于 block 的结构体和属性（省略部分属性）：
+// 阻塞的几种类型 #define BLOCKED_NONE 0 /* Not blocked, no CLIENT_BLOCKED flag set. */#define BLOCKED_LIST 1 /* BLPOP &amp;amp; co. */#define BLOCKED_WAIT 2 /* WAIT for synchronous replication. */#define BLOCKED_MODULE 3 /* Blocked by a loadable module. */#define BLOCKED_STREAM 4 /* XREAD. */#define BLOCKED_ZSET 5 /* BZPOP et al. */ // block info typedef struct bkinfo { listNode *listnode; /* List node for db-&amp;gt;blocking_keys[key] list.</description>
     </item>
     
     <item>
       <title>Redis源码：一个命令的执行流程</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/</link>
       <pubDate>Thu, 15 Oct 2020 11:23:53 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/</guid>
-      <description>一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析： 建立连接 建立连接要从acceptTcpHand</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4%E7%9A%84%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B/</guid>
+      <description>一个命令的执行过程，我们大概可以分成三步骤：建立连接，发送命令，得到结果。下面会针对这三个命令，结合源码进行分析：
+  建立连接
+建立连接要从acceptTcpHandler这个函数说起。
+前面说过，Redis 初始化服务时，会创建一个事件循环eventLoop。在 Redis 监听端口时，会给对应的 socket 绑定一个文件事件，且该事件的回调函数就是acceptTcpHandler。也就是说，任何连接到这个端口的客户端，Redis 都会调用acceptTcpHandler这个函数。
+刚初始化后，等待客户端连接时的eventLoop（此处 fd 假设为 0）：
+回调函数的整个调用链：acceptTcpHandler-&amp;gt;acceptCommonHandler-&amp;gt;createClient。
+简单说明一下acceptTcpHandler的代码逻辑：Redis 最多会循环 1000 次accept客户端来得到对应的客户端 fd，并且每一次循环中会调用acceptCommonHandler函数。所以我们的目标转移到acceptCommonHandler函数上。
+acceptCommonHandler的代码也很简单，最重要的是就是调用createClient函数，其余都是一些边界条件判断以及数据状态更新。
+createClient做了什么？注册对应客户端 fd 的可读事件函数readQueryFromClient以及初始化client对象并且 push 到server的客户端链表里。
+连接创建后的事件循环：
+  发送命令
+与客户端建立连接后，事件循环中就多了一个对应的文件描述符的读事件。只要客户端发送数据，在 Redis 进入到事件循环中就会调用对应事件的回调函数readQueryFromClient。
+首先简述一下发送命令的调用链：readQueryFromClient-&amp;gt;processInputBufferAndReplicate-&amp;gt;processInputBuffer-&amp;gt;processCommand-&amp;gt;call。
+  readQueryFromClient
+这是 Redis 接受客户端请求后的回调函数，主要的逻辑就是读取 client 的 fd 的数据，并且存入 client 的 querybuf 变量中，然后调用processInputBufferAndReplicate。
+  processInputBufferAndReplicate
+因为客户端有可能用于主从节点，这一步其实就是对第三步的封装。主要是进行 client 类型的判断，如果是普通 client 就直接调用processInputBuffer。
+  processInputBuffer
+这一步是解析客户端的输入流中的 RESP 协议，转换成 Redis 中对应的参数，即 client 的 argv 变量。</description>
     </item>
     
     <item>
       <title>Redis源码：redisDB</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81redisDB/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81redisdb/</link>
       <pubDate>Wed, 14 Oct 2020 22:22:47 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81redisDB/</guid>
-      <description>redisDB 即是 database，是 Redis 的数据库。它是变量server里的一个成员变量数组，数组大小默认是 16。 客户端默认使用第一个数据库，其间可以使用select进行 db 的</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81redisdb/</guid>
+      <description>redisDB 即是 database，是 Redis 的数据库。它是变量server里的一个成员变量数组，数组大小默认是 16。
+客户端默认使用第一个数据库，其间可以使用select进行 db 的切换。
+初始化 db 的初始化是在initServer中进行。
+// 分配空间 server.db = zmalloc(sizeof(redisDb)*server.dbnum); // 遍历数组，并且初始化每个变量 for (j = 0; j &amp;lt; server.dbnum; j++) { server.db[j].dict = dictCreate(&amp;amp;dbDictType,NULL); server.db[j].expires = dictCreate(&amp;amp;keyptrDictType,NULL); server.db[j].blocking_keys = dictCreate(&amp;amp;keylistDictType,NULL); server.db[j].ready_keys = dictCreate(&amp;amp;objectKeyPointerValueDictType,NULL); server.db[j].watched_keys = dictCreate(&amp;amp;keylistDictType,NULL); server.db[j].id = j; server.db[j].avg_ttl = 0; server.db[j].defrag_later = listCreate(); } 数据结构 对应的结构体如下：
+typedef struct redisDb { dict *dict; /* The keyspace for this DB */ dict *expires; /* Timeout of keys with a timeout set */ dict *blocking_keys; /* Keys with clients waiting for data (BLPOP)*/ dict *ready_keys; /* Blocked keys that received a PUSH */ dict *watched_keys; /* WATCHED keys for MULTI/EXEC CAS */ int id; /* Database ID */ long long avg_ttl; /* Average TTL, just for stats */ list *defrag_later; /* List of key names to attempt to defrag one by one, gradually.</description>
     </item>
     
     <item>
       <title>Redis源码：入口函数main</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0main/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0main/</link>
       <pubDate>Wed, 14 Oct 2020 15:03:38 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0main/</guid>
-      <description>main 函数是程序执行的起点，也是大家就阅读源码的入口。要了解 Redis 的初始化和运行过程，还是要通过 main 函数入手。 已一个单机的 Redis 为例，main 函数主要可以分成以下几个步骤： 初</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0main/</guid>
+      <description>main 函数是程序执行的起点，也是大家就阅读源码的入口。要了解 Redis 的初始化和运行过程，还是要通过 main 函数入手。
+已一个单机的 Redis 为例，main 函数主要可以分成以下几个步骤：
+  初始化配置
+Redis 中有个非常重要的全局变量server，初始化配置就是针对这个变量进行的。
+Redis 会先根据initServerConfig来进行默认配置的初始化。如果启动 server 时指定了配置文件，则会调用loadServerConfig来加载配置文件中的配置。
+  初始化服务
+initServer会进行一些服务的初始化，包括：信号捕获、创建共享对象、调整文件描述符限制、创建事件循环对象、初始化 db等等。
+  初始化后台线程
+通过InitServerLast函数进行，具体逻辑可以参考之前 bio 的文章。
+  加载持久化数据
+通过loadDataFromDisk函数进行数据加载，优先加载 AOF，如果没有开启 AOF 则加载 RDB。
+  事件循环
+通过aeMain来进行事件循环。
+这个在之前的文件事件循环和时间事件循环中有提到过，没有提及两个前后置的函数：beforeSleep和afterSleep，这里进行一下补充
+  beforeSleep
+beforeSleep是在每次事件循环开始就会执行。
+主要逻辑：
+ 集群的clusterBeforeSleep 进行一次过期 key 的快速清除 AOF 操作 注册可写的客户端的写事件  等等&amp;hellip;
+  afterSleep
+需要注意的是，afterSleep的处理时机是在执行完aeApiPoll后，而不是处理完所有待处理的文件事件和时间事件后。
+afterSleep主要涉及到 module，这部分代码尚未阅读。
+    </description>
     </item>
     
     <item>
       <title>Redis源码：bio</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81bio/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81bio/</link>
       <pubDate>Mon, 12 Oct 2020 16:39:29 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81bio/</guid>
-      <description>Redis 的主线程处理事件循环，所以我们常说 Redis 是单线程的（Redis6 之后加入了多线程模型）。但是在 Redis 中，也存在着 3 条线程，专门处理一些其它操作。 初始化 bio 的初始化在sr</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81bio/</guid>
+      <description>Redis 的主线程处理事件循环，所以我们常说 Redis 是单线程的（Redis6 之后加入了多线程模型）。但是在 Redis 中，也存在着 3 条线程，专门处理一些其它操作。
+初始化 bio 的初始化在src/server.c中的InitServerLast函数，函数接着会调用src/bio.c的bioInit函数。
+实现逻辑 与 bio 相关的几个宏定义、变量以及结构体：
+// 后台线程的类型 #define BIO_CLOSE_FILE 0 /* Deferred close(2) syscall. */#define BIO_AOF_FSYNC 1 /* Deferred AOF fsync. */#define BIO_LAZY_FREE 2 /* Deferred objects freeing. */// 线程数量 #define BIO_NUM_OPS 3  // 线程数组 static pthread_t bio_threads[BIO_NUM_OPS]; // 线程锁数组 static pthread_mutex_t bio_mutex[BIO_NUM_OPS]; // 线程条件变量数组 static pthread_cond_t bio_newjob_cond[BIO_NUM_OPS]; static pthread_cond_t bio_step_cond[BIO_NUM_OPS]; // 任务数组 static list *bio_jobs[BIO_NUM_OPS]; // 待处理任务数组 static unsigned long long bio_pending[BIO_NUM_OPS]; // bio的每一个执行任务结构体 struct bio_job { time_t time; /* Time at which the job was created.</description>
     </item>
     
     <item>
       <title>Redis源码：object</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81object/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81object/</link>
       <pubDate>Sun, 11 Oct 2020 12:25:01 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81object/</guid>
-      <description>我们经常使用 Redis 的基础命令有string、set、list、hashtable和zset。在 Redis 的底层中，我们不是直接使用它们对应的数据结构，而是通过 object 对这些基础命</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81object/</guid>
+      <description>我们经常使用 Redis 的基础命令有string、set、list、hashtable和zset。在 Redis 的底层中，我们不是直接使用它们对应的数据结构，而是通过 object 对这些基础命令进行封装后再对外使用。
+数据结构 typedef struct redisObject { unsigned type:4; unsigned encoding:4; unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or * LFU data (least significant 8 bits frequency * and most significant 16 bits access time). */ int refcount; void *ptr; } robj;   type和encoding
+type 是指对象记录的类型，分别对应着string、set、list、hashtable和zset。encoding 则表示编码，代表对应 type 的底层实现方式。
+  ptr
+这个是指向底层实现的数据结构的指针。
+  refcount
+引用计数，一个 object 可以被多个地方所使用。当被引用时，refcount 会 +1，变成 0 时会被销毁。</description>
     </item>
     
     <item>
       <title>Redis源码：skiplist</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81skiplist/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81skiplist/</link>
       <pubDate>Thu, 08 Oct 2020 12:13:32 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81skiplist/</guid>
-      <description>skiplist 是 Redis 对于跳跃表的一个实现，它也是 zset 的主要实现。网上关于 skiplist 数据结构的介绍有很多，这里主要记录 Redis 中的实现方式。 数据结构 // 跳表节点 typedef struct zskiplistNode { sds ele; double score; struct zskiplistNode *backward; struct zskiplistLevel { struct zskiplistNode *forward;</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81skiplist/</guid>
+      <description>skiplist 是 Redis 对于跳跃表的一个实现，它也是 zset 的主要实现。网上关于 skiplist 数据结构的介绍有很多，这里主要记录 Redis 中的实现方式。
+数据结构 // 跳表节点 typedef struct zskiplistNode { sds ele; double score; struct zskiplistNode *backward; struct zskiplistLevel { struct zskiplistNode *forward; unsigned long span; } level[]; } zskiplistNode; // 跳表 typedef struct zskiplist { struct zskiplistNode *header, *tail; unsigned long length;// 有多少个节点  int level;// 目前有几层高 } zskiplist; skiplist 简单点说就是个有序的双向链表，同时为了提高查询复杂度，增加了层的概念，其实是一种空间换时间的方法。
+与 adlist 这种传统的双向链表来比较，skiplist 的前节点指针跟 adlist 的*prev的用法一样，但是后节点的指针*next却不同。
+skiplist 中指向后节点的指针是使用层来存储。层在代码中就是一个数组，在最底层level[0]中永远会指向下一个节点。如果只想把 skiplist 当作一个普通的双向链表来使用，那么通过 zskiplistNode 中的*backward以及level[0].</description>
     </item>
     
     <item>
       <title>Redis源码：intset</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81intset/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81intset/</link>
       <pubDate>Thu, 08 Oct 2020 10:46:35 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81intset/</guid>
-      <description>intset 就是整数集合。这个集合只包含了整数，并且不回有重复数据。Redis 常用的 set 命令，当符合 intset 的情况时，底层就会使用 intset 去实现，其余情况则使用 dict。 数据结构 #define INTSET_ENC_INT16 (sizeof(int16_t))</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81intset/</guid>
+      <description>intset 就是整数集合。这个集合只包含了整数，并且不回有重复数据。Redis 常用的 set 命令，当符合 intset 的情况时，底层就会使用 intset 去实现，其余情况则使用 dict。
+数据结构 #define INTSET_ENC_INT16 (sizeof(int16_t)) #define INTSET_ENC_INT32 (sizeof(int32_t)) #define INTSET_ENC_INT64 (sizeof(int64_t))  typedef struct intset { uint32_t encoding; uint32_t length; int8_t contents[]; } intset; intset 的结构体只有 3 个属性，比较简单：
+  encoding
+encoding 表示 intset 中存储的整数类型，这里只有三种选择：int16，int32 和 int64。
+  length
+length 表示集合个数。
+  contents[]
+实际存放的元素数组。这里虽然声明是 int8_t 类型，但实际存储的类型按照 encoding 来决定。即 encoding 是 int16，则 contents 存放的就是 int16 元素的数组。
+  特点 intset 主要特点是存放元素是有序的，并且会对元素类型自动升级。</description>
     </item>
     
     <item>
       <title>Redis源码：dict</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81dict/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81dict/</link>
       <pubDate>Wed, 07 Oct 2020 22:26:33 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81dict/</guid>
-      <description>dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。 数据结构 // 字典 typedef struct dict { dictType *type; void *privdata; dictht ht[2];</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81dict/</guid>
+      <description>dict 是 Redis 对于 hashtable 的表现，我们常用的 hash 命令底层就是通过 dict 实现的（严谨一点的话，一开始会使用 ziplist 作为实现，到一定阈值后才使用 dict）。
+数据结构 // 字典 typedef struct dict { dictType *type; void *privdata; dictht ht[2]; long rehashidx; /* rehashing not in progress if rehashidx == -1 */ unsigned long iterators; /* number of iterators currently running */ } dict; // 字典的函数 typedef struct dictType { uint64_t (*hashFunction)(const void *key); void *(*keyDup)(void *privdata, const void *key); void *(*valDup)(void *privdata, const void *obj); int (*keyCompare)(void *privdata, const void *key1, const void *key2); void (*keyDestructor)(void *privdata, void *key); void (*valDestructor)(void *privdata, void *obj); } dictType; // hashtable结构体 typedef struct dictht { dictEntry **table; unsigned long size; unsigned long sizemask; unsigned long used; } dictht; // hashtable节点，存放key value typedef struct dictEntry { void *key; union { void *val; uint64_t u64; int64_t s64; double d; } v; struct dictEntry *next; } dictEntry; hashtable Redis 主要使用dictht和dictEntry这两个结构体来实现基本的 hashtable，实现原理和常见的 hashtable 差不多。</description>
     </item>
     
     <item>
       <title>Redis源码：quicklist</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81quicklist/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81quicklist/</link>
       <pubDate>Wed, 07 Oct 2020 15:34:26 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81quicklist/</guid>
-      <description>quicklist 全称是a generic doubly linked quicklist，从全称可以看得出这是一个节点存放 ziplist 的双向链表。我们常用的 list 功能，底层就是使用 quicklist 实现的。 数据结构 // 双向链表结构体 typedef struct quicklist { quicklistNode *head; quicklistNode</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81quicklist/</guid>
+      <description>quicklist 全称是a generic doubly linked quicklist，从全称可以看得出这是一个节点存放 ziplist 的双向链表。我们常用的 list 功能，底层就是使用 quicklist 实现的。
+数据结构 // 双向链表结构体 typedef struct quicklist { quicklistNode *head; quicklistNode *tail; unsigned long count; /* total count of all entries in all ziplists */ unsigned long len; /* number of quicklistNodes */ int fill : 16; /* fill factor for individual nodes */ unsigned int compress : 16; /* depth of end nodes not to compress;0=off */ } quicklist; // 节点 typedef struct quicklistNode { struct quicklistNode *prev; struct quicklistNode *next; unsigned char *zl; unsigned int sz; /* ziplist size in bytes */ unsigned int count : 16; /* count of items in ziplist */ unsigned int encoding : 2; /* RAW==1 or LZF==2 */ unsigned int container : 2; /* NONE==1 or ZIPLIST==2 */ unsigned int recompress : 1; /* was this node previous compressed?</description>
     </item>
     
     <item>
       <title>Redis源码：ziplist</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81ziplist/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ziplist/</link>
       <pubDate>Tue, 06 Oct 2020 18:40:41 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81ziplist/</guid>
-      <description>ziplist，又称作压缩列表，它是 Redis 内部定义的连续的内存组成的数据结构，目的是减少内存碎片，节省内存空间。 数据结构 ziplist主要由三部分组成：header</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ziplist/</guid>
+      <description>ziplist，又称作压缩列表，它是 Redis 内部定义的连续的内存组成的数据结构，目的是减少内存碎片，节省内存空间。
+数据结构 ziplist主要由三部分组成：header、entry和end。
+header和end header 主要由三部分组成：
+  bytes
+bytes 记录整个 ziplist 占用的内存字节数，长度是 4 个字节。
+  tail
+tail 就是最后一个节点到 ziplist 起始位置的偏移量，该偏移量是从 ziplist 指针开始计算。
+  len
+ziplist 的节点数。当 len &amp;lt; 65535 时，len 即是节点数，此时取 ziplist 的节点数的复杂度是 O(1)。当 len = 65535 时，需要遍历整个节点获取实际的 len，此时取 ziplist 的节点数的复杂度是 O(n)。
+  end 是一个恒定值 0xff，用来标识 ziplist 的末尾。
+entry entry 是 ziplist 中的每一个节点，也是由三个部分组成：prevlen、encoding和content。下面是 entry 的大概结构：
+  prevlen
+这是 entry 的第一部分，这个部分定义了前一个元素的长度。并且它的内存占用大小是不定的，有可能是 1 字节，有可能是 5 字节。</description>
     </item>
     
     <item>
       <title>Redis源码：adlist</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81adlist/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81adlist/</link>
       <pubDate>Mon, 05 Oct 2020 15:45:16 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81adlist/</guid>
-      <description>adlist 全称是a generic doubly linked list，是 Redis 内部实现的一个双向链表。旧版本中，list 是使用 adlist 实现的，后面的版本改成用 quicklist 实现。 数据结构 // 链表节点 typedef struct listNode { struct listNode *prev; struct listNode *next; void *value; } listNode; //</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81adlist/</guid>
+      <description>adlist 全称是a generic doubly linked list，是 Redis 内部实现的一个双向链表。旧版本中，list 是使用 adlist 实现的，后面的版本改成用 quicklist 实现。
+数据结构 // 链表节点 typedef struct listNode { struct listNode *prev; struct listNode *next; void *value; } listNode; // 链表 typedef struct list { listNode *head; listNode *tail; void *(*dup)(void *ptr); void (*free)(void *ptr); int (*match)(void *ptr, void *key); unsigned long len; } list; adlist 是一个常见的双向链表。它比一般的双向链表多记录了链表的长度，所以 adlist 获取元素个数的复杂度是 O(1)，以及几个触发函数：赋值、释放空间和匹配，它会在调用listDup、listEmpty以及listSearchKey时调用对应函数。
+此外，adlist 还实现了自己的迭代器：
+#define AL_START_HEAD 0 #define AL_START_TAIL 1 // 迭代器 typedef struct listIter { listNode *next; int direction; } listIter; 该迭代器根据 direction 的值可以从头到尾或者从尾到头进行遍历。</description>
     </item>
     
     <item>
       <title>Redis源码：sds</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81sds/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81sds/</link>
       <pubDate>Fri, 25 Sep 2020 23:09:58 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81sds/</guid>
-      <description>sds 全称是simple dynamic string，是 Redis 用来实现字符串的一个数据结构。 数据结构 在 C 中，简单的动态字符串结构通常会记录长度和内容： struct string { char *buf;// 字符指针 uint32_t len; // 字符串长</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81sds/</guid>
+      <description>sds 全称是simple dynamic string，是 Redis 用来实现字符串的一个数据结构。
+数据结构 在 C 中，简单的动态字符串结构通常会记录长度和内容：
+struct string { char *buf;// 字符指针  uint32_t len; // 字符串长度 }; 同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：
+ sds 是一个字符指针。 sds 是一段连续的内存空间，前缀记录着字符串元数据，如长度、分配空间、类型。  我们先看一下 sds 的数据结构在内存中的分布，可以看出 sds 是由三部分组成，header、string和结束符\0：
+我们再看一下源码里的sds以及header：
+typedef char *sds; /* Note: sdshdr5 is never used, we just access the flags byte directly. * However is here to document the layout of type 5 SDS strings. */ struct __attribute__ ((__packed__)) sdshdr5 { unsigned char flags; /* 3 lsb of type, and 5 msb of string length */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr8 { uint8_t len; /* used */ uint8_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr16 { uint16_t len; /* used */ uint16_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr32 { uint32_t len; /* used */ uint32_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr64 { uint64_t len; /* used */ uint64_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; sds 就是一个字符指针，而 sds 的前缀 header 则是对应的 sdshdr#T 的结构体。</description>
     </item>
     
     <item>
       <title>Redis源码：AE时间事件</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81AE%E6%97%B6%E9%97%B4%E4%BA%8B%E4%BB%B6/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ae%E6%97%B6%E9%97%B4%E4%BA%8B%E4%BB%B6/</link>
       <pubDate>Wed, 23 Sep 2020 23:40:53 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81AE%E6%97%B6%E9%97%B4%E4%BA%8B%E4%BB%B6/</guid>
-      <description>Redis 的时间事件相比起文件事件简单不少（以 Redis5.0.9 为例）。 aeEventLoop aeEventLoop是Redis全局的结构体对象，所有跟事件有关的数据和状态都存储在这上面： // 只展示时间事件</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ae%E6%97%B6%E9%97%B4%E4%BA%8B%E4%BB%B6/</guid>
+      <description>Redis 的时间事件相比起文件事件简单不少（以 Redis5.0.9 为例）。
+aeEventLoop aeEventLoop是Redis全局的结构体对象，所有跟事件有关的数据和状态都存储在这上面：
+// 只展示时间事件相关属性 typedef struct aeEventLoop { long long timeEventNextId; /* 自增id */ time_t lastTime; /* 每次执行时间事件循环的时间 */ aeTimeEvent *timeEventHead; /* 一个时间事件链表 */ } aeEventLoop;   timeEventNextId
+每一个时间事件都有自己唯一的 id，这个 id 是全局自增的，记录在aeEventLoop里。
+  lastTime
+最后一次执行时间事件循环的时间点。这个属性会用于事件循环中的时钟检验，如果产生了时钟回拨，则所有时间事件将会被马上执行。
+  timeEventHead
+所有的时间事件形成一个双向链表，aeEventLoop存放这链表头部，具体结构体：
+typedef struct aeTimeEvent { long long id; /* time event identifier. */ long when_sec; /* seconds */ long when_ms; /* milliseconds */ aeTimeProc *timeProc; aeEventFinalizerProc *finalizerProc; void *clientData; struct aeTimeEvent *prev; struct aeTimeEvent *next; } aeTimeEvent;   id</description>
     </item>
     
     <item>
       <title>Redis源码：AE文件事件</title>
-      <link>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81AE%E6%96%87%E4%BB%B6%E4%BA%8B%E4%BB%B6/</link>
+      <link>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ae%E6%96%87%E4%BB%B6%E4%BA%8B%E4%BB%B6/</link>
       <pubDate>Sat, 19 Sep 2020 11:46:17 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Redis/Redis%E6%BA%90%E7%A0%81AE%E6%96%87%E4%BB%B6%E4%BA%8B%E4%BB%B6/</guid>
-      <description>Redis 的事件模块分为文件事件和时间事件。文件事件主要是处理网络 IO 事件，而时间事件主要处理 Redis 自身的一些定时任务。 这里会先对 Redis 的文件事件的源码进行简单地阅读并且分析（以</description>
+      <guid>https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ae%E6%96%87%E4%BB%B6%E4%BA%8B%E4%BB%B6/</guid>
+      <description>Redis 的事件模块分为文件事件和时间事件。文件事件主要是处理网络 IO 事件，而时间事件主要处理 Redis 自身的一些定时任务。
+这里会先对 Redis 的文件事件的源码进行简单地阅读并且分析（以 Redis5.0.9 为例）。
+aeEventLoop aeEventLoop是Redis全局的结构体对象，所有跟事件有关的数据和状态都存储在这上面：
+// 只展示文件事件相关属性 typedef struct aeEventLoop { int maxfd; /* 当前注册的最大的文件描述符 */ int setsize; /* 可追踪的文件描述符数量 */ aeFileEvent *events; /* 已注册的事件数组，数组下标是 fd 值，每个events默认的mask是AE_NONE */ aeFiredEvent *fired; /* 触发的事件数组 */ void *apidata; /* api结构，select epoll 等等 */ } aeEventLoop;   int maxfd
+当前最大的文件描述符。初始值是 -1。这个值会根据aeCreateFileEvent和aeDeleteFileEvent执行时动态变化。
+  int setsize
+Redis 所能够处理的文件描述符的数量，默认值是 10000 + 32 + 96。
+  aeFileEvent *events</description>
     </item>
     
     <item>
       <title>Linux源码：select浅析</title>
-      <link>https://rudychow.github.io/post/Linux/Linux%E6%BA%90%E7%A0%81select/</link>
+      <link>https://rudychow.github.io/post/linux/linux%E6%BA%90%E7%A0%81select/</link>
       <pubDate>Wed, 09 Sep 2020 22:28:29 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Linux/Linux%E6%BA%90%E7%A0%81select/</guid>
-      <description>因为 Linux 源码中 select 的代码量不多，所以尝试阅读一下 select 的源码。阅读过程主要以读懂基础流程为主，对于尚未理解或者过于难懂的地方暂时略过。（下面以 Linux5.7 为准） 通过man 2 sel</description>
+      <guid>https://rudychow.github.io/post/linux/linux%E6%BA%90%E7%A0%81select/</guid>
+      <description>因为 Linux 源码中 select 的代码量不多，所以尝试阅读一下 select 的源码。阅读过程主要以读懂基础流程为主，对于尚未理解或者过于难懂的地方暂时略过。（下面以 Linux5.7 为准）
+通过man 2 select，我们知道有关 select 的 API 主要有以下几个：
+// FD 系列 void FD_CLR(int fd, fd_set *set); int FD_ISSET(int fd, fd_set *set); void FD_SET(int fd, fd_set *set); void FD_ZERO(fd_set *set); // select函数 int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout); 主要可以分成两个部分去理解：
+ FD_*系列的宏函数，用来操作fd_set的结构体 select函数，进行 IO 操作的主要函数  FD_* 要清楚FD_*系列函数的具体逻辑，首先需要知道fd_set的具体结构。fd_set的成员很简单，这个结构体里只有一个long类型的数组。说白了，fd_set就是一个bitmap的数据结构。
+// 这里是未展开宏时的结构体 typedef long int __fd_mask; #define __FD_SETSIZE 1024 #define __NFDBITS (8 * (int) sizeof (__fd_mask)) typedef struct { __fd_mask __fds_bits[__FD_SETSIZE / __NFDBITS]; # define __FDS_BITS(set) ((set)-&amp;gt;__fds_bits) } fd_set; // 这里是宏展开后，在64位操作系统下的结构体 typedef struct { long int __fds_bits[16]; } fd_set; 在 64 位操作系统中，数组大小是 16，在 32 位操作系统中，数组大小是 32。但总体上，整个bitmap的长度一定会是1024。这个是根据__FD_SETSIZE的宏计算而来的，这也是大家常说 select 的最大文件描述符限制是1024 的原因。</description>
     </item>
     
     <item>
       <title>PHP扩展：实现snowflake分布式id（2）</title>
-      <link>https://rudychow.github.io/post/PHP/PHP%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</link>
+      <link>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</link>
       <pubDate>Fri, 28 Aug 2020 00:29:51 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/PHP/PHP%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</guid>
-      <description>前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO） 解压后，进入到ext目</description>
+      <guid>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</guid>
+      <description>前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO）
+解压后，进入到ext目录，里面有个PHP脚本：ext_skel.php。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。
+$ php ext_skel.php --ext snowflake Copying config scripts... done Copying sources... done Copying tests... done Success. The extension is now ready to be compiled. To do so, use the following steps: cd /path/to/php-src/snowflake phpize ./configure make Don&amp;#39;t forget to run tests once the compilation is done: make test Thank you for using PHP! 我们的扩展脚手架已经搭成，准备进入扩展开发阶段。
+ 网络上的教程大部分都是执行ext_skel的 bash 脚本。 实际上，在PHP 7.3.0之后，开发组为了更好适配 Windows 下的 PHP 扩展开发，重新设计了ext_skel这个脚本。现在需要使用php ext_skel.php来代替原来的脚本，意味着没有更多其他的依赖。</description>
     </item>
     
     <item>
       <title>PHP扩展：实现snowflake分布式id（1）</title>
-      <link>https://rudychow.github.io/post/PHP/PHP%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/</link>
+      <link>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/</link>
       <pubDate>Mon, 24 Aug 2020 23:48:32 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/PHP/PHP%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/</guid>
-      <description>Snowflake，又称为雪花算法，是Twitter开源的高性能分布式ID的生成算法。关于snowflake的介绍，网上有很多，这里不再赘述。 结构 snowfla</description>
+      <guid>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/</guid>
+      <description>Snowflake，又称为雪花算法，是Twitter开源的高性能分布式ID的生成算法。关于snowflake的介绍，网上有很多，这里不再赘述。
+结构 snowflake说白了就是一个64位的整数，整体构成如下：
+ workerid + current (ms) - epoch (ms) + datacenterid + seqNum unsigned | | | | | | 0 | 0000000000-0000000000-0000000000-0000000000-0 | 0000000000 | 000000000000 | | | 1bit + 41bits + 10bits + 12bits  首位是符号位，因为snowflake总是正整数，所以首位置为0，即无符号。 第二部分占41bits，该处的值=当前毫秒-设定毫秒。 第三部分为机器id，占10bits，该处细分为workerid和datacenterid，可灵活配置。 最后一部分为序列号，占12bits，程序内的自增id值。  实现 由于没有进行过PHP扩展开发，所以此处先用C语言写一个简单版本。
+// 起始时间 #define SNOWFLAKE_START_TIME 1597939200000  uint64_t generateSnowflakeId(uint8_t, uint8_t); uint64_t getSnowflakeTime(); /** * 生成id */ uint64_t generateSnowflakeId(uint8_t workerId, uint8_t dataCenterId) { uint64_t snowflakeId = 0; // workerid 和 datacenterid判断  if (workerId &amp;gt; 31 || dataCenterId &amp;gt; 31) { fprintf(stderr, &amp;#34;workerId or dataCenterId out of range 31&amp;#34;); exit(-1); } // 序列号判断  if (snowflakeSeqNum &amp;gt; 0xfff) { snowflakeSeqNum = 0; } // 最重要的部分  return snowflakeId | getSnowflakeTime() &amp;lt;&amp;lt; 22 | workerId &amp;lt;&amp;lt; 17 | dataCenterId &amp;lt;&amp;lt; 12 | snowflakeSeqNum++; } /** * 获取snowflake的时间 */ uint64_t getSnowflakeTime() { struct timeval now; gettimeofday(&amp;amp;now, NULL); uint64_t millisecond = now.</description>
     </item>
     
     <item>
       <title>MySQL索引相关概念（1）</title>
-      <link>https://rudychow.github.io/post/MySQL/MySQL%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/</link>
+      <link>https://rudychow.github.io/post/mysql/mysql%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/</link>
       <pubDate>Mon, 17 Aug 2020 23:53:56 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/MySQL/MySQL%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/</guid>
-      <description>前缀索引（Index Prefixes） 前缀索引，即是你可以通过字段的前N个字符去创建一个索引。当你想为TEXT或者BLOB字段创建索引时，必须指定长度。 ## 创建测</description>
+      <guid>https://rudychow.github.io/post/mysql/mysql%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/</guid>
+      <description>前缀索引（Index Prefixes） 前缀索引，即是你可以通过字段的前N个字符去创建一个索引。当你想为TEXT或者BLOB字段创建索引时，必须指定长度。
+##	创建测试表 mysql&amp;gt; show create table z_test\G *************************** 1. row *************************** Table: z_test Create Table: CREATE TABLE `z_test` ( `id` int unsigned NOT NULL AUTO_INCREMENT, `name` varchar(255) NOT NULL, `age` tinyint unsigned NOT NULL, `city` varchar(16) NOT NULL, `intro` text, `create_time` datetime NOT NULL, PRIMARY KEY (`id`) ) ENGINE=InnoDB AUTO_INCREMENT=300057 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ##	直接帮TEXT字段创建索引是无法成功的 mysql&amp;gt; alter table z_test add index idx_intro(`intro`); ERROR 1170 (42000): BLOB/TEXT column &amp;#39;intro&amp;#39; used in key specification without a key length ##	指定长度后创建成功 mysql&amp;gt; alter table z_test add index idx_intro(`intro`(20)); Query OK, 0 rows affected (0.</description>
     </item>
     
     <item>
@@ -382,16 +680,29 @@
       <pubDate>Fri, 31 Jul 2020 23:28:01 +0800</pubDate>
       
       <guid>https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E9%94%81%E8%B6%85%E6%97%B6/</guid>
-      <description>问题记录 门店反馈POS机在用户成功付款时等待很久，并且弹出错误提示。于是查看日志，发现相关接口出现数据库锁超时的报错：Lock wait timeout exceeded; try restarting transaction。</description>
+      <description>问题记录 门店反馈POS机在用户成功付款时等待很久，并且弹出错误提示。于是查看日志，发现相关接口出现数据库锁超时的报错：Lock wait timeout exceeded; try restarting transaction。
+问题定位 客户端的付款流程是先调用付款接口，如果付款接口返回“用户支付中”或者没有正确得到相应结果，客户端会接着调用查询支付结果的接口，且线上日志正是查询支付接结果的接口报了锁超时的错误。
+需要注意的是锁超时和死锁是不一样的。
+ 锁超时（Lock wait timeout exceeded）：一般体现在前一个事务对记录进行了锁操作，但未进行提交或者回滚，后一个事务在等待前面的事务释放锁，但是等待的时间超出了innodb_lock_wait_timeout的值，而引起的现象。 死锁（Dead Lock）：两个或两个以上的事务在执行过程中，互相等待对方释放相同资源的锁的现象。  在知道锁超时产生原因的前提下，需要检查付款接口以及查询付款结果接口的代码逻辑即可。
+// 付款 function pay($orderId) { begin; try{ insert into child_order (order_id) values ($orderId); // 第三方支付 	thirdPay(); commit; }catch($exception){ rollback; } } // 查询支付结果 function query($orderId) { // 第三方查询支付结果 	$isPaid = queryPayResult(); // 锁超时异常点  $isPaid and insert into child_order (order_id) values ($orderId); } 两个接口都对相同订单号进行了insert操作。如果是普通的insert操作，即使第一个事务没有完成，第二个事务的insert也不会产生锁超时的情况。之所以产生锁超时，是因为order_id字段是唯一索引。第一个事务的insert会获取到锁，如果没有完成事务，第二个insert由于是相同的order_id，也就进入了等待锁的情况。
+从上面的代码看来没什么问题，该commit的地方commit了，该rollback的地方rollback了。于是我们怀疑程序在调用第三方支付请求太久，导致支付时的事务一直无法完成。但是进一步看代码，我们在请求第三方接口时做了超时限制，如果超过30s没有得到相应结果，则会自动抛出异常，猜测不成立。
+而且在请求第三方接口后，即便超时，我们也会记录日志。这次问题还有个可疑的点：我们没有找到任何这次请求第三方支付的日志，也没有找到关于这次付款接口的请求日志。
+于是我联系服务商，询问这次接口的情况情况，他们也提供给我们对应的接口日志，日志上显示付款成功。
+像这种HTTP请求会产生网络IO导致协程切换，这次的问题仿佛就像协程切换出去，但是没有切回来，导致后续的代码没有继续执行下去，也就因此没有了日志。</description>
     </item>
     
     <item>
       <title>Nginx客户端断开连接的日志记录</title>
-      <link>https://rudychow.github.io/post/Nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</link>
+      <link>https://rudychow.github.io/post/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</link>
       <pubDate>Mon, 20 Jul 2020 23:27:34 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/Nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</guid>
-      <description>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以49</description>
+      <guid>https://rudychow.github.io/post/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</guid>
+      <description>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。
+测试环境 +----------+ +---------+ +----------+ | | | | | | | | http | |upstream| server | | client &amp;lt;--------&amp;gt; Nginx +-------&amp;gt;+ | | | | | |sleep(20s)| | | | | | | +----------+ +---------+ +----------+ 场景1：主动断开连接 测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。
+经过抓包得到客户端和服务端的连接信息：
+通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。
+此时Nginx记录的日志如下：
+172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] &amp;quot;GET / HTTP/1.1&amp;quot; 499 0 &amp;quot;-&amp;quot; &amp;quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&amp;quot; &amp;quot;-&amp;quot;  HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。</description>
     </item>
     
     <item>
@@ -400,26 +711,18 @@
       <pubDate>Fri, 03 Jul 2020 18:52:50 +0800</pubDate>
       
       <guid>https://rudychow.github.io/post/%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95%E5%88%B0%E5%BA%95%E6%98%AF%E5%87%A0%E6%AC%A1%E8%AF%B7%E6%B1%82/</guid>
-      <description>问题记录 运营反馈的问题：顾客成功付款，但是POS机显示在Loading，最后弹窗提示“请校准系统时间”，但是在管理后台能查看到顾客成功付款的订单数据。 POS机发</description>
+      <description>问题记录 运营反馈的问题：顾客成功付款，但是POS机显示在Loading，最后弹窗提示“请校准系统时间”，但是在管理后台能查看到顾客成功付款的订单数据。
+POS机发出的每一个请求都会携带签名和时间戳，后端服务在接受到请求后会进行签名和时间戳的检验，如果时间戳与服务器当前时间差在20s以上，则会返回“请校准系统时间”的错误信息。
+问题定位 后台的接口日志现实响应成功，并且处理了对应逻辑，整个请求的时间在30s左右，但POS机收到的响应结果却是“请校准系统时间”。
+一开始怀疑POS机发送了两次请求，第一次请求成功，第二次请求因为网络原因导致出现该错误。
++-------+ http1 +--------+ | +--------------&amp;gt;+ | | | | | | +&amp;lt;--------------+ | | | 200 | | | POS | | server | | | http2 | | | +--------------&amp;gt;+ | | | | | | +&amp;lt;--------------+ | +-------+ error +--------+ 但在POS机记录的请求日志中，客户端发起请求直至得到响应结果前，都没有发送过第二次请求。并且在POS机发起的请求中，其携带的链路ID是可以追踪到我们后台对应的请求日志，也就是响应成功的那一个日志。
+错误信息原因 假设不存在网络问题，那就是POS机与服务器的时间确实相差了20秒以上。该逻辑不成立，如果真的是系统时间不准确，每个从POS机发出的请求都会得到这个错误响应，整个POS机也无法正常运行，而现实情况中POS机运行正常，只有这个特例。
+如果是网络问题，则POS机的该请求达到我们服务器确实用了20秒以上的时间。该逻辑不成立，根据POS机的链路ID记录请求达到服务器花了1秒不到的时间，而且服务器中也进行了业务处理，对应的数据库记录的时间也吻合，日志也记录了正确的响应结果。
+我们能确保的是POS机记录的请求和服务器记录的请求是同一个请求，因为请求携带的链路ID确实一致。于是我猜测另外一种可能性：Nginx负载均衡的超时重发。
++-----------+ +----------+ +-----------+ | | | | http(timeout) | | | | | +-------------------&amp;gt;+ | | | | | | | | | http | | 20s | | | POS +------------&amp;gt;+ Nginx | | server | | | | | http | | | | | +-------------------^+ | | | | +v-------------------+ | | | | | error | | | | | | | | | | | +&amp;lt;-------------------+ | +-----------+ +----------+ 200 +-----------+ 猜想验证 Nginx配置：</description>
     </item>
     
-    <item>
-      <title>归档</title>
-      <link>https://rudychow.github.io/archives/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://rudychow.github.io/archives/</guid>
-      <description></description>
-    </item>
     
-    <item>
-      <title>搜索</title>
-      <link>https://rudychow.github.io/search/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://rudychow.github.io/search/</guid>
-      <description></description>
-    </item>
     
   </channel>
 </rss>

@@ -192,12 +192,12 @@
             <p>Redis 中使用订阅与发布同样可以达到 block 的效果。</p>
 <h2 id="数据结构">数据结构</h2>
 <p>客户端：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> client {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> client {
     dict <span style="color:#719e07">*</span>pubsub_channels;  <span style="color:#586e75">/* 普通订阅，key是channel，value为null  */</span>
     list <span style="color:#719e07">*</span>pubsub_patterns;  <span style="color:#586e75">/* 匹配模式的订阅*/</span>
 } client;
 </code></pre></div><p>服务端：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> redisServer {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> redisServer {
     dict <span style="color:#719e07">*</span>pubsub_channels;  <span style="color:#586e75">/* 普通订阅，key是channel，value为客户端链表  */</span>
     list <span style="color:#719e07">*</span>pubsub_patterns;  <span style="color:#586e75">/* 匹配模式的订阅 */</span>
 };

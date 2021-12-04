@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>K8S on Rudy&#39;s blog</title>
+    <link>https://rudychow.github.io/categories/k8s/</link>
+    <description>Recent content in K8S on Rudy&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Wed, 27 Jan 2021 20:01:41 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/k8s/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ingress Nginx 部署</title>
+      <link>https://rudychow.github.io/post/k8s/ingress-nginx%E9%83%A8%E7%BD%B2/</link>
+      <pubDate>Wed, 27 Jan 2021 20:01:41 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/k8s/ingress-nginx%E9%83%A8%E7%BD%B2/</guid>
+      <description>前提：
+ ingress 中 Nginx 的组件有两个，一个是 kubernetes 提供的，叫Ingress Nginx，一个是 Nginx 提供的，叫Nginx ingress，这里以Ingress Nginx为例。 因为网上大部分的安装教程因为版本和时间的差别，导致很多问题，所以此处以官网文档为准。 我所使用的 k8s 版本是 1.20.2。  安装步骤：
+  执行 yaml
+因为自己是裸机环境，所以按照官网教程的Bare-metal去进行部署，需要执行kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.43.0/deploy/static/provider/baremetal/deploy.yaml。
+这里会自动拉取k8s.gcr.io/ingress-nginx/controller:v0.43.0@sha256:9bba603b99bf25f6d117cf1235b6598c16033ad027b143c90fa5b3cc583c5713镜像。由于某些原因，可以通过先提前拉取别人做好的 image。
+$ docker pull pollyduan/ingress-nginx-controller:v0.43.0 $ docker tag pollyduan/ingress-nginx-controller:v0.43.0 k8s.gcr.io/ingress-nginx/controller:v0.43.0 由于 yaml 拉取镜像时会进行镜像校验，所以需要下载 yaml 下来并且去掉校验和。
+$ sed -i &amp;#39;s/@sha256:9bba603b99bf25f6d117cf1235b6598c16033ad027b143c90fa5b3cc583c5713//&amp;#39; ingress-nginx.yaml 安装完后测试是否成功。
+[root@k8s-master nginx]# kubectl get svc -n ingress-nginx NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE ingress-nginx-controller NodePort 10.96.168.229 &amp;lt;none&amp;gt; 80:31445/TCP,443:31344/TCP 44m ingress-nginx-controller-admission ClusterIP 10.</description>
+    </item>
+    
+    <item>
+      <title>Calico个人理解</title>
+      <link>https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/</link>
+      <pubDate>Sun, 24 Jan 2021 12:41:09 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/k8s/calico%E4%B8%AA%E4%BA%BA%E7%90%86%E8%A7%A3/</guid>
+      <description>docker 的桥接网络   开启 docker 进程后，docker 会开启虚拟网桥（可以理解为 Linux 内的虚拟交换机）。
+通过ip addr可以看到系统多出一个网卡docker0，通常 IP 是172.17.0.1/16：
+$ ip addr show docker0 3: docker0: &amp;lt;BROADCAST,MULTICAST,UP,LOWER_UP&amp;gt; mtu 1500 qdisc noqueue state UP group default link/ether 02:42:e4:63:84:b5 brd ff:ff:ff:ff:ff:ff inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0 valid_lft forever preferred_lft forever inet6 fe80::42:e4ff:fe63:84b5/64 scope link valid_lft forever preferred_lft forever 通过ip route可以看到默认会写入一条路由，可以看到请求172.17.0.0/16地址的请求都会通过docker0发出：
+$ ip route default via 192.168.9.1 dev wlp1s0 proto dhcp metric 600 default via 192.168.9.1 dev wlp1s0 proto dhcp src 192.</description>
+    </item>
+    
+  </channel>
+</rss>

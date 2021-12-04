@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Redis源码：sds | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="sds 全称是simple dynamic string，是 Redis 用来实现字符串的一个数据结构。
+数据结构 在 C 中，简单的动态字符串结构通常会记录长度和内容：
+struct string { char *buf;// 字符指针  uint32_t len; // 字符串长度 }; 同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：
+ sds 是一个字符指针。 sds 是一段连续的内存空间，前缀记录着字符串元数据，如长度、分配空间、类型。  我们先看一下 sds 的数据结构在内存中的分布，可以看出 sds 是由三部分组成，header、string和结束符\0：
+我们再看一下源码里的sds以及header：
+typedef char *sds; /* Note: sdshdr5 is never used, we just access the flags byte directly. * However is here to document the layout of type 5 SDS strings. */ struct __attribute__ ((__packed__)) sdshdr5 { unsigned char flags; /* 3 lsb of type, and 5 msb of string length */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr8 { uint8_t len; /* used */ uint8_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr16 { uint16_t len; /* used */ uint16_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr32 { uint32_t len; /* used */ uint32_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr64 { uint64_t len; /* used */ uint64_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; sds 就是一个字符指针，而 sds 的前缀 header 则是对应的 sdshdr#T 的结构体。">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81sds/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Redis源码：sds" />
+<meta property="og:description" content="sds 全称是simple dynamic string，是 Redis 用来实现字符串的一个数据结构。
+数据结构 在 C 中，简单的动态字符串结构通常会记录长度和内容：
+struct string { char *buf;// 字符指针  uint32_t len; // 字符串长度 }; 同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：
+ sds 是一个字符指针。 sds 是一段连续的内存空间，前缀记录着字符串元数据，如长度、分配空间、类型。  我们先看一下 sds 的数据结构在内存中的分布，可以看出 sds 是由三部分组成，header、string和结束符\0：
+我们再看一下源码里的sds以及header：
+typedef char *sds; /* Note: sdshdr5 is never used, we just access the flags byte directly. * However is here to document the layout of type 5 SDS strings. */ struct __attribute__ ((__packed__)) sdshdr5 { unsigned char flags; /* 3 lsb of type, and 5 msb of string length */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr8 { uint8_t len; /* used */ uint8_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr16 { uint16_t len; /* used */ uint16_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr32 { uint32_t len; /* used */ uint32_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr64 { uint64_t len; /* used */ uint64_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; sds 就是一个字符指针，而 sds 的前缀 header 则是对应的 sdshdr#T 的结构体。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81sds/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-09-25T23:09:58&#43;08:00" />
+<meta property="article:modified_time" content="2020-09-25T23:09:58&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Redis源码：sds"/>
+<meta name="twitter:description" content="sds 全称是simple dynamic string，是 Redis 用来实现字符串的一个数据结构。
+数据结构 在 C 中，简单的动态字符串结构通常会记录长度和内容：
+struct string { char *buf;// 字符指针  uint32_t len; // 字符串长度 }; 同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：
+ sds 是一个字符指针。 sds 是一段连续的内存空间，前缀记录着字符串元数据，如长度、分配空间、类型。  我们先看一下 sds 的数据结构在内存中的分布，可以看出 sds 是由三部分组成，header、string和结束符\0：
+我们再看一下源码里的sds以及header：
+typedef char *sds; /* Note: sdshdr5 is never used, we just access the flags byte directly. * However is here to document the layout of type 5 SDS strings. */ struct __attribute__ ((__packed__)) sdshdr5 { unsigned char flags; /* 3 lsb of type, and 5 msb of string length */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr8 { uint8_t len; /* used */ uint8_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr16 { uint16_t len; /* used */ uint16_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr32 { uint32_t len; /* used */ uint32_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr64 { uint64_t len; /* used */ uint64_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; sds 就是一个字符指针，而 sds 的前缀 header 则是对应的 sdshdr#T 的结构体。"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Redis源码：sds",
+      "item": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81sds/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Redis源码：sds",
+  "name": "Redis源码：sds",
+  "description": "sds 全称是simple dynamic string，是 Redis 用来实现字符串的一个数据结构。\n数据结构 在 C 中，简单的动态字符串结构通常会记录长度和内容：\nstruct string { char *buf;// 字符指针  uint32_t len; // 字符串长度 }; 同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：\n sds 是一个字符指针。 sds 是一段连续的内存空间，前缀记录着字符串元数据，如长度、分配空间、类型。  我们先看一下 sds 的数据结构在内存中的分布，可以看出 sds 是由三部分组成，header、string和结束符\\0：\n我们再看一下源码里的sds以及header：\ntypedef char *sds; /* Note: sdshdr5 is never used, we just access the flags byte directly. * However is here to document the layout of type 5 SDS strings. */ struct __attribute__ ((__packed__)) sdshdr5 { unsigned char flags; /* 3 lsb of type, and 5 msb of string length */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr8 { uint8_t len; /* used */ uint8_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr16 { uint16_t len; /* used */ uint16_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr32 { uint32_t len; /* used */ uint32_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr64 { uint64_t len; /* used */ uint64_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; sds 就是一个字符指针，而 sds 的前缀 header 则是对应的 sdshdr#T 的结构体。",
+  "keywords": [
+    
+  ],
+  "articleBody": "sds 全称是simple dynamic string，是 Redis 用来实现字符串的一个数据结构。\n数据结构 在 C 中，简单的动态字符串结构通常会记录长度和内容：\nstruct string { char *buf;// 字符指针  uint32_t len; // 字符串长度 }; 同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：\n sds 是一个字符指针。 sds 是一段连续的内存空间，前缀记录着字符串元数据，如长度、分配空间、类型。  我们先看一下 sds 的数据结构在内存中的分布，可以看出 sds 是由三部分组成，header、string和结束符\\0：\n我们再看一下源码里的sds以及header：\ntypedef char *sds; /* Note: sdshdr5 is never used, we just access the flags byte directly. * However is here to document the layout of type 5 SDS strings. */ struct __attribute__ ((__packed__)) sdshdr5 { unsigned char flags; /* 3 lsb of type, and 5 msb of string length */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr8 { uint8_t len; /* used */ uint8_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr16 { uint16_t len; /* used */ uint16_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr32 { uint32_t len; /* used */ uint32_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; struct __attribute__ ((__packed__)) sdshdr64 { uint64_t len; /* used */ uint64_t alloc; /* excluding the header and null terminator */ unsigned char flags; /* 3 lsb of type, 5 unused bits */ char buf[]; }; sds 就是一个字符指针，而 sds 的前缀 header 则是对应的 sdshdr#T 的结构体。\nheader header 的结构体一共有 5 个，但主要分成两类：sdshdr5与非sdshdr5。具体会使用哪一个结构体，则是根据字符串的长度来决定的。\nlen代表字符串的长度，alloc代表字符串分配的空间。在一开始创建 sds 时，len和alloc是相同的，但是可以通过空间扩容进行预分配，此时alloc的值会比len大。\n所有的结构体都有两个共同的属性：flags和buf[]。buf[]是一个柔性数组，不占用空间，起到标识作用。而flags是很重要的一个属性，因为它记录了数据结构使用了哪个结构体。\nflags占 1 个字节，即 8 个 bits。这 8 个 bits 会分成两部分，第一部分是 3 个bits：存放结构体类型的type、第二个部分是 5 个bits：字符串长度或者无实际意义。\n sds通过指针位移sds[-1]即可获得sdshdr的flags属性。\n需要注意的是，整个数据结构的内存是连续的，所以为了避免编译器在编译过程中进行内存对齐优化，header的结构体使用了__attribute__ ((__packed__))来保证结构体的每一个字段都黏在一起。\n最重要是确保结构体中的flags字段与sds连续，因为sds会通过指针位移来获取header中的flags属性。\nstring与结束符\\0 string 是 heap 中的内存空间，而后面跟着字符串结束符。正常来说，知道 len 就可以获取到整个字符串了。在这里加上字符串结束符主要是为了可以让 sds 兼容库的字符串函数，但这里不保证二进制安全。\napi 几个关于 sds 的常见 api：\n  sdsnewlen\n该函数用于创建 sds 数据结构，接收两个参数，一个指针，一个是字符串长度。创建流程如下：\n 根据字符串长度参数获取sdshdr的类型，即 header。此时如果长度为 0，则分配的是sdshdr8的结构体。 获取到 header 后，根据 header 的长度加上字符串长度再加上 1 个字节长度（\\0），分配内存空间。 根据 sdshdr 的类型对 header 里的各项数据进行赋值：len、alloc和flags，此时 len 和 alloc 等值。 复制第一个参数到 sds 中的字符串内存中，并给最后一个字节赋值为 \\0。    sdsMakeRoomFor\n该函数用于扩容，即预分配 sds 的空间，即 alloc 的值。接收两个参数，一个 sds 指针，一个是扩容的空间长度 addlen。\n 获取到目前剩余的空间：alloc - len，如果当前剩余空间大于要扩容的空间长度，则直接返回（代表有足够的空间）。 计算新的总空间大小 newlen = len + addlen。这里进行空间预分配，如果 newlen 重新分配空间。    sdsfree\n该函数用于释放 sds 的空间。\n  结语 以前看《Redis设计与实现》时，关于 Redis 早期版本的数据结构并非如此像上面那样，当时的数据结构如下：\nstruct sdshdr { int len; int free; char buf[]; }; 可见一个 sds 占用至少 8 个字节，这样无论字符串多小还是多大，header 都是占用一个固定的内存空间。在新版的 sds 中，其范围是 1 ~ 17 个字节，来适应不同长度的字符串长度，更加弹性，在资源控制上更加严格。\n",
+  "wordCount" : "361",
+  "inLanguage": "en",
+  "datePublished": "2020-09-25T23:09:58+08:00",
+  "dateModified": "2020-09-25T23:09:58+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81sds/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      Redis源码：sds
+    </h1>
+    <div class="post-meta"><span title='2020-09-25 23:09:58 +0800 HKT'>September 25, 2020</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><p>sds 全称是<code>simple dynamic string</code>，是 Redis 用来实现字符串的一个数据结构。</p>
+<h2 id="数据结构">数据结构<a hidden class="anchor" aria-hidden="true" href="#数据结构">#</a></h2>
+<p>在 C 中，简单的动态字符串结构通常会记录长度和内容：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">struct</span> string {
+    <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>buf;<span style="color:#75715e">// 字符指针
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">uint32_t</span> len; <span style="color:#75715e">// 字符串长度
+</span><span style="color:#75715e"></span>};
+</code></pre></div><p>同样 sds 也会记录长度，但是它和常见的动态字符串结构不同：</p>
+<ul>
+<li>sds 是一个字符指针。</li>
+<li>sds 是一段连续的内存空间，前缀记录着字符串元数据，如长度、分配空间、类型。</li>
+</ul>
+<p>我们先看一下 sds 的数据结构在内存中的分布，可以看出 sds 是由三部分组成，<code>header</code>、<code>string</code>和<code>结束符\0</code>：</p>
+<p><img loading="lazy" src="/pics/redis/sds/1.jpg" alt="sds-1"  />
+</p>
+<p>我们再看一下源码里的<code>sds</code>以及<code>header</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>sds;
+
+<span style="color:#75715e">/* Note: sdshdr5 is never used, we just access the flags byte directly.
+</span><span style="color:#75715e"> * However is here to document the layout of type 5 SDS strings. */</span>
+<span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">__attribute__</span> ((__packed__)) sdshdr5 {
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">char</span> flags; <span style="color:#75715e">/* 3 lsb of type, and 5 msb of string length */</span>
+    <span style="color:#66d9ef">char</span> buf[];
+};
+<span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">__attribute__</span> ((__packed__)) sdshdr8 {
+    <span style="color:#66d9ef">uint8_t</span> len; <span style="color:#75715e">/* used */</span>
+    <span style="color:#66d9ef">uint8_t</span> alloc; <span style="color:#75715e">/* excluding the header and null terminator */</span>
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">char</span> flags; <span style="color:#75715e">/* 3 lsb of type, 5 unused bits */</span>
+    <span style="color:#66d9ef">char</span> buf[];
+};
+<span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">__attribute__</span> ((__packed__)) sdshdr16 {
+    <span style="color:#66d9ef">uint16_t</span> len; <span style="color:#75715e">/* used */</span>
+    <span style="color:#66d9ef">uint16_t</span> alloc; <span style="color:#75715e">/* excluding the header and null terminator */</span>
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">char</span> flags; <span style="color:#75715e">/* 3 lsb of type, 5 unused bits */</span>
+    <span style="color:#66d9ef">char</span> buf[];
+};
+<span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">__attribute__</span> ((__packed__)) sdshdr32 {
+    <span style="color:#66d9ef">uint32_t</span> len; <span style="color:#75715e">/* used */</span>
+    <span style="color:#66d9ef">uint32_t</span> alloc; <span style="color:#75715e">/* excluding the header and null terminator */</span>
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">char</span> flags; <span style="color:#75715e">/* 3 lsb of type, 5 unused bits */</span>
+    <span style="color:#66d9ef">char</span> buf[];
+};
+<span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">__attribute__</span> ((__packed__)) sdshdr64 {
+    <span style="color:#66d9ef">uint64_t</span> len; <span style="color:#75715e">/* used */</span>
+    <span style="color:#66d9ef">uint64_t</span> alloc; <span style="color:#75715e">/* excluding the header and null terminator */</span>
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">char</span> flags; <span style="color:#75715e">/* 3 lsb of type, 5 unused bits */</span>
+    <span style="color:#66d9ef">char</span> buf[];
+};
+</code></pre></div><p><strong>sds 就是一个字符指针，而 sds 的前缀 header 则是对应的 sdshdr#T 的结构体。</strong></p>
+<h3 id="header">header<a hidden class="anchor" aria-hidden="true" href="#header">#</a></h3>
+<p>header 的结构体一共有 5 个，但主要分成两类：<code>sdshdr5</code>与<code>非sdshdr5</code>。具体会使用哪一个结构体，则是根据字符串的长度来决定的。</p>
+<p><code>len</code>代表字符串的长度，<code>alloc</code>代表字符串分配的空间。在一开始创建 sds 时，<code>len</code>和<code>alloc</code>是相同的，但是可以通过空间扩容进行预分配，此时<code>alloc</code>的值会比<code>len</code>大。</p>
+<p>所有的结构体都有两个共同的属性：<code>flags</code>和<code>buf[]</code>。<code>buf[]</code>是一个柔性数组，不占用空间，起到标识作用。而<code>flags</code>是很重要的一个属性，因为它记录了数据结构使用了哪个结构体。</p>
+<p><code>flags</code>占 1 个字节，即 8 个 bits。这 8 个 bits 会分成两部分，第一部分是 3 个bits：存放结构体类型的type、第二个部分是 5 个bits：字符串长度或者无实际意义。</p>
+<h3 id="sds-2picsredissds2jpg"><img loading="lazy" src="/pics/redis/sds/2.jpg" alt="sds-2"  />
+</h3>
+<p><code>sds</code>通过指针位移<code>sds[-1]</code>即可获得<code>sdshdr&lt;T&gt;</code>的<code>flags</code>属性。</p>
+<p>需要注意的是，整个数据结构的内存是连续的，所以为了避免编译器在编译过程中进行内存对齐优化，<code>header</code>的结构体使用了<code>__attribute__ ((__packed__))</code>来保证结构体的每一个字段都黏在一起。</p>
+<p>最重要是确保结构体中的<code>flags</code>字段与<code>sds</code>连续，因为<code>sds</code>会通过指针位移来获取<code>header</code>中的<code>flags</code>属性。</p>
+<h3 id="string与结束符0">string与结束符\0<a hidden class="anchor" aria-hidden="true" href="#string与结束符0">#</a></h3>
+<p>string 是 heap 中的内存空间，而后面跟着字符串结束符。正常来说，知道 len 就可以获取到整个字符串了。在这里加上字符串结束符主要是为了可以让 sds 兼容<code>&lt;string.h&gt;</code>库的字符串函数，但这里不保证二进制安全。</p>
+<h2 id="api">api<a hidden class="anchor" aria-hidden="true" href="#api">#</a></h2>
+<p>几个关于 sds 的常见 api：</p>
+<ul>
+<li>
+<p>sdsnewlen</p>
+<p>该函数用于创建 sds 数据结构，接收两个参数，一个指针，一个是字符串长度。创建流程如下：</p>
+<ol>
+<li>根据字符串长度参数获取<code>sdshdr&lt;T&gt;</code>的类型，即 header。此时如果长度为 0，则分配的是<code>sdshdr8</code>的结构体。</li>
+<li>获取到 header 后，根据 header 的长度加上字符串长度再加上 1 个字节长度（\0），分配内存空间。</li>
+<li>根据 sdshdr 的类型对 header 里的各项数据进行赋值：len、alloc和flags，此时 len 和 alloc 等值。</li>
+<li>复制第一个参数到 sds 中的字符串内存中，并给最后一个字节赋值为 \0。</li>
+</ol>
+</li>
+<li>
+<p>sdsMakeRoomFor</p>
+<p>该函数用于扩容，即预分配 sds 的空间，即 alloc 的值。接收两个参数，一个 sds 指针，一个是扩容的空间长度 addlen。</p>
+<ol>
+<li>获取到目前剩余的空间：alloc - len，如果当前剩余空间大于要扩容的空间长度，则直接返回（代表有足够的空间）。</li>
+<li>计算新的总空间大小 newlen = len + addlen。这里进行空间预分配，如果 newlen &lt; 1M，则 newlen *= 2，否则 newlen += 1M。</li>
+<li>重新分配空间。</li>
+</ol>
+</li>
+<li>
+<p>sdsfree</p>
+<p>该函数用于释放 sds 的空间。</p>
+</li>
+</ul>
+<h2 id="结语">结语<a hidden class="anchor" aria-hidden="true" href="#结语">#</a></h2>
+<p>以前看《Redis设计与实现》时，关于 Redis 早期版本的数据结构并非如此像上面那样，当时的数据结构如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">struct</span> sdshdr {
+    <span style="color:#66d9ef">int</span> len;
+    <span style="color:#66d9ef">int</span> free;
+    <span style="color:#66d9ef">char</span> buf[];
+};
+</code></pre></div><p>可见一个 sds 占用至少 8 个字节，这样无论字符串多小还是多大，header 都是占用一个固定的内存空间。在新版的 sds 中，其范围是 1 ~ 17 个字节，来适应不同长度的字符串长度，更加弹性，在资源控制上更加严格。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81adlist/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>Redis源码：adlist</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81ae%E6%97%B6%E9%97%B4%E4%BA%8B%E4%BB%B6/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>Redis源码：AE时间事件</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

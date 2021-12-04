@@ -190,7 +190,7 @@
         <div class="post-content">
             <p>我们经常使用 Redis 的基础命令有<code>string</code>、<code>set</code>、<code>list</code>、<code>hashtable</code>和<code>zset</code>。在 Redis 的底层中，我们不是直接使用它们对应的数据结构，而是通过 object 对这些基础命令进行封装后再对外使用。</p>
 <h2 id="数据结构">数据结构</h2>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> redisObject {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> redisObject {
     <span style="color:#dc322f">unsigned</span> type:<span style="color:#2aa198">4</span>;
     <span style="color:#dc322f">unsigned</span> encoding:<span style="color:#2aa198">4</span>;
     <span style="color:#dc322f">unsigned</span> lru:LRU_BITS; <span style="color:#586e75">/* LRU time (relative to global lru_clock) or

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>PHP on Rudy&#39;s blog</title>
+    <link>https://rudychow.github.io/tags/php/</link>
+    <description>Recent content in PHP on Rudy&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Fri, 28 Aug 2020 00:29:51 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/tags/php/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>PHP扩展：实现snowflake分布式id（2）</title>
+      <link>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</link>
+      <pubDate>Fri, 28 Aug 2020 00:29:51 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</guid>
+      <description>前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO）
+解压后，进入到ext目录，里面有个PHP脚本：ext_skel.php。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。
+$ php ext_skel.php --ext snowflake Copying config scripts... done Copying sources... done Copying tests... done Success. The extension is now ready to be compiled. To do so, use the following steps: cd /path/to/php-src/snowflake phpize ./configure make Don&amp;#39;t forget to run tests once the compilation is done: make test Thank you for using PHP! 我们的扩展脚手架已经搭成，准备进入扩展开发阶段。
+ 网络上的教程大部分都是执行ext_skel的 bash 脚本。 实际上，在PHP 7.3.0之后，开发组为了更好适配 Windows 下的 PHP 扩展开发，重新设计了ext_skel这个脚本。现在需要使用php ext_skel.php来代替原来的脚本，意味着没有更多其他的依赖。</description>
+    </item>
+    
+  </channel>
+</rss>

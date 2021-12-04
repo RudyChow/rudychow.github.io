@@ -224,12 +224,12 @@
 <h2 id="ip">ip</h2>
 <p>这个是<code>iproute2</code>中主要的命令，可以替代<code>net-tools</code>的<code>ifconfig</code>、<code>route</code>和<code>arp</code>。</p>
 <h3 id="ip-link">ip link</h3>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看网络设备，但是不会查看到ip</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看网络设备，但是不会查看到ip</span>
 ip link
 <span style="color:#586e75"># 启动/关闭某个网卡</span>
 ip link <span style="color:#b58900">set</span> interface up/down
 </code></pre></div><h3 id="ip-addr">ip addr</h3>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看每个网络设备上的ip</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看每个网络设备上的ip</span>
 ip addr
 <span style="color:#586e75"># 查看指定的网卡</span>
 ip addr show dev device
@@ -238,12 +238,12 @@ ip addr add/del IPv4/IPv6 dev device
 <span style="color:#586e75"># 清除指定网卡的所有ip</span>
 ip addr flush dev device
 </code></pre></div><h3 id="ip-route">ip route</h3>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看路由表</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看路由表</span>
 ip route
 <span style="color:#586e75"># 启动/关闭某个网卡</span>
 ip link <span style="color:#b58900">set</span> interface up/down
 </code></pre></div><p><code>ip route</code>和<code>route</code>显示的格式不太一样：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-node1 vagrant<span style="color:#719e07">]</span><span style="color:#586e75"># ip route</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#719e07">[</span>root@k8s-node1 vagrant<span style="color:#719e07">]</span><span style="color:#586e75"># ip route</span>
 default via 192.168.9.1 dev eth1 proto dhcp metric <span style="color:#2aa198">100</span> 
 default via 10.0.2.2 dev eth0 proto dhcp metric <span style="color:#2aa198">101</span> 
 10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric <span style="color:#2aa198">101</span> 
@@ -253,7 +253,7 @@ default via 10.0.2.2 dev eth0 proto dhcp metric <span style="color:#2aa198">101<
 <p>以<code>10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15 metric 101  </code>为例简单解读：</p>
 <p>默认发送给 10.0.2.0/24 的网络请求，都经过网卡 eth0 发出去寻找目标 IP，src 表示 eth0 网卡的 IP 地址。（同一网段内的两台机器不需要经过网关）</p>
 <h3 id="ip-neigh">ip neigh</h3>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看arp表</span>
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#586e75"># 查看arp表</span>
 ip neigh
 <span style="color:#586e75"># 添加ARP</span>
 ip neigh add IPv4 lladdr mac dev divice

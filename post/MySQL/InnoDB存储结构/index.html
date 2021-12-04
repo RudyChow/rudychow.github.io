@@ -204,21 +204,21 @@
 <li>&hellip;</li>
 </ul>
 <p>而在表空间里，其实就是由许许多多的页构成，从代码上看大概是这样：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#268bd2">type</span> page <span style="color:#268bd2">struct</span>{}
-  
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#268bd2">type</span> page <span style="color:#268bd2">struct</span>{}
+
 <span style="color:#268bd2">func</span> <span style="color:#268bd2">main</span>()  {
-  <span style="color:#586e75">// 表空间里面有许许多多页组成
-</span><span style="color:#586e75"></span>  <span style="color:#586e75">// 每个表空间一定会有三个页
-</span><span style="color:#586e75"></span>  <span style="color:#586e75">// 系统表空间也会预先分配一定的空间
-</span><span style="color:#586e75"></span>  tablespace <span style="color:#719e07">:=</span> <span style="color:#b58900">make</span>([]page, <span style="color:#2aa198">3</span>, <span style="color:#2aa198">64</span>)
-  
-  <span style="color:#586e75">// 第一个页是系统页
-</span><span style="color:#586e75"></span>  fmt.<span style="color:#268bd2">Println</span>(tablespace[<span style="color:#2aa198">0</span>])
-  <span style="color:#586e75">// 第二个页是insert buffer bitmap页
-</span><span style="color:#586e75"></span>  fmt.<span style="color:#268bd2">Println</span>(tablespace[<span style="color:#2aa198">1</span>])
-  <span style="color:#586e75">// 第三个页是段索引页
-</span><span style="color:#586e75"></span>  fmt.<span style="color:#268bd2">Println</span>(tablespace[<span style="color:#2aa198">2</span>])
-  
+	<span style="color:#586e75">// 表空间里面有许许多多页组成
+</span><span style="color:#586e75"></span>	<span style="color:#586e75">// 每个表空间一定会有三个页
+</span><span style="color:#586e75"></span>	<span style="color:#586e75">// 系统表空间也会预先分配一定的空间
+</span><span style="color:#586e75"></span>	tablespace <span style="color:#719e07">:=</span> <span style="color:#b58900">make</span>([]page, <span style="color:#2aa198">3</span>, <span style="color:#2aa198">64</span>)
+
+	<span style="color:#586e75">// 第一个页是系统页
+</span><span style="color:#586e75"></span>	fmt.<span style="color:#268bd2">Println</span>(tablespace[<span style="color:#2aa198">0</span>])
+	<span style="color:#586e75">// 第二个页是insert buffer bitmap页
+</span><span style="color:#586e75"></span>	fmt.<span style="color:#268bd2">Println</span>(tablespace[<span style="color:#2aa198">1</span>])
+	<span style="color:#586e75">// 第三个页是段索引页
+</span><span style="color:#586e75"></span>	fmt.<span style="color:#268bd2">Println</span>(tablespace[<span style="color:#2aa198">2</span>])
+
 }
 </code></pre></div></li>
 <li>

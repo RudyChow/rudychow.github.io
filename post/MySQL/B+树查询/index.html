@@ -185,7 +185,7 @@
             <p>B+ 树是一种多路平衡树，通过 B 树演化而来。</p>
 <p>我们知道从一组有序数字数组中查找目标记录，使用二分查找法（Binary Search）是一种有效的方式，复杂度达到 O(log2n)。但是如果要在几个分开的有序数组中找到目标记录，要怎样才比较有效率？</p>
 <p>假设有 4 个数组，每个数组最多只能存放 4 个元素，现在需要在这四个数组中找到目标 10：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go">page1 <span style="color:#719e07">:=</span> []<span style="color:#dc322f">int</span>{<span style="color:#2aa198">1</span>, <span style="color:#2aa198">2</span>, <span style="color:#2aa198">3</span>, <span style="color:#2aa198">4</span>}
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go">page1 <span style="color:#719e07">:=</span> []<span style="color:#dc322f">int</span>{<span style="color:#2aa198">1</span>, <span style="color:#2aa198">2</span>, <span style="color:#2aa198">3</span>, <span style="color:#2aa198">4</span>}
 page2 <span style="color:#719e07">:=</span> []<span style="color:#dc322f">int</span>{<span style="color:#2aa198">5</span>, <span style="color:#2aa198">6</span>, <span style="color:#2aa198">7</span>, <span style="color:#2aa198">8</span>}
 page3 <span style="color:#719e07">:=</span> []<span style="color:#dc322f">int</span>{<span style="color:#2aa198">9</span>, <span style="color:#2aa198">10</span>, <span style="color:#2aa198">11</span>, <span style="color:#2aa198">12</span>}
 page4 <span style="color:#719e07">:=</span> []<span style="color:#dc322f">int</span>{<span style="color:#2aa198">13</span>, <span style="color:#2aa198">14</span>, <span style="color:#2aa198">15</span>, <span style="color:#2aa198">16</span>}

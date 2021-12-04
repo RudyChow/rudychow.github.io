@@ -196,7 +196,7 @@
         <div class="post-content">
             <p>skiplist 是 Redis 对于跳跃表的一个实现，它也是 zset 的主要实现。网上关于 skiplist 数据结构的介绍有很多，这里主要记录 Redis 中的实现方式。</p>
 <h2 id="数据结构">数据结构</h2>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 跳表节点
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 跳表节点
 </span><span style="color:#586e75"></span><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> zskiplistNode {
     sds ele;
     <span style="color:#dc322f">double</span> score;
@@ -225,7 +225,7 @@
 <h2 id="api">api</h2>
 <p>下面是阅读源码时做的笔记：</p>
 <h3 id="zslinsert插入数据">zslInsert（插入数据）</h3>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">zskiplistNode <span style="color:#719e07">*</span><span style="color:#268bd2">zslInsert</span>(zskiplist <span style="color:#719e07">*</span>zsl, <span style="color:#dc322f">double</span> score, sds ele) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">zskiplistNode <span style="color:#719e07">*</span><span style="color:#268bd2">zslInsert</span>(zskiplist <span style="color:#719e07">*</span>zsl, <span style="color:#dc322f">double</span> score, sds ele) {
     zskiplistNode <span style="color:#719e07">*</span>update[ZSKIPLIST_MAXLEVEL], <span style="color:#719e07">*</span>x;
     <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> rank[ZSKIPLIST_MAXLEVEL];
     <span style="color:#dc322f">int</span> i, level;
@@ -294,7 +294,7 @@
     <span style="color:#719e07">return</span> x;
 }
 </code></pre></div><h3 id="zsldelete删除数据">zslDelete（删除数据）</h3>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">zslDelete</span>(zskiplist <span style="color:#719e07">*</span>zsl, <span style="color:#dc322f">double</span> score, sds ele, zskiplistNode <span style="color:#719e07">**</span>node) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">zslDelete</span>(zskiplist <span style="color:#719e07">*</span>zsl, <span style="color:#dc322f">double</span> score, sds ele, zskiplistNode <span style="color:#719e07">**</span>node) {
     zskiplistNode <span style="color:#719e07">*</span>update[ZSKIPLIST_MAXLEVEL], <span style="color:#719e07">*</span>x;
     <span style="color:#dc322f">int</span> i;
 
@@ -328,7 +328,7 @@
     <span style="color:#719e07">return</span> <span style="color:#2aa198">0</span>; <span style="color:#586e75">/* not found */</span>
 }
 </code></pre></div><h3 id="zslupdatescore修改数据">zslUpdateScore（修改数据）</h3>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">zskiplistNode <span style="color:#719e07">*</span><span style="color:#268bd2">zslUpdateScore</span>(zskiplist <span style="color:#719e07">*</span>zsl, <span style="color:#dc322f">double</span> curscore, sds ele, <span style="color:#dc322f">double</span> newscore) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">zskiplistNode <span style="color:#719e07">*</span><span style="color:#268bd2">zslUpdateScore</span>(zskiplist <span style="color:#719e07">*</span>zsl, <span style="color:#dc322f">double</span> curscore, sds ele, <span style="color:#dc322f">double</span> newscore) {
     zskiplistNode <span style="color:#719e07">*</span>update[ZSKIPLIST_MAXLEVEL], <span style="color:#719e07">*</span>x;
     <span style="color:#dc322f">int</span> i;
 

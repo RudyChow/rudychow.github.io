@@ -1,24 +1,23 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Nginx on Rudy&#39;s blog</title>
-    <link>/categories/nginx/</link>
+    <link>https://rudychow.github.io/categories/nginx/</link>
     <description>Recent content in Nginx on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>zh-cn</language>
-    <lastBuildDate>Mon, 20 Jul 2020 23:27:34 +0800</lastBuildDate>
-    
-        <atom:link href="/categories/nginx/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Mon, 20 Jul 2020 23:27:34 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/nginx/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Nginx客户端断开连接的日志记录</title>
-      <link>/posts/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</link>
+      <link>https://rudychow.github.io/post/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</link>
       <pubDate>Mon, 20 Jul 2020 23:27:34 +0800</pubDate>
       
-      <guid>/posts/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</guid>
-      <description>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时</description>
-      
+      <guid>https://rudychow.github.io/post/nginx%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%96%AD%E5%BC%80%E8%BF%9E%E6%8E%A5%E7%9A%84%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/</guid>
+      <description>最近跟同事讨论问题时提到Nginx客户端断开连接时的日志问题。 同事说客户端异常断开连接时，记录的会是200日志。之前一直认为客户端断开连接时，Nginx会以499状态来记录日志，所以来实验一下。
+测试环境 +----------+ +---------+ +----------+ | | | | | | | | http | |upstream| server | | client &amp;lt;--------&amp;gt; Nginx +-------&amp;gt;+ | | | | | |sleep(20s)| | | | | | | +----------+ +---------+ +----------+ 场景1：主动断开连接 测试行为：浏览器对Nginx发起请求，并在Nginx响应前关闭页面，此后观察结果。
+经过抓包得到客户端和服务端的连接信息：
+通过序号213～236可以看到，客户端发送了http请求后主动断开连接，并且之后与服务端完成四次挥手行为，即证明客户端与服务端已经断开连接。
+此时Nginx记录的日志如下：
+172.20.0.1 - - [20/Jul/2020:15:03:19 +0000] &amp;quot;GET / HTTP/1.1&amp;quot; 499 0 &amp;quot;-&amp;quot; &amp;quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36&amp;quot; &amp;quot;-&amp;quot;  HTTP并没有一个专门响应码来定义客户端主动关闭连接的行为，所以在Nginx发送响应之前如果客户端关闭了连接，则会使用他们自己定义的响应码，即499，来代表客户端主动关闭连接。</description>
     </item>
     
   </channel>

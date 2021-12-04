@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>总结与计划 on Rudy&#39;s blog</title>
     <link>https://rudychow.github.io/categories/%E6%80%BB%E7%BB%93%E4%B8%8E%E8%AE%A1%E5%88%92/</link>
     <description>Recent content in 总结与计划 on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>zh-cn</language>
     <lastBuildDate>Sat, 06 Feb 2021 14:00:56 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/%E6%80%BB%E7%BB%93%E4%B8%8E%E8%AE%A1%E5%88%92/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>2021计划</title>
@@ -13,7 +12,22 @@
       <pubDate>Sat, 06 Feb 2021 14:00:56 +0800</pubDate>
       
       <guid>https://rudychow.github.io/post/2021%E8%AE%A1%E5%88%92/</guid>
-      <description>学习： 至少读一本书 去年完成目标《MySQL技术内幕：InnoDB存储引擎》，今年目标未定，但会围绕自己兴趣或者工作需要进行。 至少看一个开源项目源码 去年完成目标 R</description>
+      <description>学习：
+  至少读一本书
+去年完成目标《MySQL技术内幕：InnoDB存储引擎》，今年目标未定，但会围绕自己兴趣或者工作需要进行。
+  至少看一个开源项目源码
+去年完成目标 Redis，今年暂定是 Nginx 或 Docker。
+  生活：
+  坚持运动，体重保持在 140 斤内
+去年增肌到 150 斤，无奈身边人都觉得太胖了，于是又减脂到 140 斤，后面长时间也会维持在这个体重内。
+去年还完成了人生最重要的一件事——取掉右手肱骨的钢板。即使医生一直劝说手术的风险，还签了责任告知，最后我还是选择做了手术，现在还是心有余悸。手术后手臂恢复还算不错，健身时的各种不适感明显减少了，甚至可以做俯卧撑了。希望今年能在保证身体正常的前提下，进行更多的运动。
+  十分钟内能解决的事情不要拖
+比如吃完饭后马上洗碗，洗完澡如果不再进食就顺便刷牙等等。这些事情分开做的时间也是一样的，但是顺手完成了心里愉悦度会高很多。再也不想准备上床睡觉时，突然想到碗还没洗，又或者还没刷牙时又要爬起来做事情。
+  进行一次出行
+去年在疫情爆发前去了泰国，但是在 2020 年由于疫情，取消了出行的计划，希望今年可以在预期内出行。
+  早睡早起
+尽力而为。
+  </description>
     </item>
     
   </channel>

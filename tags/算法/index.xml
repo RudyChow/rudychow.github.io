@@ -1,28 +1,33 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>算法 on Rudy&#39;s blog</title>
     <link>https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/</link>
     <description>Recent content in 算法 on Rudy&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>zh-cn</language>
     <lastBuildDate>Fri, 28 Aug 2020 00:29:51 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/tags/%E7%AE%97%E6%B3%95/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>PHP扩展：实现snowflake分布式id（2）</title>
-      <link>https://rudychow.github.io/post/PHP/PHP%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</link>
+      <link>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</link>
       <pubDate>Fri, 28 Aug 2020 00:29:51 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/PHP/PHP%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</guid>
-      <description>前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO） 解压后，进入到ext目</description>
+      <guid>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid2/</guid>
+      <description>前期准备 首先需要下载PHP源码：下载地址。（这里我使用的PHP版本是7.4.9，系统环境是x86_64 Linux 5.7.17-2-MANJARO）
+解压后，进入到ext目录，里面有个PHP脚本：ext_skel.php。接下来，我们需要通过该脚本帮我们生成扩展的脚手架。
+$ php ext_skel.php --ext snowflake Copying config scripts... done Copying sources... done Copying tests... done Success. The extension is now ready to be compiled. To do so, use the following steps: cd /path/to/php-src/snowflake phpize ./configure make Don&amp;#39;t forget to run tests once the compilation is done: make test Thank you for using PHP! 我们的扩展脚手架已经搭成，准备进入扩展开发阶段。
+ 网络上的教程大部分都是执行ext_skel的 bash 脚本。 实际上，在PHP 7.3.0之后，开发组为了更好适配 Windows 下的 PHP 扩展开发，重新设计了ext_skel这个脚本。现在需要使用php ext_skel.php来代替原来的脚本，意味着没有更多其他的依赖。</description>
     </item>
     
     <item>
       <title>PHP扩展：实现snowflake分布式id（1）</title>
-      <link>https://rudychow.github.io/post/PHP/PHP%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/</link>
+      <link>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/</link>
       <pubDate>Mon, 24 Aug 2020 23:48:32 +0800</pubDate>
       
-      <guid>https://rudychow.github.io/post/PHP/PHP%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/</guid>
-      <description>Snowflake，又称为雪花算法，是Twitter开源的高性能分布式ID的生成算法。关于snowflake的介绍，网上有很多，这里不再赘述。 结构 snowfla</description>
+      <guid>https://rudychow.github.io/post/php/php%E6%89%A9%E5%B1%95%E5%AE%9E%E7%8E%B0snowflake%E5%88%86%E5%B8%83%E5%BC%8Fid1/</guid>
+      <description>Snowflake，又称为雪花算法，是Twitter开源的高性能分布式ID的生成算法。关于snowflake的介绍，网上有很多，这里不再赘述。
+结构 snowflake说白了就是一个64位的整数，整体构成如下：
+ workerid + current (ms) - epoch (ms) + datacenterid + seqNum unsigned | | | | | | 0 | 0000000000-0000000000-0000000000-0000000000-0 | 0000000000 | 000000000000 | | | 1bit + 41bits + 10bits + 12bits  首位是符号位，因为snowflake总是正整数，所以首位置为0，即无符号。 第二部分占41bits，该处的值=当前毫秒-设定毫秒。 第三部分为机器id，占10bits，该处细分为workerid和datacenterid，可灵活配置。 最后一部分为序列号，占12bits，程序内的自增id值。  实现 由于没有进行过PHP扩展开发，所以此处先用C语言写一个简单版本。
+// 起始时间 #define SNOWFLAKE_START_TIME 1597939200000  uint64_t generateSnowflakeId(uint8_t, uint8_t); uint64_t getSnowflakeTime(); /** * 生成id */ uint64_t generateSnowflakeId(uint8_t workerId, uint8_t dataCenterId) { uint64_t snowflakeId = 0; // workerid 和 datacenterid判断  if (workerId &amp;gt; 31 || dataCenterId &amp;gt; 31) { fprintf(stderr, &amp;#34;workerId or dataCenterId out of range 31&amp;#34;); exit(-1); } // 序列号判断  if (snowflakeSeqNum &amp;gt; 0xfff) { snowflakeSeqNum = 0; } // 最重要的部分  return snowflakeId | getSnowflakeTime() &amp;lt;&amp;lt; 22 | workerId &amp;lt;&amp;lt; 17 | dataCenterId &amp;lt;&amp;lt; 12 | snowflakeSeqNum++; } /** * 获取snowflake的时间 */ uint64_t getSnowflakeTime() { struct timeval now; gettimeofday(&amp;amp;now, NULL); uint64_t millisecond = now.</description>
     </item>
     
   </channel>

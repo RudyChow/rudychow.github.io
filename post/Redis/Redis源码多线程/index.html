@@ -198,12 +198,12 @@
 <p>以往的 Redis 在处理网络 IO 时是单线程，在新版本中引入了多线程。默认是关闭的，需要修改配置进行开启。</p>
 <h2 id="相关配置与变量">相关配置与变量</h2>
 <p>有两个配置参数会影响到多线程：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 线程数量，默认是1，即只有主线程，最大是128
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 线程数量，默认是1，即只有主线程，最大是128
 </span><span style="color:#586e75"></span>io<span style="color:#719e07">-</span>threads [<span style="color:#2aa198">1</span><span style="color:#719e07">~</span><span style="color:#2aa198">128</span>]
 <span style="color:#586e75">// 是否通过辅助线程来读取并解析客户端，默认是0
 </span><span style="color:#586e75"></span>io<span style="color:#719e07">-</span>threads<span style="color:#719e07">-</span><span style="color:#719e07">do</span><span style="color:#719e07">-</span>reads [<span style="color:#2aa198">0</span><span style="color:#719e07">|</span><span style="color:#2aa198">1</span>]
 </code></pre></div><p>还有几个相关的结构体字段以及全局变量：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> redisServer {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">struct</span> redisServer {
     <span style="color:#dc322f">int</span> io_threads_num;         <span style="color:#586e75">/* Number of IO threads to use. */</span>
     <span style="color:#dc322f">int</span> io_threads_do_reads;    <span style="color:#586e75">/* Read and parse from IO threads? */</span>
     <span style="color:#dc322f">int</span> io_threads_active;      <span style="color:#586e75">/* Is IO threads currently active? */</span>
@@ -228,7 +228,7 @@
 <p>在以前的版本中，每个客户端发送请求时，主线程会回调<code>readQueryFromClient</code>函数。Redis6 版本中仍然是旧的逻辑，那这里要如何才能把<code>readQueryFromClient</code>的工作交给其它线程来处理呢？</p>
 <p>源码中显示其它线程是根据<code>io_threads_pending[id]</code>以及<code>io_threads_op</code>去执行读操作的，所以阅读的重点就在于这两个全局变量的变化。</p>
 <p>主线程接收到客户端请求时，仍旧会调用<code>readQueryFromClient</code>。但是在 Redis6 中，该函数中会调用<code>postponeClientRead</code>去判断是否由其它线程去执行读的操作。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">postponeClientRead</span>(client <span style="color:#719e07">*</span>c) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#dc322f">int</span> <span style="color:#268bd2">postponeClientRead</span>(client <span style="color:#719e07">*</span>c) {
     <span style="color:#719e07">if</span> (server.io_threads_active <span style="color:#719e07">&amp;&amp;</span>
         server.io_threads_do_reads <span style="color:#719e07">&amp;&amp;</span>
         <span style="color:#719e07">!</span>ProcessingEventsWhileBlocked <span style="color:#719e07">&amp;&amp;</span>

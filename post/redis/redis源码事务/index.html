@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Redis源码：事务 | Rudy&#39;s blog</title>
+<meta name="keywords" content="" />
+<meta name="description" content="Redis 与事务相关的命令有：multi、discard、exec和watch。
+multi、discard和exec这是一组命令，与MySQL的begin、rollback和commit有相似之处。watch则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。
+数据结构 // 事务状态 typedef struct multiState { multiCmd *commands; /* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */ int count; /* 一共有多少个待处理的命令 */ int cmd_flags; /* The accumulated command flags OR-ed together. So if at least a command has a given flag, it will be set in this field. */ int minreplicas; /* MINREPLICAS for synchronous replication */ time_t minreplicas_timeout; /* MINREPLICAS timeout as unixtime. */ } multiState; // watch的信息 typedef struct watchedKey { robj *key; redisDb *db; } watchedKey; // 客户端相关的事务字段 typedef struct client { multiState mstate; /* 事务状态 */ list *watched_keys; /* watch的key，里面每个元素都是watchedKey结构体变量 */ } client; // db typedef struct redisDb { dict *watched_keys; /* watch的key，键是key，值是客户端链表 */ } redisDb; 状态 与事务相关的几个客户端状态有：">
+<meta name="author" content="Rudy">
+<link rel="canonical" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://rudychow.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://rudychow.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://rudychow.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://rudychow.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://rudychow.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.89.3" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Redis源码：事务" />
+<meta property="og:description" content="Redis 与事务相关的命令有：multi、discard、exec和watch。
+multi、discard和exec这是一组命令，与MySQL的begin、rollback和commit有相似之处。watch则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。
+数据结构 // 事务状态 typedef struct multiState { multiCmd *commands; /* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */ int count; /* 一共有多少个待处理的命令 */ int cmd_flags; /* The accumulated command flags OR-ed together. So if at least a command has a given flag, it will be set in this field. */ int minreplicas; /* MINREPLICAS for synchronous replication */ time_t minreplicas_timeout; /* MINREPLICAS timeout as unixtime. */ } multiState; // watch的信息 typedef struct watchedKey { robj *key; redisDb *db; } watchedKey; // 客户端相关的事务字段 typedef struct client { multiState mstate; /* 事务状态 */ list *watched_keys; /* watch的key，里面每个元素都是watchedKey结构体变量 */ } client; // db typedef struct redisDb { dict *watched_keys; /* watch的key，键是key，值是客户端链表 */ } redisDb; 状态 与事务相关的几个客户端状态有：" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2020-10-30T18:39:35&#43;08:00" />
+<meta property="article:modified_time" content="2020-10-30T18:39:35&#43;08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Redis源码：事务"/>
+<meta name="twitter:description" content="Redis 与事务相关的命令有：multi、discard、exec和watch。
+multi、discard和exec这是一组命令，与MySQL的begin、rollback和commit有相似之处。watch则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。
+数据结构 // 事务状态 typedef struct multiState { multiCmd *commands; /* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */ int count; /* 一共有多少个待处理的命令 */ int cmd_flags; /* The accumulated command flags OR-ed together. So if at least a command has a given flag, it will be set in this field. */ int minreplicas; /* MINREPLICAS for synchronous replication */ time_t minreplicas_timeout; /* MINREPLICAS timeout as unixtime. */ } multiState; // watch的信息 typedef struct watchedKey { robj *key; redisDb *db; } watchedKey; // 客户端相关的事务字段 typedef struct client { multiState mstate; /* 事务状态 */ list *watched_keys; /* watch的key，里面每个元素都是watchedKey结构体变量 */ } client; // db typedef struct redisDb { dict *watched_keys; /* watch的key，键是key，值是客户端链表 */ } redisDb; 状态 与事务相关的几个客户端状态有："/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://rudychow.github.io/post/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Redis源码：事务",
+      "item": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Redis源码：事务",
+  "name": "Redis源码：事务",
+  "description": "Redis 与事务相关的命令有：multi、discard、exec和watch。\nmulti、discard和exec这是一组命令，与MySQL的begin、rollback和commit有相似之处。watch则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。\n数据结构 // 事务状态 typedef struct multiState { multiCmd *commands; /* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */ int count; /* 一共有多少个待处理的命令 */ int cmd_flags; /* The accumulated command flags OR-ed together. So if at least a command has a given flag, it will be set in this field. */ int minreplicas; /* MINREPLICAS for synchronous replication */ time_t minreplicas_timeout; /* MINREPLICAS timeout as unixtime. */ } multiState; // watch的信息 typedef struct watchedKey { robj *key; redisDb *db; } watchedKey; // 客户端相关的事务字段 typedef struct client { multiState mstate; /* 事务状态 */ list *watched_keys; /* watch的key，里面每个元素都是watchedKey结构体变量 */ } client; // db typedef struct redisDb { dict *watched_keys; /* watch的key，键是key，值是客户端链表 */ } redisDb; 状态 与事务相关的几个客户端状态有：",
+  "keywords": [
+    
+  ],
+  "articleBody": "Redis 与事务相关的命令有：multi、discard、exec和watch。\nmulti、discard和exec这是一组命令，与MySQL的begin、rollback和commit有相似之处。watch则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。\n数据结构 // 事务状态 typedef struct multiState { multiCmd *commands; /* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */ int count; /* 一共有多少个待处理的命令 */ int cmd_flags; /* The accumulated command flags OR-ed together. So if at least a command has a given flag, it will be set in this field. */ int minreplicas; /* MINREPLICAS for synchronous replication */ time_t minreplicas_timeout; /* MINREPLICAS timeout as unixtime. */ } multiState; // watch的信息 typedef struct watchedKey { robj *key; redisDb *db; } watchedKey; // 客户端相关的事务字段 typedef struct client { multiState mstate; /* 事务状态 */ list *watched_keys; /* watch的key，里面每个元素都是watchedKey结构体变量 */ } client; // db typedef struct redisDb { dict *watched_keys; /* watch的key，键是key，值是客户端链表 */ } redisDb; 状态 与事务相关的几个客户端状态有：\n#define CLIENT_MULTI (1/* 处于事务开启状态 */#define CLIENT_DIRTY_CAS (1/* watch的key发生了改变 */#define CLIENT_DIRTY_EXEC (1/* 发生错误时，exec会失败，此时处于失败状态 */当执行multi后，客户端就会处于CLIENT_MULTI的状态。\n当执行discard或exec后，客户端会清除所有与事务相关的状态：CLIENT_MULTI、CLIENT_DIRTY_CAS和CLIENT_DIRTY_EXEC。\n当watch了某个 key 时，如果 key 在其它客户端请求下发生了修改，此时会修改所有watch这个 key 的客户端们叠加上CLIENT_DIRTY_CAS的状态。具体是根据signalModifiedKey和signalFlushedDb函数来触发，大部分增删改的操作都有对应的函数埋点。\n如果客户端执行命令时发生了错误，则会叠加上CLIENT_DIRTY_EXEC状态，这个状态由flagTransaction函数来触发。\nmulti 开启事务的逻辑很简单，就是单纯给客户端叠加CLIENT_MULTI的状态。另外，Redis 不支持嵌套事务。\n另外需要记录的一点是，当客户端处于CLIENT_MULTI状态时，为了保证事务原子性、除了exec、discard、multi和watch以外的其它命令，都不再是调用call函数，而是调用queueMultiCommand。\n具体代码在src/server.c的processCommand：\n/* Exec the command */ if (c-flags \u0026 CLIENT_MULTI \u0026\u0026 c-cmd-proc != execCommand \u0026\u0026 c-cmd-proc != discardCommand \u0026\u0026 c-cmd-proc != multiCommand \u0026\u0026 c-cmd-proc != watchCommand) { // 处于事务状态下，除了事务相关的命令，其它命令全部调用queueMultiCommand  queueMultiCommand(c); addReply(c,shared.queued); } else { // 非事务状态，或者事务开启下执行事务命令时，还是调用call函数  call(c,CMD_CALL_FULL); c-woff = server.master_repl_offset; if (listLength(server.ready_keys)) handleClientsBlockedOnKeys(); } queueMultiCommand的逻辑很简单，就是把当前命令的参数以及函数封装成multiCmd，存入c-mstate.commands数组中。\nwatch和unwatch watch的操作也很简单，就是在当前 db 中的watched_keys中对应的 key 添加当前客户端，以及在当前客户端中记录watch的 key。unwatch则是进行反向操作。\n当watch的 key 被touch的时候，Redis 会循环watched_keys所属的 key 下的全部客户端，并且叠加CLIENT_DIRTY_CAS状态。\ndiscard discard主要做两件事：\n 清除当前客户端的所有事务状态和信息。 unwatch所有的 key。  exec 如果当前客户端处于CLIENT_DIRTY_CAS或者CLIENT_DIRTY_EXEC的状态，则不能提交事务，此时会强行discard。\n正常流程下，会遍历客户端的c-mstate.commands，call每一个命令。\n",
+  "wordCount" : "205",
+  "inLanguage": "en",
+  "datePublished": "2020-10-30T18:39:35+08:00",
+  "dateModified": "2020-10-30T18:39:35+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Rudy"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81%E4%BA%8B%E5%8A%A1/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rudy's blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://rudychow.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://rudychow.github.io/" accesskey="h" title="Rudy&#39;s blog (Alt + H)">Rudy&#39;s blog</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="https://rudychow.github.io/archives/" title="archives">
+                    <span>archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/categories/" title="categories">
+                    <span>categories</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://rudychow.github.io/tags/" title="tags">
+                    <span>tags</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://github.com/RudyChow" title="github">
+                    <span>github</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      Redis源码：事务
+    </h1>
+    <div class="post-meta"><span title='2020-10-30 18:39:35 +0800 HKT'>October 30, 2020</span>&nbsp;·&nbsp;Rudy
+
+</div>
+  </header> 
+  <div class="post-content"><p>Redis 与事务相关的命令有：<code>multi</code>、<code>discard</code>、<code>exec</code>和<code>watch</code>。</p>
+<p><code>multi</code>、<code>discard</code>和<code>exec</code>这是一组命令，与<code>MySQL</code>的<code>begin</code>、<code>rollback</code>和<code>commit</code>有相似之处。<code>watch</code>则是监听某个键，如果键值发生了改编，在事务中则会更新客户端的状态。</p>
+<h2 id="数据结构">数据结构<a hidden class="anchor" aria-hidden="true" href="#数据结构">#</a></h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// 事务状态
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> multiState {
+    multiCmd <span style="color:#f92672">*</span>commands;     <span style="color:#75715e">/* 命令数组，元素是没一个事务中需要执行的命令，以先进先出的顺序保存 */</span>
+    <span style="color:#66d9ef">int</span> count;              <span style="color:#75715e">/* 一共有多少个待处理的命令 */</span>
+    <span style="color:#66d9ef">int</span> cmd_flags;          <span style="color:#75715e">/* The accumulated command flags OR-ed together.
+</span><span style="color:#75715e">                               So if at least a command has a given flag, it
+</span><span style="color:#75715e">                               will be set in this field. */</span>
+    <span style="color:#66d9ef">int</span> minreplicas;        <span style="color:#75715e">/* MINREPLICAS for synchronous replication */</span>
+    time_t minreplicas_timeout; <span style="color:#75715e">/* MINREPLICAS timeout as unixtime. */</span>
+} multiState;
+
+<span style="color:#75715e">// watch的信息
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> watchedKey {
+    robj <span style="color:#f92672">*</span>key;
+    redisDb <span style="color:#f92672">*</span>db;
+} watchedKey;
+
+<span style="color:#75715e">// 客户端相关的事务字段
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> client {
+    multiState mstate;      <span style="color:#75715e">/* 事务状态 */</span>
+    list <span style="color:#f92672">*</span>watched_keys;     <span style="color:#75715e">/* watch的key，里面每个元素都是watchedKey结构体变量 */</span>
+} client;
+
+<span style="color:#75715e">// db
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> redisDb {
+    dict <span style="color:#f92672">*</span>watched_keys;         <span style="color:#75715e">/* watch的key，键是key，值是客户端链表 */</span>
+} redisDb;
+
+</code></pre></div><h2 id="状态">状态<a hidden class="anchor" aria-hidden="true" href="#状态">#</a></h2>
+<p>与事务相关的几个客户端状态有：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#define CLIENT_MULTI (1&lt;&lt;3)   </span><span style="color:#75715e">/* 处于事务开启状态 */</span><span style="color:#75715e">
+</span><span style="color:#75715e">#define CLIENT_DIRTY_CAS (1&lt;&lt;5) </span><span style="color:#75715e">/* watch的key发生了改变 */</span><span style="color:#75715e">
+</span><span style="color:#75715e">#define CLIENT_DIRTY_EXEC (1&lt;&lt;12)  </span><span style="color:#75715e">/* 发生错误时，exec会失败，此时处于失败状态 */</span><span style="color:#75715e">
+</span></code></pre></div><p>当执行<code>multi</code>后，客户端就会处于<code>CLIENT_MULTI</code>的状态。</p>
+<p>当执行<code>discard</code>或<code>exec</code>后，客户端会清除所有与事务相关的状态：<code>CLIENT_MULTI</code>、<code>CLIENT_DIRTY_CAS</code>和<code>CLIENT_DIRTY_EXEC</code>。</p>
+<p>当<code>watch</code>了某个 key 时，如果 key 在其它客户端请求下发生了修改，此时会修改所有<code>watch</code>这个 key 的客户端们叠加上<code>CLIENT_DIRTY_CAS</code>的状态。具体是根据<code>signalModifiedKey</code>和<code>signalFlushedDb</code>函数来触发，大部分增删改的操作都有对应的函数埋点。</p>
+<p>如果客户端执行命令时发生了错误，则会叠加上<code>CLIENT_DIRTY_EXEC</code>状态，这个状态由<code>flagTransaction</code>函数来触发。</p>
+<h2 id="multi">multi<a hidden class="anchor" aria-hidden="true" href="#multi">#</a></h2>
+<p>开启事务的逻辑很简单，就是单纯给客户端叠加<code>CLIENT_MULTI</code>的状态。另外，Redis 不支持嵌套事务。</p>
+<p>另外需要记录的一点是，当客户端处于<code>CLIENT_MULTI</code>状态时，为了保证事务原子性、除了<code>exec</code>、<code>discard</code>、<code>multi</code>和<code>watch</code>以外的其它命令，都不再是调用<code>call</code>函数，而是调用<code>queueMultiCommand</code>。</p>
+<p>具体代码在<code>src/server.c</code>的<code>processCommand</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">    <span style="color:#75715e">/* Exec the command */</span>
+    <span style="color:#66d9ef">if</span> (c<span style="color:#f92672">-&gt;</span>flags <span style="color:#f92672">&amp;</span> CLIENT_MULTI <span style="color:#f92672">&amp;&amp;</span>
+        c<span style="color:#f92672">-&gt;</span>cmd<span style="color:#f92672">-&gt;</span>proc <span style="color:#f92672">!=</span> execCommand <span style="color:#f92672">&amp;&amp;</span> c<span style="color:#f92672">-&gt;</span>cmd<span style="color:#f92672">-&gt;</span>proc <span style="color:#f92672">!=</span> discardCommand <span style="color:#f92672">&amp;&amp;</span>
+        c<span style="color:#f92672">-&gt;</span>cmd<span style="color:#f92672">-&gt;</span>proc <span style="color:#f92672">!=</span> multiCommand <span style="color:#f92672">&amp;&amp;</span> c<span style="color:#f92672">-&gt;</span>cmd<span style="color:#f92672">-&gt;</span>proc <span style="color:#f92672">!=</span> watchCommand)
+    {
+        <span style="color:#75715e">// 处于事务状态下，除了事务相关的命令，其它命令全部调用queueMultiCommand
+</span><span style="color:#75715e"></span>        queueMultiCommand(c);
+        addReply(c,shared.queued);
+    } <span style="color:#66d9ef">else</span> {
+        <span style="color:#75715e">// 非事务状态，或者事务开启下执行事务命令时，还是调用call函数
+</span><span style="color:#75715e"></span>        call(c,CMD_CALL_FULL);
+        c<span style="color:#f92672">-&gt;</span>woff <span style="color:#f92672">=</span> server.master_repl_offset;
+        <span style="color:#66d9ef">if</span> (listLength(server.ready_keys))
+            handleClientsBlockedOnKeys();
+    }
+</code></pre></div><p><code>queueMultiCommand</code>的逻辑很简单，就是把当前命令的参数以及函数封装成<code>multiCmd</code>，存入<code>c-&gt;mstate.commands</code>数组中。</p>
+<h2 id="watch和unwatch">watch和unwatch<a hidden class="anchor" aria-hidden="true" href="#watch和unwatch">#</a></h2>
+<p><code>watch</code>的操作也很简单，就是在当前 db 中的<code>watched_keys</code>中对应的 key 添加当前客户端，以及在当前客户端中记录<code>watch</code>的 key。<code>unwatch</code>则是进行反向操作。</p>
+<p>当<code>watch</code>的 key 被<code>touch</code>的时候，Redis 会循环<code>watched_keys</code>所属的 key 下的全部客户端，并且叠加<code>CLIENT_DIRTY_CAS</code>状态。</p>
+<h2 id="discard">discard<a hidden class="anchor" aria-hidden="true" href="#discard">#</a></h2>
+<p><code>discard</code>主要做两件事：</p>
+<ol>
+<li>清除当前客户端的所有事务状态和信息。</li>
+<li><code>unwatch</code>所有的 key。</li>
+</ol>
+<h2 id="exec">exec<a hidden class="anchor" aria-hidden="true" href="#exec">#</a></h2>
+<p>如果当前客户端处于<code>CLIENT_DIRTY_CAS</code>或者<code>CLIENT_DIRTY_EXEC</code>的状态，则不能提交事务，此时会强行<code>discard</code>。</p>
+<p>正常流程下，会遍历客户端的<code>c-&gt;mstate.commands</code>，<code>call</code>每一个命令。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+<nav class="paginav">
+  <a class="prev" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81rdb/">
+    <span class="title">« Prev Page</span>
+    <br>
+    <span>Redis源码：rdb</span>
+  </a>
+  <a class="next" href="https://rudychow.github.io/post/redis/redis%E6%BA%90%E7%A0%81pub%E5%92%8Csub/">
+    <span class="title">Next Page »</span>
+    <br>
+    <span>Redis源码：pub和sub</span>
+  </a>
+</nav>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2021 <a href="https://rudychow.github.io/">Rudy&#39;s blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerText = 'copy';
+
+        function copyingDone() {
+            copybutton.innerText = 'copied!';
+            setTimeout(() => {
+                copybutton.innerText = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

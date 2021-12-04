@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Linux on Rudy&#39;s blog</title>
+    <link>https://rudychow.github.io/categories/linux/</link>
+    <description>Recent content in Linux on Rudy&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Sat, 23 Jan 2021 13:59:11 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/categories/linux/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>iproute2</title>
+      <link>https://rudychow.github.io/post/linux/iproute2/</link>
+      <pubDate>Sat, 23 Jan 2021 13:59:11 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/linux/iproute2/</guid>
+      <description>大部分 Linux 中已经不再使用net-tools来进行网络配置了（包括我目前在用的 Manjaro 也是），所以有必要熟悉iproute2相关的命令。net-tools中主要使用ifconfig、route、arp和netstat，而iproute2中也有对应的ip和ss命令来替代。
+   net-tools iproute2     ifconfig ip link/ip addr   route ip route   arp ip neigh   netstat ss    ip 这个是iproute2中主要的命令，可以替代net-tools的ifconfig、route和arp。
+ip link # 查看网络设备，但是不会查看到ip ip link # 启动/关闭某个网卡 ip link set interface up/down ip addr # 查看每个网络设备上的ip ip addr # 查看指定的网卡 ip addr show dev device # 为指定网卡添加/删除ip地址 ip addr add/del IPv4/IPv6 dev device # 清除指定网卡的所有ip ip addr flush dev device ip route # 查看路由表 ip route # 启动/关闭某个网卡 ip link set interface up/down ip route和route显示的格式不太一样：</description>
+    </item>
+    
+    <item>
+      <title>Linux源码：select浅析</title>
+      <link>https://rudychow.github.io/post/linux/linux%E6%BA%90%E7%A0%81select/</link>
+      <pubDate>Wed, 09 Sep 2020 22:28:29 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/linux/linux%E6%BA%90%E7%A0%81select/</guid>
+      <description>因为 Linux 源码中 select 的代码量不多，所以尝试阅读一下 select 的源码。阅读过程主要以读懂基础流程为主，对于尚未理解或者过于难懂的地方暂时略过。（下面以 Linux5.7 为准）
+通过man 2 select，我们知道有关 select 的 API 主要有以下几个：
+// FD 系列 void FD_CLR(int fd, fd_set *set); int FD_ISSET(int fd, fd_set *set); void FD_SET(int fd, fd_set *set); void FD_ZERO(fd_set *set); // select函数 int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout); 主要可以分成两个部分去理解：
+ FD_*系列的宏函数，用来操作fd_set的结构体 select函数，进行 IO 操作的主要函数  FD_* 要清楚FD_*系列函数的具体逻辑，首先需要知道fd_set的具体结构。fd_set的成员很简单，这个结构体里只有一个long类型的数组。说白了，fd_set就是一个bitmap的数据结构。
+// 这里是未展开宏时的结构体 typedef long int __fd_mask; #define __FD_SETSIZE 1024 #define __NFDBITS (8 * (int) sizeof (__fd_mask)) typedef struct { __fd_mask __fds_bits[__FD_SETSIZE / __NFDBITS]; # define __FDS_BITS(set) ((set)-&amp;gt;__fds_bits) } fd_set; // 这里是宏展开后，在64位操作系统下的结构体 typedef struct { long int __fds_bits[16]; } fd_set; 在 64 位操作系统中，数组大小是 16，在 32 位操作系统中，数组大小是 32。但总体上，整个bitmap的长度一定会是1024。这个是根据__FD_SETSIZE的宏计算而来的，这也是大家常说 select 的最大文件描述符限制是1024 的原因。</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -190,14 +190,14 @@
         <div class="post-content">
             <p>intset 就是整数集合。这个集合只包含了整数，并且不回有重复数据。Redis 常用的 set 命令，当符合 intset 的情况时，底层就会使用 intset 去实现，其余情况则使用 dict。</p>
 <h2 id="数据结构">数据结构</h2>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">#define INTSET_ENC_INT16 (sizeof(int16_t))
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">#define INTSET_ENC_INT16 (sizeof(int16_t))
 </span><span style="color:#719e07">#define INTSET_ENC_INT32 (sizeof(int32_t))
 </span><span style="color:#719e07">#define INTSET_ENC_INT64 (sizeof(int64_t))
 </span><span style="color:#719e07"></span>
 <span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> intset {
-    uint32_t encoding;
-    uint32_t length;
-    int8_t contents[];
+    <span style="color:#dc322f">uint32_t</span> encoding;
+    <span style="color:#dc322f">uint32_t</span> length;
+    <span style="color:#dc322f">int8_t</span> contents[];
 } intset;
 </code></pre></div><p>intset 的结构体只有 3 个属性，比较简单：</p>
 <ul>
@@ -217,14 +217,14 @@
 <h2 id="特点">特点</h2>
 <p>intset 主要特点是<strong>存放元素是有序的，并且会对元素类型自动升级</strong>。</p>
 <p>下面通过一个 intset 的添加函数<code>intsetAdd</code>进行入手：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// is: 就是 intset 的缩写，指向要操作的 intset
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// is: 就是 intset 的缩写，指向要操作的 intset
 </span><span style="color:#586e75">// value: 准备增加的整数数据
 </span><span style="color:#586e75">// success: 传入传出参数
-</span><span style="color:#586e75"></span>intset <span style="color:#719e07">*</span><span style="color:#268bd2">intsetAdd</span>(intset <span style="color:#719e07">*</span>is, int64_t value, uint8_t <span style="color:#719e07">*</span>success) {
+</span><span style="color:#586e75"></span>intset <span style="color:#719e07">*</span><span style="color:#268bd2">intsetAdd</span>(intset <span style="color:#719e07">*</span>is, <span style="color:#dc322f">int64_t</span> value, <span style="color:#dc322f">uint8_t</span> <span style="color:#719e07">*</span>success) {
     <span style="color:#586e75">// 根据 value 获取 value 最小的数据类型长度
-</span><span style="color:#586e75"></span>    uint8_t valenc <span style="color:#719e07">=</span> _intsetValueEncoding(value);
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">uint8_t</span> valenc <span style="color:#719e07">=</span> _intsetValueEncoding(value);
     <span style="color:#586e75">// 因为 intset 是有序的，所以需要寻找插入的 position
-</span><span style="color:#586e75"></span>    uint32_t pos;
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">uint32_t</span> pos;
     <span style="color:#719e07">if</span> (success) <span style="color:#719e07">*</span>success <span style="color:#719e07">=</span> <span style="color:#2aa198">1</span>;
 
     <span style="color:#586e75">// 用 value 与 intset 当前的 encoding 进行判断，看看是否需要对数组元素进行升级
@@ -253,11 +253,11 @@
     <span style="color:#719e07">return</span> is;
 }
 </code></pre></div><p>通过这一个函数就能充分体现出 intset 的特点。另外需要注意的是，当需要升级时，插入的复杂度从 O(1) 变成 O(n)。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">static</span> intset <span style="color:#719e07">*</span><span style="color:#268bd2">intsetUpgradeAndAdd</span>(intset <span style="color:#719e07">*</span>is, int64_t value) {
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">static</span> intset <span style="color:#719e07">*</span><span style="color:#268bd2">intsetUpgradeAndAdd</span>(intset <span style="color:#719e07">*</span>is, <span style="color:#dc322f">int64_t</span> value) {
     <span style="color:#586e75">// 获取当前的数据类型
-</span><span style="color:#586e75"></span>    uint8_t curenc <span style="color:#719e07">=</span> intrev32ifbe(is<span style="color:#719e07">-&gt;</span>encoding);
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">uint8_t</span> curenc <span style="color:#719e07">=</span> intrev32ifbe(is<span style="color:#719e07">-&gt;</span>encoding);
     <span style="color:#586e75">// 获取插入值 value 的数据类型
-</span><span style="color:#586e75"></span>    uint8_t newenc <span style="color:#719e07">=</span> _intsetValueEncoding(value);
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">uint8_t</span> newenc <span style="color:#719e07">=</span> _intsetValueEncoding(value);
     <span style="color:#586e75">// 获取当前的长度
 </span><span style="color:#586e75"></span>    <span style="color:#dc322f">int</span> length <span style="color:#719e07">=</span> intrev32ifbe(is<span style="color:#719e07">-&gt;</span>length);
     <span style="color:#586e75">// 是否前置插入

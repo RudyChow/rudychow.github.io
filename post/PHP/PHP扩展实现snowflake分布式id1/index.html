@@ -191,7 +191,7 @@
             <p>Snowflake，又称为雪花算法，是Twitter开源的高性能分布式ID的生成算法。关于snowflake的介绍，网上有很多，这里不再赘述。</p>
 <h2 id="结构">结构</h2>
 <p>snowflake说白了就是一个<strong>64位</strong>的整数，整体构成如下：</p>
-<pre><code>                                                              workerid
+<pre tabindex="0"><code>                                                              workerid
          +          current (ms) - epoch (ms)            +  datacenterid +   seqNum
 unsigned |                                               |               |
          |                                               |               |
@@ -207,19 +207,19 @@ unsigned |                                               |               |
 </ol>
 <h2 id="实现">实现</h2>
 <p>由于没有进行过PHP扩展开发，所以此处先用C语言写一个简单版本。</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 起始时间
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#586e75">// 起始时间
 </span><span style="color:#586e75"></span><span style="color:#719e07">#define SNOWFLAKE_START_TIME 1597939200000
 </span><span style="color:#719e07"></span>
-uint64_t <span style="color:#268bd2">generateSnowflakeId</span>(uint8_t, uint8_t);
-uint64_t <span style="color:#268bd2">getSnowflakeTime</span>();
+<span style="color:#dc322f">uint64_t</span> <span style="color:#268bd2">generateSnowflakeId</span>(<span style="color:#dc322f">uint8_t</span>, <span style="color:#dc322f">uint8_t</span>);
+<span style="color:#dc322f">uint64_t</span> <span style="color:#268bd2">getSnowflakeTime</span>();
 
 
 <span style="color:#586e75">/**
 </span><span style="color:#586e75"> * 生成id
 </span><span style="color:#586e75"> */</span>
-uint64_t <span style="color:#268bd2">generateSnowflakeId</span>(uint8_t workerId, uint8_t dataCenterId)
+<span style="color:#dc322f">uint64_t</span> <span style="color:#268bd2">generateSnowflakeId</span>(<span style="color:#dc322f">uint8_t</span> workerId, <span style="color:#dc322f">uint8_t</span> dataCenterId)
 {
-    uint64_t snowflakeId <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
+    <span style="color:#dc322f">uint64_t</span> snowflakeId <span style="color:#719e07">=</span> <span style="color:#2aa198">0</span>;
 
     <span style="color:#586e75">// workerid 和 datacenterid判断
 </span><span style="color:#586e75"></span>    <span style="color:#719e07">if</span> (workerId <span style="color:#719e07">&gt;</span> <span style="color:#2aa198">31</span> <span style="color:#719e07">||</span> dataCenterId <span style="color:#719e07">&gt;</span> <span style="color:#2aa198">31</span>)
@@ -241,11 +241,11 @@ uint64_t <span style="color:#268bd2">generateSnowflakeId</span>(uint8_t workerId
 <span style="color:#586e75">/**
 </span><span style="color:#586e75"> * 获取snowflake的时间
 </span><span style="color:#586e75"> */</span>
-uint64_t <span style="color:#268bd2">getSnowflakeTime</span>()
+<span style="color:#dc322f">uint64_t</span> <span style="color:#268bd2">getSnowflakeTime</span>()
 {
     <span style="color:#719e07">struct</span> timeval now;
     gettimeofday(<span style="color:#719e07">&amp;</span>now, <span style="color:#b58900">NULL</span>);
-    uint64_t millisecond <span style="color:#719e07">=</span> now.tv_sec <span style="color:#719e07">*</span> <span style="color:#2aa198">1000</span> <span style="color:#719e07">+</span> now.tv_usec <span style="color:#719e07">/</span> <span style="color:#2aa198">1000</span> <span style="color:#719e07">-</span> SNOWFLAKE_START_TIME;
+    <span style="color:#dc322f">uint64_t</span> millisecond <span style="color:#719e07">=</span> now.tv_sec <span style="color:#719e07">*</span> <span style="color:#2aa198">1000</span> <span style="color:#719e07">+</span> now.tv_usec <span style="color:#719e07">/</span> <span style="color:#2aa198">1000</span> <span style="color:#719e07">-</span> SNOWFLAKE_START_TIME;
 
     <span style="color:#719e07">return</span> millisecond;
 }
@@ -257,18 +257,18 @@ uint64_t <span style="color:#268bd2">getSnowflakeTime</span>()
 <p>这两个问题在后续的PHP扩展实现中解决。</p>
 <h2 id="补充">补充</h2>
 <p>在C语言的实现中，也可以通过<code>union</code>和<code>struct</code>的位域来实现：</p>
-<div class="highlight"><pre style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> _snowflake_val
+<div class="highlight"><pre tabindex="0" style="color:#93a1a1;background-color:#002b36;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#719e07">typedef</span> <span style="color:#719e07">struct</span> _snowflake_val
 {
     <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> seq : <span style="color:#2aa198">12</span>;       <span style="color:#586e75">// 12 seq   max:4095
 </span><span style="color:#586e75"></span>    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> data_num : <span style="color:#2aa198">5</span>;   <span style="color:#586e75">// 5        max:31
 </span><span style="color:#586e75"></span>    <span style="color:#dc322f">unsigned</span> <span style="color:#dc322f">int</span> worker_num : <span style="color:#2aa198">5</span>; <span style="color:#586e75">// 5位      max:31
-</span><span style="color:#586e75"></span>    uint64_t ms : <span style="color:#2aa198">41</span>;            <span style="color:#586e75">// 41位毫秒
+</span><span style="color:#586e75"></span>    <span style="color:#dc322f">uint64_t</span> ms : <span style="color:#2aa198">41</span>;            <span style="color:#586e75">// 41位毫秒
 </span><span style="color:#586e75"></span>    <span style="color:#dc322f">unsigned</span> <span style="color:#719e07">:</span> <span style="color:#2aa198">1</span>;                <span style="color:#586e75">// 1位置留空
 </span><span style="color:#586e75"></span>} _snowflake_val;
 
 <span style="color:#719e07">typedef</span> <span style="color:#719e07">union</span> Snowflake
 {
-    uint64_t parsedVal;
+    <span style="color:#dc322f">uint64_t</span> parsedVal;
     _snowflake_val val;
 } Snowflake;
 

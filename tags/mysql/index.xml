@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>MySQL on Rudy&#39;s blog</title>
+    <link>https://rudychow.github.io/tags/mysql/</link>
+    <description>Recent content in MySQL on Rudy&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Mon, 17 Aug 2020 23:53:56 +0800</lastBuildDate><atom:link href="https://rudychow.github.io/tags/mysql/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MySQL索引相关概念（1）</title>
+      <link>https://rudychow.github.io/post/mysql/mysql%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/</link>
+      <pubDate>Mon, 17 Aug 2020 23:53:56 +0800</pubDate>
+      
+      <guid>https://rudychow.github.io/post/mysql/mysql%E7%B4%A2%E5%BC%95%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B51/</guid>
+      <description>前缀索引（Index Prefixes） 前缀索引，即是你可以通过字段的前N个字符去创建一个索引。当你想为TEXT或者BLOB字段创建索引时，必须指定长度。
+##	创建测试表 mysql&amp;gt; show create table z_test\G *************************** 1. row *************************** Table: z_test Create Table: CREATE TABLE `z_test` ( `id` int unsigned NOT NULL AUTO_INCREMENT, `name` varchar(255) NOT NULL, `age` tinyint unsigned NOT NULL, `city` varchar(16) NOT NULL, `intro` text, `create_time` datetime NOT NULL, PRIMARY KEY (`id`) ) ENGINE=InnoDB AUTO_INCREMENT=300057 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ##	直接帮TEXT字段创建索引是无法成功的 mysql&amp;gt; alter table z_test add index idx_intro(`intro`); ERROR 1170 (42000): BLOB/TEXT column &amp;#39;intro&amp;#39; used in key specification without a key length ##	指定长度后创建成功 mysql&amp;gt; alter table z_test add index idx_intro(`intro`(20)); Query OK, 0 rows affected (0.</description>
+    </item>
+    
+  </channel>
+</rss>
